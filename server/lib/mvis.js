@@ -14,7 +14,7 @@ function spawn(callback) {
     
     mvisProcess = fork(path.join(wDir, 'mvis-service.js'), [], {
         cwd: wDir,
-        env: {NODE_ENV: 'development'}//{NODE_ENV: process.env.NODE_ENV}
+        env: {NODE_ENV: process.env.NODE_ENV}
     });
 
     // throw new Error('Not implemented');
