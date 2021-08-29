@@ -1,9 +1,17 @@
 'use strict';
 
 const moment = require('moment');
+const config = require('config');
+const axios = require('axios').default;
 
-const activityQueueLenthThreshold = 100;
-const actitivyQueue = [];
+const APIToken = config.get('mvis.apiToken');
+const activityQueueLengthThreshold = 1; // 100;
+const activityQueueTimeoutMs = 1000;
+const activityQueue = [];
+
+// load Token from config too... how to save it? script?
+const apiUrlBase = config.get('mvis.apiUrlBase');
+const apiurl = `${apiUrlBase}/api/events?global_access_token=${APIToken}`;
 
 let processQueueIsRunning = false;
 
@@ -14,21 +22,30 @@ async function processQueue() {
 
     processQueueIsRunning = true;
 
-    // XXX submit data to IVIS if configured in config
+    console.log('logging data:')
+    console.log(JSON.stringify(activityQueue))
+    if (apiurl) {
+        try {
+            await axios.post(apiurl, { data: activityQueue });
+        } catch (e) {
+            console.log('failure to send activity-log data');
+        }
+        // thats all i guess? think about how to prevent writing to activityQueue between this and the splice
+    }
 
-    actitivyQueue.splice(0);
+    activityQueue.splice(0);
 
     processQueueIsRunning = false;
 }
 
 async function _logActivity(typeId, data) {
-    actitivyQueue.push({
+    activityQueue.push({
         typeId,
         data,
         timestamp: moment.utc().toISOString()
     });
 
-    if (actitivyQueue.length >= activityQueueLenthThreshold) {
+    if (activityQueue.length >= activityQueueLengthThreshold) {
         // noinspection ES6MissingAwait
         processQueue();
     }

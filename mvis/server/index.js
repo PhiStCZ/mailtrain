@@ -3,6 +3,9 @@
 require('./extensions-common');
 const em = require('../ivis-core/server/lib/extension-manager');
 const path = require('path');
+const config = require('config');
+
+const APIToken = config.get('www.apiToken');
 
 async function init() {
     em.set('app.clientDist', path.join(__dirname, '..', 'client', 'dist'));
@@ -20,7 +23,17 @@ async function init() {
         app.use('/api', eventsApi);
     });
 
+    em.on('app.validateGlobalAccess', data => {
+        data.accept = APIToken && (data.token === APIToken);
+    });
+
     require('../ivis-core/server/index');
 }
 
 init();
+
+if (process.send) {
+    process.send({
+        type: 'mvis-started'
+    });
+}

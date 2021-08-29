@@ -12,19 +12,17 @@ function spawn(callback) {
 
     const wDir = path.join(__dirname, '..', '..', 'mvis', 'server');
     
-    mvisProcess = fork(path.join(wDir, 'mvis-service.js'), [], {
+    mvisProcess = fork(path.join(wDir, 'index.js'), [], {
         cwd: wDir,
         env: {NODE_ENV: process.env.NODE_ENV}
     });
-
-    // throw new Error('Not implemented');
 
     mvisProcess.on('message', msg => {
         if (msg && msg.type === 'mvis-started') {
             log.info('Mvis', 'Mvis process started');
             return callback();
         }
-    })
+    });
 };
 
 module.exports.spawn = bluebird.promisify(spawn);

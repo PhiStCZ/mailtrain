@@ -116,6 +116,20 @@ www:
   # maximum POST body size
   postSize: 2MB
 
+mvis:
+  trustedPort: 3010
+  sandboxPort: 3011
+  apiPort: 3012
+
+  host: 0.0.0.0
+
+  trustedUrlBase: http://localhost:3010
+  sandboxUrlBase: http://localhost:3011
+  apiUrlBase: http://localhost:3012
+
+  # a global authentication token for logging activity data to ivis
+  apiToken: mvis
+
 mysql:
   host: localhost
   user: mailtrain
