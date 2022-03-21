@@ -17,7 +17,7 @@ const share = require('./share');
 // the types need to have `ensure()`, `ingest(record)`, and `schema` entries
 const types = {
     blacklist,
-    share,
+    // share,
     // entityActivity,
 }
 
