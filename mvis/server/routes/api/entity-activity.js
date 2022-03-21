@@ -52,8 +52,8 @@ async function ensure(context) {
     return await signalSets.ensure(
         context,
         {
-            cid: 'globalEntity',
-            name: 'globalEntity',
+            cid: 'entityActivity',
+            name: 'Entity Activity',
             description: '',
             namespace: config.mailtrain.namespace,
         },

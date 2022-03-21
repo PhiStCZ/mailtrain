@@ -44,8 +44,8 @@ async function ensure(context) {
     return await signalSets.ensure(
         context,
         {
-            cid: 'lists',
-            name: 'Lists',
+            cid: 'users',
+            name: 'Users',
             description: '',
             namespace: config.mailtrain.namespace,
         },
