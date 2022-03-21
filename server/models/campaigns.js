@@ -25,7 +25,7 @@ const {convertFileURLs} = require('../lib/campaign-content');
 const messageSender = require('../lib/message-sender');
 const lists = require('./lists');
 
-const {EntityActivityType, CampaignActivityType} = require('../../shared/activity-log');
+const {EntityActivityType, CampaignActivityType, CampaignTrackerActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeysCommon = ['name', 'description', 'namespace', 'channel',
@@ -783,6 +783,17 @@ async function _changeStatusByMessageTx(tx, context, message, campaignMessageSta
                 status: campaignMessageStatus,
                 updated: knex.fn.now()
             });
+
+        // TODO: move the map somewhere more useful
+        const messageStatusActivityLogMapping = new Map();
+        messageStatusActivityLogMapping.set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT);
+        messageStatusActivityLogMapping.set(CampaignMessageStatus.BOUNCED, CampaignTrackerActivityType.BOUNCED);
+        messageStatusActivityLogMapping.set(CampaignMessageStatus.UNSUBSCRIBED, CampaignTrackerActivityType.UNSUBSCRIBED);
+        messageStatusActivityLogMapping.set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.UNSUBSCRIBED);
+        // TODO: there are more modifying operations -> figure out if they shouuld be logged
+        await activityLog.logCampaignTrackerActivity(
+            messageStatusActivityLogMapping[campaignMessageStatus],
+            message.campaign, message.list, message.subscription);
     }
 }
 
@@ -826,6 +837,8 @@ async function updateMessageResponse(context, message, response, responseId) {
             response,
             response_id: responseId
         });
+
+        // TODO: log? (not in specification)
     });
 }
 
@@ -952,6 +965,8 @@ async function reset(context, campaignId) {
         await tx('campaign_messages').where('campaign', campaignId).del();
         await tx('campaign_links').where('campaign', campaignId).del();
         await tx('links').where('campaign', campaignId).del();
+        
+        await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.IDLE});
     });
 }
 

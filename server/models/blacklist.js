@@ -6,7 +6,7 @@ const shares = require('./shares');
 const tools = require('../lib/tools');
 const { enforce } = require('../lib/helpers');
 
-const {BlacklistActivityType} = require('../../shared/activity-log');
+const { BlacklistActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 

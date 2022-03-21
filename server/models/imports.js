@@ -119,7 +119,7 @@ async function create(context, listId, entity, files) {
         const ids = await tx('imports').insert(filteredEntity);
         const id = ids[0];
 
-        await activityLog.logEntityActivity('list', ListActivityType.CREATE_IMPORT, listId, {importId: id, importStatus: entity.status});
+        await activityLog.logListActivity(context, ListActivityType.CREATE_IMPORT, listId, {importId: id, importStatus: entity.status});
 
         return id;
     });
@@ -153,7 +153,7 @@ async function updateWithConsistencyCheck(context, listId, entity) {
 
         await tx('imports').where({list: listId, id: entity.id}).update(filteredEntity);
 
-        await activityLog.logEntityActivity('list', ListActivityType.UPDATE_IMPORT, listId, {importId: entity.id, importStatus: entity.status});
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_IMPORT, listId, {importId: entity.id, importStatus: entity.status});
     });
 }
 
@@ -177,7 +177,7 @@ async function removeTx(tx, context, listId, id) {
     await tx('import_runs').where('import', id).del();
     await tx('imports').where({list: listId, id}).del();
 
-    await activityLog.logEntityActivity('list', ListActivityType.REMOVE_IMPORT, listId, {importId: id});
+    await activityLog.logListActivity(context, ListActivityType.REMOVE_IMPORT, listId, {importId: id});
 }
 
 async function remove(context, listId, id) {
@@ -217,7 +217,7 @@ async function start(context, listId, id) {
             mapping: entity.mapping
         });
 
-        await activityLog.logEntityActivity('list', ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_SCHEDULED});
+        await activityLog.logListActivity(context, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_SCHEDULED});
     });
 
     importer.scheduleCheck();
@@ -245,7 +245,7 @@ async function stop(context, listId, id) {
             status: RunStatus.STOPPING
         });
 
-        await activityLog.logEntityActivity('list', ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_STOPPING});
+        await activityLog.logListActivity(context, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_STOPPING});
     });
 
     importer.scheduleCheck();

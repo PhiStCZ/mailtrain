@@ -13,6 +13,8 @@ const contextHelpers = require('../lib/context-helpers');
 const mailers = require('../lib/mailers');
 const senders = require('../lib/senders');
 const dependencyHelpers = require('../lib/dependency-helpers');
+const activityLog = require('../lib/activity-log');
+const { EntityActivityType } = require('../../shared/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'from_email', 'from_email_overridable', 'from_name', 'from_name_overridable', 'reply_to', 'reply_to_overridable', 'x_mailer', 'verp_hostname', 'verp_disable_sender_header', 'mailer_type', 'mailer_settings', 'namespace']);
 
@@ -133,6 +135,8 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'sendConfiguration', entityId: id });
 
+        await activityLog.logEntityActivityWithContext(context, 'sendConfiguration', EntityActivityType.CREATE, id);
+
         return id;
     });
 }
@@ -160,6 +164,8 @@ async function updateWithConsistencyCheck(context, entity) {
         await tx('send_configurations').where('id', entity.id).update(filterObject(entity, allowedKeys));
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'sendConfiguration', entityId: entity.id });
+
+        await activityLog.logEntityActivityWithContext(context, 'sendConfiguration', EntityActivityType.UPDATE, entity.id);
     });
 
     mailers.invalidateMailer(entity.id);
@@ -180,6 +186,8 @@ async function remove(context, id) {
         ]);
 
         await tx('send_configurations').where('id', id).del();
+
+        await activityLog.logEntityActivityWithContext(context, 'sendConfiguration', EntityActivityType.REMOVE, id);
     });
 }
 

@@ -10,6 +10,20 @@ const EntityActivityType = {
 const CampaignActivityType = {
     STATUS_CHANGE: EntityActivityType.MAX + 1,
     TEST_SEND: EntityActivityType.MAX + 2,
+    
+    // right place?
+    CREATE_TRIGGER: EntityActivityType.MAX + 3,
+    UPDATE_TRIGGER: EntityActivityType.MAX + 4,
+    REMOVE_TRIGGER: EntityActivityType.MAX + 5,
+};
+
+const CampaignTrackerActivityType = {
+    SENT: 1,
+    BOUNCED: 2,
+    UNSUBSCRIBED: 3,
+    COMPLAINED: 4,
+    OPENED: 5,
+    CLICKED: 6
 };
 
 const ListActivityType = {
@@ -27,15 +41,6 @@ const ListActivityType = {
     UPDATE_IMPORT: EntityActivityType.MAX + 9,
     REMOVE_IMPORT: EntityActivityType.MAX + 10,
     IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 11,
-};
-
-const CampaignTrackerActivityType = {
-    SENT: 1,
-    BOUNCED: 2,
-    UNSUBSCRIBED: 3,
-    COMPLAINED: 4,
-    OPENED: 5,
-    CLICKED: 6
 };
 
 const BlacklistActivityType = {

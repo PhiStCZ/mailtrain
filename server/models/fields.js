@@ -566,7 +566,7 @@ async function createTx(tx, context, listId, entity) {
         await knex.schema.raw('ALTER TABLE `subscription__' + listId + '` ADD `source_' + columnName +'` int(11) DEFAULT NULL');
     }
 
-    await activityLog.logEntityActivity('list', ListActivityType.CREATE_FIELD, listId, {fieldId: id});
+    await activityLog.logListActivity(context, ListActivityType.CREATE_FIELD, listId, {fieldId: id});
 
     return id;
 }
@@ -598,7 +598,7 @@ async function updateWithConsistencyCheck(context, listId, entity) {
         await tx('custom_fields').where({list: listId, id: entity.id}).update(filterObject(entity, allowedKeysUpdate));
         await _sortIn(tx, listId, entity.id, entity.orderListBefore, entity.orderSubscribeBefore, entity.orderManageBefore);
 
-        await activityLog.logEntityActivity('list', ListActivityType.UPDATE_FIELD, listId, {fieldId: entity.id});
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_FIELD, listId, {fieldId: entity.id});
     });
 }
 
@@ -626,7 +626,7 @@ async function removeTx(tx, context, listId, id) {
         await segments.removeRulesByColumnTx(tx, context, listId, existing.column);
     }
 
-    await activityLog.logEntityActivity('list', ListActivityType.REMOVE_FIELD, listId, {fieldId: id});
+    await activityLog.logListActivity(context, ListActivityType.REMOVE_FIELD, listId, {fieldId: id});
 }
 
 async function remove(context, listId, id) {

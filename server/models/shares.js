@@ -7,8 +7,10 @@ const dtHelpers = require('../lib/dt-helpers');
 const entitySettings = require('../lib/entity-settings');
 const interoperableErrors = require('../../shared/interoperable-errors');
 const log = require('../lib/log');
-const {getGlobalNamespaceId} = require('../../shared/namespaces');
-const {getAdminId} = require('../../shared/users');
+const { getGlobalNamespaceId } = require('../../shared/namespaces');
+const { getAdminId } = require('../../shared/users');
+
+const activityLog = require('../lib/activity-log');
 
 // TODO: This would really benefit from some permission cache connected to rebuildPermissions
 // A bit of the problem is that the cache would have to expunged as the result of other processes modifying entites/permissions
@@ -129,10 +131,12 @@ async function assign(context, entityTypeId, entityId, userId, role) {
 
         await tx(entityType.permissionsTable).where({user: userId, entity: entityId}).del();
         if (entityTypeId === 'namespace') {
-            await rebuildPermissionsTx(tx, {userId});
+            await rebuildPermissionsTx(tx, { userId });
         } else {
             await rebuildPermissionsTx(tx, { entityTypeId, entityId, userId });
         }
+
+        await activityLog.logShare(context, entityTypeId, entityId, userId, role);
     });
 }
 

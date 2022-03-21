@@ -12,6 +12,8 @@ const { getPublicUrl } = require('../lib/urls');
 const tools = require('../lib/tools');
 const shortid = require('../lib/shortid');
 const {enforce} = require('../lib/helpers');
+const { EntityActivityType } = require('../../shared/activity-log');
+const activityLog = require('../lib/activity-log');
 
 const LinkId = {
     OPEN: -1,
@@ -81,6 +83,8 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
             await tx(subscriptions.getSubscriptionTableName(list.id)).update(latestUpdates).where('id', subscription.id);
         }
 
+        // TODO: log somewhere... here? inside the ifs or something, idk.
+
         // Update clicks
         if (linkId > LinkId.GENERAL_CLICK && !campaign.click_tracking_disabled) {
             await tx('links').increment('hits').where('id', linkId);
@@ -118,6 +122,9 @@ async function addOrGet(campaignId, url) {
                 cid,
                 url
             });
+
+            // TODO: log this information? also log cid or id?
+            // activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { url });
 
             return {
                 id: ids[0],

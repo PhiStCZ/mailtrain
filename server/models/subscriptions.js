@@ -16,6 +16,8 @@ const moment = require('moment');
 const { formatDate, formatBirthday } = require('../../shared/date');
 const campaigns = require('./campaigns');
 const lists = require('./lists');
+const { ListActivityType } = require('../../shared/activity-log');
+const activityLog = require('../lib/activity-log');
 
 const allowedKeysBase = new Set(['email', 'tz', 'is_test', 'status']);
 
@@ -615,11 +617,14 @@ async function _update(tx, listId, groupedFieldsMap, existing, filteredEntity) {
         filteredEntity.unsubscribed = null;
     }
 
-    if (filteredEntity) {
+    if (filteredEntity) { // TODO: this is messy and for logging might need updating
         filteredEntity.updated = new Date();
         await tx(getSubscriptionTableName(listId)).where('id', existing.id).update(filteredEntity);
 
+        activityData = { subscriptionId: existing.id };
+
         if ('status' in filteredEntity) {
+            activityData.status = filteredEntity.status;
             let countIncrement = 0;
             if (existing.status === SubscriptionStatus.SUBSCRIBED && filteredEntity.status !== SubscriptionStatus.SUBSCRIBED) {
                 countIncrement = -1;
@@ -631,12 +636,16 @@ async function _update(tx, listId, groupedFieldsMap, existing, filteredEntity) {
                 await tx('lists').where('id', listId).increment('subscribers', countIncrement);
             }
         }
+
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, activityData);
     } else {
         await tx(getSubscriptionTableName(listId)).where('id', existing.id).del();
 
         if (existing.status === SubscriptionStatus.SUBSCRIBED) {
             await tx('lists').where('id', listId).decrement('subscribers', 1);
         }
+
+        await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
     }
 }
 
@@ -647,6 +656,8 @@ async function _create(tx, listId, filteredEntity) {
     if (filteredEntity.status === SubscriptionStatus.SUBSCRIBED) {
         await tx('lists').where('id', listId).increment('subscribers', 1);
     }
+
+    await activityLog.logListActivity(context, ListActivityType.CREATE_SUBSCRIPTION, listId, {subscriptionId: id});
 
     return id;
 }
@@ -735,6 +746,8 @@ async function _removeAndGetTx(tx, context, listId, existing) {
     if (existing.status === SubscriptionStatus.SUBSCRIBED) {
         await tx('lists').where('id', listId).decrement('subscribers', 1);
     }
+
+    await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
 
     return existing;
 }
@@ -832,6 +845,8 @@ async function updateAddressAndGet(context, listId, subscriptionId, emailNew) {
             });
 
             existing.email = emailNew;
+
+            await activityLog.logListActivity('list', ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
         }
 
         return existing;

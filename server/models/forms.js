@@ -15,6 +15,9 @@ const mjml2html = require('mjml');
 const lists = require('./lists');
 const dependencyHelpers = require('../lib/dependency-helpers');
 
+const activityLog = require('../lib/activity-log');
+const { EntityActivityType } = require('../../shared/activity-log');
+
 const formAllowedKeys = new Set([
     'name',
     'description',
@@ -153,6 +156,9 @@ async function create(context, entity) {
         }
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'customForm', entityId: id });
+        
+        await activityLog.logEntityActivity('form', EntityActivityType.CREATE, id);
+
         return id;
     });
 }
@@ -186,6 +192,8 @@ async function updateWithConsistencyCheck(context, entity) {
         }
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'customForm', entityId: entity.id });
+
+        await activityLog.logEntityActivity('form', EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -199,6 +207,8 @@ async function remove(context, id) {
 
         await tx('custom_forms_data').where('form', id).del();
         await tx('custom_forms').where('id', id).del();
+
+        await activityLog.logEntityActivity('form', EntityActivityType.REMOVE, id);
     });
 }
 

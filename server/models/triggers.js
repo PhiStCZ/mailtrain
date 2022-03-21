@@ -9,6 +9,9 @@ const shares = require('./shares');
 const {EntityVals, EventVals, Entity} = require('../../shared/triggers');
 const campaigns = require('./campaigns');
 
+const { EntityActivityType, CampaignActivityType } = require('../../shared/activity-log');
+const activityLog = require('../lib/activity-log');
+
 const allowedKeys = new Set(['name', 'description', 'entity', 'event', 'seconds', 'enabled', 'source_campaign']);
 
 function hash(entity) {
@@ -82,6 +85,8 @@ async function create(context, campaignId, entity) {
         const ids = await tx('triggers').insert(filteredEntity);
         const id = ids[0];
 
+        await activityLog.logEntityActivity('campaign', CampaignActivityType.CREATE_TRIGGER, campaignId, {triggerId: id});
+
         return id;
     });
 }
@@ -104,6 +109,8 @@ async function updateWithConsistencyCheck(context, campaignId, entity) {
         await _validateAndPreprocess(tx, context, campaignId, entity);
 
         await tx('triggers').where({campaign: campaignId, id: entity.id}).update(filterObject(entity, allowedKeys));
+
+        await activityLog.logEntityActivity('campaign', CampaignActivityType.UPDATE_TRIGGER, campaignId, {triggerId: entity.id});
     });
 }
 
@@ -117,6 +124,8 @@ async function removeTx(tx, context, campaignId, id) {
 
     await tx('trigger_messages').where({trigger: id}).del();
     await tx('triggers').where('id', id).del();
+
+    await activityLog.logEntityActivity('campaign', CampaignActivityType.REMOVE_TRIGGER, campaignId, {triggerId: id});
 }
 
 async function remove(context, campaignId, id) {

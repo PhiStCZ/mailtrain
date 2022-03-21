@@ -241,7 +241,7 @@ async function create(context, entity) {
             await fields.createTx(tx, context, id, fld);
         }
 
-        await activityLog.logEntityActivity('list', EntityActivityType.CREATE, id);
+        await activityLog.logListActivity(context, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -269,7 +269,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'list', entityId: entity.id });
 
-        await activityLog.logEntityActivity('list', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logListActivity(context, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -294,7 +294,7 @@ async function remove(context, id) {
         await tx('lists').where('id', id).del();
         await knex.schema.dropTableIfExists('subscription__' + id);
 
-        await activityLog.logEntityActivity('list', EntityActivityType.REMOVE, id);
+        await activityLog.logListActivity(context, EntityActivityType.REMOVE, id);
     });
 }
 

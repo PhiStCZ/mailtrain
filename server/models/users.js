@@ -31,6 +31,8 @@ const allowedKeysExternal = new Set(['username', 'namespace', 'role', 'name', 'e
 const hashKeys = new Set(['username', 'name', 'email', 'namespace', 'role']);
 const shares = require('./shares');
 const contextHelpers = require('../lib/context-helpers');
+const activityLog = require('../lib/activity-log');
+const { EntityActivityType } = require('../../shared/activity-log');
 
 function hash(entity) {
     return hasher.hash(filterObject(entity, hashKeys));
@@ -186,6 +188,8 @@ async function create(context, user) {
         }
 
         await shares.rebuildPermissionsTx(tx, { userId: id });
+
+        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.CREATE, id);
     });
 
     return id;
@@ -234,6 +238,8 @@ async function updateWithConsistencyCheck(context, user, isOwnAccount) {
         }
 
         await shares.rebuildPermissionsTx(tx, { userId: user.id });
+
+        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.UPDATE, id);
     });
 }
 
@@ -250,6 +256,8 @@ async function remove(context, userId) {
         await shares.enforceEntityPermissionTx(tx, context, 'namespace', existing.namespace, 'manageUsers');
 
         await tx('users').where('id', userId).del();
+
+        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.REMOVE, id);
     });
 }
 
@@ -292,6 +300,7 @@ async function getAccessToken(userId) {
 }
 
 async function resetAccessToken(userId) {
+    // TODO: decide if this action should be logged
     const token = crypto.randomBytes(20).toString('hex').toLowerCase();
     await knex('users').where({id: userId}).update({access_token: token});
     return token;
@@ -347,6 +356,7 @@ async function isPasswordResetTokenValid(username, resetToken) {
 }
 
 async function resetPassword(username, resetToken, password) {
+    // TODO: decide if this action should be logged
     enforce(passport.isAuthMethodLocal, 'Local user management is required');
 
     await knex.transaction(async tx => {
@@ -399,6 +409,7 @@ async function getRestrictedAccessToken(context, method, params) {
 }
 
 async function refreshRestrictedAccessToken(context, token) {
+    // TODO: decide if this action should be logged
     const tokenEntry = restrictedAccessTokens.get(token);
 
     if (tokenEntry && tokenEntry.userId === context.user.id) {

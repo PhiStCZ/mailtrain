@@ -9,6 +9,8 @@ const entitySettings = require('../lib/entity-settings');
 const namespaceHelpers = require('../lib/namespace-helpers');
 const dependencyHelpers = require('../lib/dependency-helpers');
 
+const { EntityActivityType } = require('../../shared/activity-log');
+const activityLog = require('../lib/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'namespace']);
 
@@ -172,6 +174,9 @@ async function createTx(tx, context, entity) {
     // We don't have to rebuild all entity types, because no entity can be a child of the namespace at this moment.
     await shares.rebuildPermissionsTx(tx, { entityTypeId: 'namespace', entityId: id });
 
+
+    await activityLog. logEntityActivityWithContext(context, 'namespace', EntityActivityType.CREATE, id);
+
     return id;
 }
 
@@ -216,6 +221,8 @@ async function updateWithConsistencyCheck(context, entity) {
         await tx('namespaces').where('id', entity.id).update(filterObject(entity, allowedKeys));
 
         await shares.rebuildPermissionsTx(tx);
+
+        await activityLog.logEntityActivityWithContext(context, 'namespace', EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -238,6 +245,8 @@ async function remove(context, id) {
         await dependencyHelpers.ensureNoDependencies(tx, context, id, depSpecs);
 
         await tx('namespaces').where('id', id).del();
+
+        await activityLog.logEntityActivityWithContext(context, 'namespace', EntityActivityType.REMOVE, id);
     });
 }
 
