@@ -562,7 +562,7 @@ async function _createTx(tx, context, entity, content) {
                 }).where('id', id);
         }
 
-        await activityLog.logEntityActivity('campaign', EntityActivityType.CREATE, id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.CREATE, id, {status: filteredEntity.status});
 
         return id;
     });
@@ -632,7 +632,7 @@ async function updateWithConsistencyCheck(context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'campaign', entityId: entity.id });
 
-        await activityLog.logEntityActivity('campaign', EntityActivityType.UPDATE, entity.id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.UPDATE, entity.id, {status: filteredEntity.status});
     });
 }
 
@@ -673,7 +673,7 @@ async function _removeTx(tx, context, id, existing = null, overrideTypeCheck = f
 
     await tx('campaigns').where('id', id).del();
 
-    await activityLog.logEntityActivity('campaign', EntityActivityType.REMOVE, id);
+    await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.REMOVE, id);
 }
 
 
@@ -767,6 +767,14 @@ statusFieldMapping.set(CampaignMessageStatus.UNSUBSCRIBED, 'unsubscribed');
 statusFieldMapping.set(CampaignMessageStatus.BOUNCED, 'bounced');
 statusFieldMapping.set(CampaignMessageStatus.COMPLAINED, 'complained');
 
+const messageStatusActivityLogMapping = new Map()
+    .set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT)
+    .set(CampaignMessageStatus.BOUNCED, CampaignTrackerActivityType.BOUNCED)
+    .set(CampaignMessageStatus.UNSUBSCRIBED, CampaignTrackerActivityType.UNSUBSCRIBED)
+    .set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.COMPLAINED);
+    // CampaignTrackerActivityType.OPENED|.CLICKED are logged elsewhere, not mapped from CampaignMessageStatus
+    // CampaignMessageStatus.SCHEDULED|.FAILED don't map to CampainTrackerActivityType and are not logged
+
 async function _changeStatusByMessageTx(tx, context, message, campaignMessageStatus) {
     enforce(statusFieldMapping.has(campaignMessageStatus));
 
@@ -784,16 +792,11 @@ async function _changeStatusByMessageTx(tx, context, message, campaignMessageSta
                 updated: knex.fn.now()
             });
 
-        // TODO: move the map somewhere more useful
-        const messageStatusActivityLogMapping = new Map();
-        messageStatusActivityLogMapping.set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT);
-        messageStatusActivityLogMapping.set(CampaignMessageStatus.BOUNCED, CampaignTrackerActivityType.BOUNCED);
-        messageStatusActivityLogMapping.set(CampaignMessageStatus.UNSUBSCRIBED, CampaignTrackerActivityType.UNSUBSCRIBED);
-        messageStatusActivityLogMapping.set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.UNSUBSCRIBED);
-        // TODO: there are more modifying operations -> figure out if they shouuld be logged
-        await activityLog.logCampaignTrackerActivity(
-            messageStatusActivityLogMapping[campaignMessageStatus],
-            message.campaign, message.list, message.subscription);
+        const messageActivity = messageStatusActivityLogMapping.get(campaignMessageStatus);
+        if (messageActivity) {
+            await activityLog.logCampaignTrackerActivity(messageActivity,
+                message.campaign, message.list, message.subscription);
+        }
     }
 }
 
@@ -837,8 +840,6 @@ async function updateMessageResponse(context, message, response, responseId) {
             response,
             response_id: responseId
         });
-
-        // TODO: log? (not in specification)
     });
 }
 
@@ -922,7 +923,7 @@ async function _changeStatus(context, campaignId, permittedCurrentStates, newSta
 
         await tx('campaigns').where('id', campaignId).update(updateData);
 
-        await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
+        await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
     });
 
     senders.scheduleCheck();
@@ -966,7 +967,7 @@ async function reset(context, campaignId) {
         await tx('campaign_links').where('campaign', campaignId).del();
         await tx('links').where('campaign', campaignId).del();
         
-        await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.IDLE});
+        await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.IDLE});
     });
 }
 
@@ -1015,7 +1016,8 @@ async function testSend(context, data) {
         const processSubscriber = async (sendConfigurationId, listId, subscriptionId, messageData) => {
             await messageSender.queueCampaignMessageTx(tx, sendConfigurationId, listId, subscriptionId, messageSender.MessageType.TEST, messageData);
 
-            await activityLog.logEntityActivity('campaign', CampaignActivityType.TEST_SEND, campaignId, {list: listId, subscription: subscriptionId});
+            // TODO: campaignId will be nonexistent if we are test-sending a template, change this
+            await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, campaignId, {list: listId, subscription: subscriptionId});
         };
 
         const campaignId = data.campaignId;
