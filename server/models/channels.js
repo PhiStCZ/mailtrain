@@ -156,7 +156,7 @@ async function _createTx(tx, context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'channel', entityId: id });
 
-        await activityLog.logEntityActivity('channel', EntityActivityType.CREATE, id, {});
+        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -192,7 +192,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'channel', entityId: entity.id });
 
-        await activityLog.logEntityActivity('channel', EntityActivityType.UPDATE, entity.id, {});
+        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -207,7 +207,7 @@ async function remove(context, id) {
 
         await tx('channels').where('id', id).del();
 
-        await activityLog.logEntityActivity('channel', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.REMOVE, id);
     });
 }
 

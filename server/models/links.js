@@ -12,7 +12,7 @@ const { getPublicUrl } = require('../lib/urls');
 const tools = require('../lib/tools');
 const shortid = require('../lib/shortid');
 const {enforce} = require('../lib/helpers');
-const { EntityActivityType } = require('../../shared/activity-log');
+const { EntityActivityType, CampaignTrackerActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const LinkId = {
@@ -83,16 +83,17 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
             await tx(subscriptions.getSubscriptionTableName(list.id)).update(latestUpdates).where('id', subscription.id);
         }
 
-        // TODO: log somewhere... here? inside the ifs or something, idk.
-
         // Update clicks
         if (linkId > LinkId.GENERAL_CLICK && !campaign.click_tracking_disabled) {
             await tx('links').increment('hits').where('id', linkId);
             if (await _countLink(linkId, true)) {
                 await tx('links').increment('visits').where('id', linkId);
 
+                // TODO: here we could log clicks for the concrete link, not the whole campaign
+
                 if (await _countLink(LinkId.GENERAL_CLICK, false)) {
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {});
                 }
             }
         }
@@ -102,6 +103,7 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
         if (!campaign.open_tracking_disabled) {
             if (await _countLink(LinkId.OPEN, true)) {
                 await tx('campaigns').increment('opened').where('id', campaign.id);
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {});
             }
         }
     });

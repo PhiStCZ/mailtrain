@@ -70,7 +70,10 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: id });
 
-        await activityLog.logEntityActivity('mosaico_template', EntityActivityType.CREATE, id);
+        // TODO: decide if templates and mosaico templates should be differentiated by table, or by
+        // a field in a table (like is_mosaico=true|false) or not at all
+        // currently its by the whole table, for simplicity
+        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -100,7 +103,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: entity.id });
 
-        await activityLog.logEntityActivity('mosaico_template', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -135,7 +138,7 @@ async function remove(context, id) {
 
         await tx('mosaico_templates').where('id', id).del();
 
-        await activityLog.logEntityActivity('mosaico_template', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.REMOVE, id);
     });
 }
 

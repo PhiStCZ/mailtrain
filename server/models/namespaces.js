@@ -175,7 +175,7 @@ async function createTx(tx, context, entity) {
     await shares.rebuildPermissionsTx(tx, { entityTypeId: 'namespace', entityId: id });
 
 
-    await activityLog. logEntityActivityWithContext(context, 'namespace', EntityActivityType.CREATE, id);
+    await activityLog.logEntityActivityWithContext(context, 'namespace', EntityActivityType.CREATE, id);
 
     return id;
 }

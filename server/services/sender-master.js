@@ -326,6 +326,7 @@ async function processCampaign(campaignId) {
             campaignMessageQueue.delete(campaignId);
 
             await knex('campaigns').where('id', campaignId).update({status: newStatus});
+            // TODO: check if this is a duplicate log to models/campaigns - _changeStatus()
             await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
         }
     }
