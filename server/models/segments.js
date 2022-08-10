@@ -338,7 +338,7 @@ async function create(context, listId, entity) {
         const ids = await tx('segments').insert(filteredEntity);
         const id = ids[0];
 
-        await activityLog.logEntityActivity('list', ListActivityType.CREATE_SEGMENT, listId, {segmentId: id});
+        await activityLog.logListActivity(context, ListActivityType.CREATE_SEGMENT, listId, {segmentId: id});
 
         return id;
     });
@@ -364,7 +364,7 @@ async function updateWithConsistencyCheck(context, listId, entity) {
 
         await tx('segments').where({list: listId, id: entity.id}).update(filterObject(entity, allowedKeys));
 
-        await activityLog.logEntityActivity('list', ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
     });
 }
 
@@ -385,7 +385,7 @@ async function removeTx(tx, context, listId, id) {
     // The listId "where" is here to prevent deleting segment of a list for which a user does not have permission
     await tx('segments').where({list: listId, id}).del();
 
-    await activityLog.logEntityActivity('list', ListActivityType.REMOVE_SEGMENT, listId, {segmentId: id});
+    await activityLog.logListActivity(context, ListActivityType.REMOVE_SEGMENT, listId, {segmentId: id});
 }
 
 async function remove(context, listId, id) {
@@ -427,6 +427,9 @@ async function removeRulesByColumnTx(tx, context, listId, column) {
         pruneChildRules(settings.rootRule);
 
         await tx('segments').where({list: listId, id: entity.id}).update('settings', JSON.stringify(settings));
+
+        // this is worthy of logging just for consistency with other cascade deletes (e.g. lists->fields)
+        await activityLog.logListActivity(context, ListActivityType.REMOVE_SEGMENT, listId, {segmentId: entity.id});
     }
 }
 
@@ -460,7 +463,7 @@ async function getQueryGeneratorTx(tx, listId, id) {
     }
 
     return query => processRule(query, settings.rootRule);
-} 
+}
 
 // This is to handle circular dependency with fields.js
 module.exports.hash = hash;

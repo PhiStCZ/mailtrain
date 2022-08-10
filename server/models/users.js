@@ -32,7 +32,7 @@ const hashKeys = new Set(['username', 'name', 'email', 'namespace', 'role']);
 const shares = require('./shares');
 const contextHelpers = require('../lib/context-helpers');
 const activityLog = require('../lib/activity-log');
-const { EntityActivityType } = require('../../shared/activity-log');
+const { EntityActivityType, UserActivityType } = require('../../shared/activity-log');
 
 function hash(entity) {
     return hasher.hash(filterObject(entity, hashKeys));
@@ -300,7 +300,6 @@ async function getAccessToken(userId) {
 }
 
 async function resetAccessToken(userId) {
-    // TODO: decide if this action should be logged
     const token = crypto.randomBytes(20).toString('hex').toLowerCase();
     await knex('users').where({id: userId}).update({access_token: token});
     return token;
@@ -356,7 +355,6 @@ async function isPasswordResetTokenValid(username, resetToken) {
 }
 
 async function resetPassword(username, resetToken, password) {
-    // TODO: decide if this action should be logged
     enforce(passport.isAuthMethodLocal, 'Local user management is required');
 
     await knex.transaction(async tx => {
@@ -379,6 +377,7 @@ async function resetPassword(username, resetToken, password) {
                 reset_token: null,
                 reset_expire: null
             });
+            await activityLog.logEntityActivityWithContext(contextHelpers.getAdminContext(), 'user', UserActivityType.RESET_PASSWORD, user.id);
         } else {
             throw new interoperableErrors.InvalidTokenError();
         }
@@ -409,7 +408,6 @@ async function getRestrictedAccessToken(context, method, params) {
 }
 
 async function refreshRestrictedAccessToken(context, token) {
-    // TODO: decide if this action should be logged
     const tokenEntry = restrictedAccessTokens.get(token);
 
     if (tokenEntry && tokenEntry.userId === context.user.id) {

@@ -136,7 +136,7 @@ async function assign(context, entityTypeId, entityId, userId, role) {
             await rebuildPermissionsTx(tx, { entityTypeId, entityId, userId });
         }
 
-        await activityLog.logShare(context, entityTypeId, entityId, userId, role);
+        await activityLog.logShareActivity(context, entityTypeId, entityId, userId, role);
     });
 }
 

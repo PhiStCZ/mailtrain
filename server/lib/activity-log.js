@@ -24,6 +24,7 @@ async function processQueue() {
 
     processQueueIsRunning = true;
 
+    // TODO: remove the console.logs when done debugging
     console.log('logging data:')
     console.log(JSON.stringify(activityQueue))
     if (apiurl) {
@@ -42,7 +43,7 @@ async function processQueue() {
 }
 
 async function _logActivity(typeId, data) {
-    // TODO: add time check requirement
+    // TODO: add time check requirement (using SetTimeout?)
 
     // if (activityQueue.length == 0) firstInsertTime = getMs();
     activityQueue.push({
@@ -90,30 +91,12 @@ async function logEntityActivity(entityTypeId, activityType, entityId, extraData
     await _logActivity('entity_activity', data);
 }
 
-async function logShare(context, entityTypeId, entityId, userId, role) {
-    const data = {
-        userId,
-        entityTypeId,
-        entityId,
-        role
-    };
-    _assignIssuedBy(context, data);
-    await _logActivity('share', data);
-}
-
 async function logEntityActivityWithContext(context, entityTypeId, activityType, entityId, extraData = {}) {
     _assignIssuedBy(context, extraData);
     logEntityActivity(entityTypeId, activityType, entityId, extraData);
 }
 
-async function logBlacklistActivity(activityType, email) {
-    const data = {
-        type: activityType,
-        email
-    };
 
-    await _logActivity('blacklist', data);
-}
 
 async function logCampaignTrackerActivity(activityType, campaignId, listId, subscriptionId, extraData = {}) {
     const data = {
@@ -125,6 +108,33 @@ async function logCampaignTrackerActivity(activityType, campaignId, listId, subs
     };
 
     await _logActivity('campaign_tracker', data);
+}
+
+async function logBlacklistActivity(context, activityType, email) {
+    const data = {
+        type: activityType,
+        email
+    };
+    _assignIssuedBy(context, data);
+
+    await _logActivity('blacklist', data);
+}
+
+async function logShareActivity(context, entityTypeId, entityId, userId, role) {
+    const data = {
+        userId,
+        entityTypeId,
+        entityId,
+        role
+    };
+    _assignIssuedBy(context, data);
+    await _logActivity('share', data);
+}
+
+async function logSettingsActivity(context) {
+    const data = {};
+    _assignIssuedBy(context, data);
+    await _logActivity('settings', data);
 }
 
 const listLogNoGlobal = [
@@ -144,7 +154,9 @@ const listLogNoGlobal = [
  * - importStatus : ImportStatus
  */
 async function logListActivity(context, activityType, listId, extraData = {}) {
-    logEntityActivity('list', activityType, listId, extraData);
+    // if activityType is subscription-add/remove/change, log only to the list signal set
+    // otherwise, log both to list sigset and global list sigset
+    await logEntityActivityWithContext(context, 'list', activityType, listId, extraData);
     if (listLogNoGlobal.includes(activityType)) {
         // also log in global index ... ?
     }
@@ -155,4 +167,5 @@ module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
 module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
 module.exports.logListActivity = logListActivity;
-module.exports.logShare = logShare;
+module.exports.logShareActivity = logShareActivity;
+module.exports.logSettingsActivity = logSettingsActivity;

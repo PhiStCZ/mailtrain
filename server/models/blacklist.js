@@ -45,7 +45,7 @@ async function add(context, email) {
 
     try {
         await knex('blacklist').insert({email});
-        await activityLog.logBlacklistActivity(BlacklistActivityType.ADD, email);
+        await activityLog.logBlacklistActivity(context, BlacklistActivityType.ADD, email);
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
         } else {
@@ -62,7 +62,7 @@ async function remove(context, email) {
 
         await tx('blacklist').where('email', email).del();
 
-        await activityLog.logBlacklistActivity(BlacklistActivityType.REMOVE, email);
+        await activityLog.logBlacklistActivity(context, BlacklistActivityType.REMOVE, email);
     });
 }
 

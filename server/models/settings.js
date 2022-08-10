@@ -4,6 +4,8 @@ const knex = require('../lib/knex');
 const { filterObject } = require('../lib/helpers');
 const hasher = require('node-object-hash')();
 const shares = require('./shares');
+const activityLog = require('../lib/activity-log');
+const { SettingsActivityType } = require('../../shared/activity-log');
 
 const allowedKeys = new Set(['adminEmail', 'uaCode', 'mapsApiKey', 'shoutout', 'pgpPassphrase', 'pgpPrivateKey', 'defaultHomepage']);
 // defaultHomepage is used as a default to list.homepage - if the list.homepage is not filled in
@@ -50,6 +52,8 @@ async function set(context, data) {
                 await knex('settings').where('key', key).update('value', value);
             }
         }
+
+        activityLog.logSettingsActivity(context);
     }
 
     // FIXME - recreate mailers, notify senders to recreate the mailers

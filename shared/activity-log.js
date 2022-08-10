@@ -47,11 +47,15 @@ const ReportActivityType = {
     STATUS_CHANGE: EntityActivityType.MAX + 1,
 };
 
+const UserActivityType = {
+    RESET_ACCESS_TOKEN: EntityActivityType.MAX + 1,
+    RESET_PASSWORD: EntityActivityType.MAX + 2
+};
+
 const BlacklistActivityType = {
     ADD: 1,
     REMOVE: 2
 };
-
 
 module.exports.EntityActivityType = EntityActivityType;
 module.exports.BlacklistActivityType = BlacklistActivityType;
@@ -59,3 +63,4 @@ module.exports.CampaignActivityType = CampaignActivityType;
 module.exports.ListActivityType = ListActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
 module.exports.ReportActivityType = ReportActivityType;
+module.exports.UserActivityType = UserActivityType;
