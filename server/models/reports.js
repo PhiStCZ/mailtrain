@@ -14,6 +14,8 @@ const contextHelpers = require('../lib/context-helpers');
 const {LinkId} = require('./links');
 const subscriptions = require('./subscriptions');
 const {Readable} = require('stream');
+const activityLog = require('../lib/activity-log');
+const { EntityActivityType, ReportActivityType } = require('../../shared/activity-log');
 
 const ReportState = require('../../shared/reports').ReportState;
 
@@ -81,6 +83,9 @@ async function create(context, entity) {
 
     const reportProcessor = require('../lib/report-processor');
     await reportProcessor.start(id);
+
+    await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.CREATE, id);
+
     return id;
 }
 
@@ -112,6 +117,8 @@ async function updateWithConsistencyCheck(context, entity) {
         await tx('reports').where('id', entity.id).update(filteredUpdates);
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'report', entityId: entity.id });
+
+        await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.UPDATE, entity.id);
     });
 
     // This require is here to avoid cyclic dependency
@@ -128,6 +135,8 @@ async function removeTx(tx, context, id) {
     await fs.removeAsync(reportHelpers.getReportOutputFile(report));
 
     await tx('reports').where('id', id).del();
+
+    await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.REMOVE, id);
 }
 
 async function remove(context, id) {
@@ -144,8 +153,23 @@ async function listByState(state, limit) {
     return await knex('reports').where('state', state).limit(limit);
 }
 
+async function changeState(id, newState, last_run = undefined) {
+    const fields = {state: newState};
+    if (last_run !== undefined) {
+        fields.last_run = last_run;
+    }
+
+    activityLog.logEntityActivity('report', ReportActivityType.STATUS_CHANGE, id, {status: newState});
+
+    return await updateFields(id, fields);
+}
+
 async function bulkChangeState(oldState, newState) {
-    return await knex('reports').where('state', oldState).update('state', newState);
+    const res = await knex('reports').where('state', oldState).update('state', newState);
+    for (const updatedMember of res) {
+        activityLog.logEntityActivity('report', ReportActivityType.STATUS_CHANGE, updatedMember.id, {status: newState});
+    }
+    return res
 }
 
 async function getCampaignCommonListFields(campaign) {
@@ -513,6 +537,7 @@ module.exports.updateWithConsistencyCheck = updateWithConsistencyCheck;
 module.exports.remove = remove;
 module.exports.updateFields = updateFields;
 module.exports.listByState = listByState;
+module.exports.changeState = changeState;
 module.exports.bulkChangeState = bulkChangeState;
 module.exports.getCampaignCommonListFields = getCampaignCommonListFields;
 module.exports.getCampaignStatistics = getCampaignStatistics;

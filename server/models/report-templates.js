@@ -9,6 +9,8 @@ const namespaceHelpers = require('../lib/namespace-helpers');
 const shares = require('./shares');
 const reports = require('./reports');
 const dependencyHelpers = require('../lib/dependency-helpers');
+const activityLog = require('../lib/activity-log');
+const { EntityActivityType } = require('../../shared/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'mime_type', 'user_fields', 'js', 'hbs', 'namespace']);
 
@@ -46,6 +48,8 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'reportTemplate', entityId: id });
 
+        await activityLog.logEntityActivityWithContext(context, 'report_template', EntityActivityType.CREATE, id);
+
         return id;
     });
 }
@@ -71,6 +75,8 @@ async function updateWithConsistencyCheck(context, entity) {
         await tx('report_templates').where('id', entity.id).update(filterObject(entity, allowedKeys));
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'reportTemplate', entityId: entity.id });
+
+        await activityLog.logEntityActivityWithContext(context, 'report_template', EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -83,6 +89,8 @@ async function remove(context, id) {
         ]);
 
         await tx('report_templates').where('id', id).del();
+
+        await activityLog.logEntityActivityWithContext(context, 'report_template', EntityActivityType.REMOVE, id);
     });
 }
 

@@ -43,6 +43,10 @@ const ListActivityType = {
     IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 11,
 };
 
+const ReportActivityType = {
+    STATUS_CHANGE: EntityActivityType.MAX + 1,
+};
+
 const BlacklistActivityType = {
     ADD: 1,
     REMOVE: 2
@@ -54,3 +58,4 @@ module.exports.BlacklistActivityType = BlacklistActivityType;
 module.exports.CampaignActivityType = CampaignActivityType;
 module.exports.ListActivityType = ListActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
+module.exports.ReportActivityType = ReportActivityType;

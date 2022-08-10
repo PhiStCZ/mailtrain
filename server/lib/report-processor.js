@@ -22,16 +22,13 @@ function startWorker(report) {
         log.info('ReportProcessor', 'Worker process for "%s" (tid %s) exited with code %s signal %s. Current worker count is %s.', report.name, workers[report.id], code, signal, runningWorkersCount);
         delete workers[report.id];
 
-        const fields = {};
-        if (code === 0) {
-            fields.state = reports.ReportState.FINISHED;
-            fields.last_run = new Date();
-        } else {
-            fields.state = reports.ReportState.FAILED;
-        }
-
         try {
-            await reports.updateFields(report.id, fields);
+            if (code === 0) {
+                await reports.changeState(report.id, reports.ReportState.FINISHED, new Date());
+            } else {
+                await reports.changeState(report.id, reports.ReportState.FAILED);
+            }
+
             setImmediate(tryStartWorkers);
         } catch (err) {
             log.error('ReportProcessor', err);
@@ -43,12 +40,8 @@ function startWorker(report) {
         log.error('ReportProcessor', 'Executing worker process for "%s" (tid %s) failed with message "%s". Current worker count is %s.', report.name, workers[report.id], msg, runningWorkersCount);
         delete workers[report.id];
 
-        const fields = {
-            state: reports.ReportState.FAILED
-        };
-
         try {
-            await reports.updateFields(report.id, fields);
+            await reports.changeState(report.id, reports.ReportState.FAILED);
             setImmediate(tryStartWorkers);
         } catch (err) {
             log.error('ReportProcessor', err);
@@ -84,7 +77,7 @@ async function tryStartWorkers() {
                 log.info('ReportProcessor', 'Starting worker');
 
                 const report = reportList[0];
-                await reports.updateFields(report.id, {state: reports.ReportState.PROCESSING});
+                await reports.changeState(report.id, reports.ReportState.PROCESSING);
                 startWorker(report);
 
             } else {
@@ -103,7 +96,7 @@ async function tryStartWorkers() {
 module.exports.start = async (reportId) => {
     if (!workers[reportId]) {
         log.info('ReportProcessor', 'Scheduling report id: %s', reportId);
-        await reports.updateFields(reportId, { state: reports.ReportState.SCHEDULED, last_run: null});
+        await reports.changeState(reportId, reports.ReportState.SCHEDULED, null);
         await tryStartWorkers();
     } else {
         log.info('ReportProcessor', 'Worker for report id: %s is already running.', reportId);
@@ -116,7 +109,7 @@ module.exports.stop = async reportId => {
         log.info('ReportProcessor', 'Killing worker for report id: %s', reportId);
         executor.stop(tid);
 
-        await reports.updateFields(reportId, { state: reports.ReportState.FAILED });
+        await reports.changeState(reportId, reports.ReportState.FAILED);
     } else {
         log.info('ReportProcessor', 'No running worker found for report id: %s', reportId);
     }
