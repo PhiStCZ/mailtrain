@@ -18,7 +18,6 @@ const campaigns = require('./campaigns');
 const lists = require('./lists');
 const { ListActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
-const { getAdminContext } = require('../lib/context-helpers');
 
 const allowedKeysBase = new Set(['email', 'tz', 'is_test', 'status']);
 
