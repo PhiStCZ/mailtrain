@@ -18,6 +18,7 @@ const campaigns = require('./campaigns');
 const lists = require('./lists');
 const { ListActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
+const { getAdminContext } = require('../lib/context-helpers');
 
 const allowedKeysBase = new Set(['email', 'tz', 'is_test', 'status']);
 
@@ -596,6 +597,14 @@ function purgeSensitiveData(subscription, groupedFieldsMap) {
     }
 }
 
+async function _remove(tx, listId, existing) {
+    await tx(getSubscriptionTableName(listId)).where('id', existing.id).del();
+
+    if (existing.status === SubscriptionStatus.SUBSCRIBED) {
+        await tx('lists').where('id', listId).decrement('subscribers', 1);
+    }
+}
+
 async function _update(tx, listId, groupedFieldsMap, existing, filteredEntity) {
     if ('status' in filteredEntity) {
         if (existing.status !== filteredEntity.status) {
@@ -617,14 +626,11 @@ async function _update(tx, listId, groupedFieldsMap, existing, filteredEntity) {
         filteredEntity.unsubscribed = null;
     }
 
-    if (filteredEntity) { // TODO: this is messy and for logging might need updating
+    if (filteredEntity) {
         filteredEntity.updated = new Date();
         await tx(getSubscriptionTableName(listId)).where('id', existing.id).update(filteredEntity);
 
-        activityData = { subscriptionId: existing.id };
-
         if ('status' in filteredEntity) {
-            activityData.status = filteredEntity.status;
             let countIncrement = 0;
             if (existing.status === SubscriptionStatus.SUBSCRIBED && filteredEntity.status !== SubscriptionStatus.SUBSCRIBED) {
                 countIncrement = -1;
@@ -636,16 +642,8 @@ async function _update(tx, listId, groupedFieldsMap, existing, filteredEntity) {
                 await tx('lists').where('id', listId).increment('subscribers', countIncrement);
             }
         }
-
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, activityData);
     } else {
-        await tx(getSubscriptionTableName(listId)).where('id', existing.id).del();
-
-        if (existing.status === SubscriptionStatus.SUBSCRIBED) {
-            await tx('lists').where('id', listId).decrement('subscribers', 1);
-        }
-
-        await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+        await _remove(tx, listId, existing);
     }
 }
 
@@ -656,8 +654,6 @@ async function _create(tx, listId, filteredEntity) {
     if (filteredEntity.status === SubscriptionStatus.SUBSCRIBED) {
         await tx('lists').where('id', listId).increment('subscribers', 1);
     }
-
-    await activityLog.logListActivity(context, ListActivityType.CREATE_SUBSCRIPTION, listId, {subscriptionId: id});
 
     return id;
 }
@@ -687,12 +683,31 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
     if (meta.update) { // meta.update is set by _validateAndPreprocess
         await _update(tx, listId, groupedFieldsMap, meta.existing, filteredEntity);
         meta.cid = meta.existing.cid; // The cid is needed by /confirm/subscribe/:cid
+
+        const subscriptionId = meta.existing.id;
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId});
+        if ('status' in filteredEntity && filteredEntity.status !== meta.existing.status) {
+            await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, {
+                subscriptionId,
+                subscriptionStatus: filteredEntity.status,
+                previousSubscriptionStatus: meta.existing.status
+            });
+        }
+
         return meta.existing.id;
 
     } else {
         filteredEntity.cid = shortid.generate();
         meta.cid = filteredEntity.cid; // The cid is needed by /confirm/subscribe/:cid
-        return await _create(tx, listId, filteredEntity);
+        const id = await _create(tx, listId, filteredEntity);
+
+        const logData = {
+            subscriptionId: id,
+            subscriptionStatus: filteredEntity.status
+        };
+        await activityLog.logListActivity(context, ListActivityType.CREATE_SUBSCRIPTION, listId, logData);
+
+        return id;
     }
 }
 
@@ -731,6 +746,15 @@ async function updateWithConsistencyCheck(context, listId, entity, source) {
         updateSourcesAndHashEmail(filteredEntity, source, groupedFieldsMap);
 
         await _update(tx, listId, groupedFieldsMap, existing, filteredEntity);
+
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+        if ('status' in filteredEntity && filteredEntity.status !== existing.status) {
+            await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, {
+                subscriptionId: existing.id,
+                subscriptionStatus: filteredEntity.status,
+                previousSubscriptionStatus: existing.status
+            });
+        }
     });
 }
 
@@ -741,13 +765,13 @@ async function _removeAndGetTx(tx, context, listId, existing) {
         throw new interoperableErrors.NotFoundError();
     }
 
-    await tx(getSubscriptionTableName(listId)).where('id', existing.id).del();
+    await _remove(tx, listId, existing);
 
-    if (existing.status === SubscriptionStatus.SUBSCRIBED) {
-        await tx('lists').where('id', listId).decrement('subscribers', 1);
-    }
-
-    await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+    const logData = {
+        subscriptionId: existing.id,
+        subscriptionStatus: existing.status
+    };
+    await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, logData);
 
     return existing;
 }
@@ -773,6 +797,13 @@ async function _changeStatusTx(tx, context, listId, existing, newStatus) {
     const groupedFieldsMap = await getGroupedFieldsMapTx(tx, listId);
 
     await shares.enforceEntityPermissionTx(tx, context, 'list', listId, 'manageSubscriptions');
+
+    const logData = {
+        subscriptionId: existing.id,
+        subscriptionStatus: newStatus,
+        previousSubscriptionStatus: existing.status
+    };
+    await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, logData);
 
     await _update(tx, listId, groupedFieldsMap, existing, {
         status: newStatus
@@ -846,7 +877,7 @@ async function updateAddressAndGet(context, listId, subscriptionId, emailNew) {
 
             existing.email = emailNew;
 
-            await activityLog.logListActivity('list', ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+            await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
         }
 
         return existing;
@@ -871,6 +902,10 @@ async function updateManaged(context, listId, cid, entity) {
         }
 
         ungroupSubscription(groupedFieldsMap, update);
+
+        // list subscriber count is not updated here, which should mean that subscription status doesn't change
+        const existing = await tx(getSubscriptionTableName(listId)).where('cid', cid).first();
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
 
         await tx(getSubscriptionTableName(listId)).where('cid', cid).update(update);
     });
