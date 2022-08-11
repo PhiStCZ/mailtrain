@@ -377,7 +377,7 @@ async function resetPassword(username, resetToken, password) {
                 reset_token: null,
                 reset_expire: null
             });
-            await activityLog.logEntityActivityWithContext(contextHelpers.getAdminContext(), 'user', UserActivityType.RESET_PASSWORD, user.id);
+            await activityLog.logEntityActivity('user', UserActivityType.RESET_PASSWORD, user.id);
         } else {
             throw new interoperableErrors.InvalidTokenError();
         }

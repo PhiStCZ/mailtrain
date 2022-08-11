@@ -20,7 +20,6 @@ function spawn(callback) {
             for (const impt of await tx('imports').where('status', fromStatus).select(['id', 'list'])) {
                 await tx('imports').where('id', impt.id).update({status: toStatus});
                 await activityLog.logEntityActivity('list', ListActivityType.IMPORT_STATUS_CHANGE, impt.list, {importId: impt.id, importStatus: toStatus});
-                // TODO: add context : recommended getAdminContext(), id:0
             }
         }
 

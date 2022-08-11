@@ -83,12 +83,11 @@ list:
 async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
     const data = {
         ...extraData,
-        entityType: entityTypeId,
-        activityType: activityType,
-        entityId: entityId
+        type: activityType,
+        entity: entityId
     };
 
-    await _logActivity('entity_activity', data);
+    await _logActivity(entityTypeId, data);
 }
 
 async function logEntityActivityWithContext(context, entityTypeId, activityType, entityId, extraData = {}) {
