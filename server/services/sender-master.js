@@ -326,7 +326,6 @@ async function processCampaign(campaignId) {
             campaignMessageQueue.delete(campaignId);
 
             await knex('campaigns').where('id', campaignId).update({status: newStatus});
-            // TODO: check if this is a duplicate log to models/campaigns - _changeStatus()
             await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
         }
     }
@@ -414,6 +413,10 @@ async function scheduleCampaigns() {
             .whereIn('campaigns.status', [CampaignStatus.SCHEDULED, CampaignStatus.PAUSED])
             .where('campaigns.start_at', '<', expirationThreshold)
             .update({status: CampaignStatus.FINISHED});
+
+        for (const cpg of expiredCampaigns) {
+            await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, cpg.id, {status: CampaignStatus.FINISHED});
+        }
 
         // Empty message queues for PAUSING campaigns. A pausing campaign typically waits for campaignMessageQueueEmpty before it can check for PAUSING
         // We speed this up by discarding messages in the message queue of the campaign.

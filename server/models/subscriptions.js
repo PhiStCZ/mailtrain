@@ -902,11 +902,10 @@ async function updateManaged(context, listId, cid, entity) {
 
         ungroupSubscription(groupedFieldsMap, update);
 
-        // list subscriber count is not updated here, which should mean that subscription status doesn't change
-        const existing = await tx(getSubscriptionTableName(listId)).where('cid', cid).first();
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+        const existing = await tx(getSubscriptionTableName(listId)).where('cid', cid).update(update);
 
-        await tx(getSubscriptionTableName(listId)).where('cid', cid).update(update);
+        // list subscriber count is not updated here, which should mean that subscription status doesn't change
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
     });
 }
 

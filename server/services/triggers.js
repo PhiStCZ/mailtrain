@@ -164,6 +164,8 @@ async function run() {
                     await tx('triggers').increment('count').where('id', trigger.id);
 
                     log.verbose('Triggers', `Triggered ${trigger.name} (${trigger.id}) for subscriber ${subscriber.id}`);
+
+                    // TODO: decide whether to log this activity
                 }
             }
 
