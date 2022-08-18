@@ -40,8 +40,6 @@ async function processQueue() {
     }
 
     activityQueue.splice(0);
-
-    incrementBatchId();
     processQueueIsRunning = false;
 }
 
