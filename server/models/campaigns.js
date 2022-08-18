@@ -1013,14 +1013,16 @@ async function testSend(context, data) {
     // Though it's a bit counter-intuitive, this handles also test sends of a template (i.e. without any campaign id)
 
     await knex.transaction(async tx => {
+        const campaignId = data.campaignId;
+
         const processSubscriber = async (sendConfigurationId, listId, subscriptionId, messageData) => {
             await messageSender.queueCampaignMessageTx(tx, sendConfigurationId, listId, subscriptionId, messageSender.MessageType.TEST, messageData);
 
-            // TODO: campaignId will be nonexistent if we are test-sending a template, change this
-            await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, campaignId, {list: listId, subscription: subscriptionId});
+            // TODO: perhaps also log template test-send?
+            if (campaignId) {
+                await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, campaignId, {list: listId, subscription: subscriptionId});
+            }
         };
-
-        const campaignId = data.campaignId;
 
         if (campaignId) { // This means we are sending a campaign
             /*

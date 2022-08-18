@@ -16,13 +16,15 @@ const apiUrlBase = config.get('mvis.apiUrlBase');
 const apiurl = `${apiUrlBase}/api/events?global_access_token=${APIToken}`;
 
 let processQueueIsRunning = false;
+let lastProcess = new Date();
 
 async function processQueue() {
-    if (processQueueIsRunning) {
+    if (activityQueue.length == 0 || processQueueIsRunning) {
         return;
     }
 
     processQueueIsRunning = true;
+    lastProcess = new Date();
 
     // TODO: remove the console.logs when done debugging
     console.log('logging data:')
@@ -39,20 +41,17 @@ async function processQueue() {
 
     activityQueue.splice(0);
 
+    incrementBatchId();
     processQueueIsRunning = false;
 }
 
 async function _logActivity(typeId, data) {
-    // TODO: add time check requirement (using SetTimeout?)
-
-    // if (activityQueue.length == 0) firstInsertTime = getMs();
     activityQueue.push({
         typeId,
         data,
         timestamp: moment.utc().toISOString()
     });
 
-    // if ( length >= threshold || (activityQueue.length >= 0 && firstInsertTime + activityQueueTimeoutMs < getMs())) {
     if (activityQueue.length >= activityQueueLengthThreshold) {
         // noinspection ES6MissingAwait
         processQueue();
@@ -160,6 +159,18 @@ async function logListActivity(context, activityType, listId, extraData = {}) {
         // also log in global index ... ?
     }
 }
+
+function periodicLog() {
+    // if a queue limit was reached recently, chances are we don't need extra logs from timeout
+    if ((new Date() - lastProcess) >= activityQueueTimeoutMs / 2) {
+        // noinspection ES6MissingAwait
+        processQueue();
+    }
+
+    setTimeout(periodicLog, activityQueueTimeoutMs);
+}
+
+periodicLog();
 
 module.exports.logBlacklistActivity = logBlacklistActivity;
 module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;

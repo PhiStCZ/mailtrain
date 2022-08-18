@@ -126,7 +126,7 @@ async function addOrGet(campaignId, url) {
             });
 
             // TODO: log this information? also log cid or id?
-            // activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { url });
+            // await activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { url });
 
             return {
                 id: ids[0],

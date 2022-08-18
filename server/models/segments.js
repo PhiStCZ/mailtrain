@@ -429,7 +429,7 @@ async function removeRulesByColumnTx(tx, context, listId, column) {
         await tx('segments').where({list: listId, id: entity.id}).update('settings', JSON.stringify(settings));
 
         // this is worthy of logging just for consistency with other cascade deletes (e.g. lists->fields)
-        await activityLog.logListActivity(context, ListActivityType.REMOVE_SEGMENT, listId, {segmentId: entity.id});
+        await activityLog.logListActivity(context, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
     }
 }
 

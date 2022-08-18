@@ -23,7 +23,9 @@ const CampaignTrackerActivityType = {
     UNSUBSCRIBED: 3,
     COMPLAINED: 4,
     OPENED: 5,
-    CLICKED: 6
+    CLICKED: 6,
+
+    TRIGGERED: 7 // TODO: decide if to remove or keep
 };
 
 const ListActivityType = {

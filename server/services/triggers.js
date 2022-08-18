@@ -11,6 +11,8 @@ const { SubscriptionStatus } = require('../../shared/lists');
 const links = require('../models/links');
 const contextHelpers = require('../lib/context-helpers');
 const messageSender = require('../lib/message-sender');
+const activityLog = require('../lib/activity-log');
+const { CampaignTrackerActivityType } = require('../../shared/activity-log');
 
 const triggerCheckPeriod = 30 * 1000;
 const triggerFirePeriod = 120 * 1000;
@@ -165,7 +167,8 @@ async function run() {
 
                     log.verbose('Triggers', `Triggered ${trigger.name} (${trigger.id}) for subscriber ${subscriber.id}`);
 
-                    // TODO: decide whether to log this activity
+                    // TODO: decide if to log this in this or some other table
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.TRIGGERED, campaign.id, cpgList, subscriber.id, {triggerId: trigger.id});
                 }
             }
 
