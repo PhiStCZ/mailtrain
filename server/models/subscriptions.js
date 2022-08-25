@@ -684,13 +684,9 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
         meta.cid = meta.existing.cid; // The cid is needed by /confirm/subscribe/:cid
 
         const subscriptionId = meta.existing.id;
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId});
+        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, subscriptionId);
         if ('status' in filteredEntity && filteredEntity.status !== meta.existing.status) {
-            await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, {
-                subscriptionId,
-                subscriptionStatus: filteredEntity.status,
-                previousSubscriptionStatus: meta.existing.status
-            });
+            await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, subscriptionId, filteredEntity.status, meta.existing.status);
         }
 
         return meta.existing.id;
@@ -700,11 +696,7 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
         meta.cid = filteredEntity.cid; // The cid is needed by /confirm/subscribe/:cid
         const id = await _create(tx, listId, filteredEntity);
 
-        const logData = {
-            subscriptionId: id,
-            subscriptionStatus: filteredEntity.status
-        };
-        await activityLog.logListActivity(context, ListActivityType.CREATE_SUBSCRIPTION, listId, logData);
+        await activityLog.logListTrackerActivity(ListActivityType.CREATE_SUBSCRIPTION, listId, id, filteredEntity.status);
 
         return id;
     }
@@ -746,13 +738,9 @@ async function updateWithConsistencyCheck(context, listId, entity, source) {
 
         await _update(tx, listId, groupedFieldsMap, existing, filteredEntity);
 
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, existing.id);
         if ('status' in filteredEntity && filteredEntity.status !== existing.status) {
-            await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, {
-                subscriptionId: existing.id,
-                subscriptionStatus: filteredEntity.status,
-                previousSubscriptionStatus: existing.status
-            });
+            await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, existing.id, filteredEntity.status, existing.status);
         }
     });
 }
@@ -766,11 +754,7 @@ async function _removeAndGetTx(tx, context, listId, existing) {
 
     await _remove(tx, listId, existing);
 
-    const logData = {
-        subscriptionId: existing.id,
-        subscriptionStatus: existing.status
-    };
-    await activityLog.logListActivity(context, ListActivityType.REMOVE_SUBSCRIPTION, listId, logData);
+    await activityLog.logListTrackerActivity(ListActivityType.REMOVE_SUBSCRIPTION, listId, existing.id, existing.status);
 
     return existing;
 }
@@ -797,12 +781,7 @@ async function _changeStatusTx(tx, context, listId, existing, newStatus) {
 
     await shares.enforceEntityPermissionTx(tx, context, 'list', listId, 'manageSubscriptions');
 
-    const logData = {
-        subscriptionId: existing.id,
-        subscriptionStatus: newStatus,
-        previousSubscriptionStatus: existing.status
-    };
-    await activityLog.logListActivity(context, ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, logData);
+    await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, existing.id, newStatus, existing.status);
 
     await _update(tx, listId, groupedFieldsMap, existing, {
         status: newStatus
@@ -876,7 +855,7 @@ async function updateAddressAndGet(context, listId, subscriptionId, emailNew) {
 
             existing.email = emailNew;
 
-            await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+            await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, existing.id);
         }
 
         return existing;
@@ -905,7 +884,7 @@ async function updateManaged(context, listId, cid, entity) {
         const existing = await tx(getSubscriptionTableName(listId)).where('cid', cid).update(update);
 
         // list subscriber count is not updated here, which should mean that subscription status doesn't change
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_SUBSCRIPTION, listId, {subscriptionId: existing.id});
+        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, existing.id);
     });
 }
 

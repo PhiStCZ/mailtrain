@@ -158,6 +158,23 @@ async function logListActivity(context, activityType, listId, extraData = {}) {
     }
 }
 
+async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined, extraData = {}) {
+    const data = {
+        ...extraData,
+        type: activityType,
+        list: listId,
+        subscription: subscriptionId,
+    };
+    if (subscriptionStatus) {
+        data.subscriptionStatus = subscriptionStatus;
+    }
+    if (previousSubscriptionStatus) {
+        data.previousSubscriptionStatus = previousSubscriptionStatus;
+    }
+
+    await _logActivity('list_tracker', data);
+}
+
 function periodicLog() {
     // if a queue limit was reached recently, chances are we don't need extra logs from timeout
     if ((new Date() - lastProcess) >= activityQueueTimeoutMs / 2) {
@@ -175,5 +192,6 @@ module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
 module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
 module.exports.logListActivity = logListActivity;
+module.exports.logListTrackerActivity = logListTrackerActivity;
 module.exports.logShareActivity = logShareActivity;
 module.exports.logSettingsActivity = logSettingsActivity;

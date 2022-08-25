@@ -90,10 +90,11 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                 await tx('links').increment('visits').where('id', linkId);
 
                 // TODO: here we could log clicks for the concrete link, not the whole campaign
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId});
 
                 if (await _countLink(LinkId.GENERAL_CLICK, false)) {
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {});
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK});
                 }
             }
         }

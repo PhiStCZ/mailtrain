@@ -42,7 +42,7 @@ const blacklist = {
         },
     }
     // ensure, ingest
-}
+};
 
 const campaign = {
     schema: {
@@ -82,7 +82,7 @@ const campaign = {
             // id: TODO
         };
     }
-}
+};
 
 const campaignTracker = { // per campaign
     schema: {
@@ -110,9 +110,17 @@ const campaignTracker = { // per campaign
             weight_list: 2,
             weight_edit: 2
         },
+        linkId: {
+            type: SignalType.INTEGER,
+            name: 'Link ID',
+            settings: {},
+            indexed: true,
+            weight_list: 3,
+            weight_edit: 3
+        },
     }
     // ensure, ingest
-}
+};
 
 const channel = {
     schema: schemas.genericEntitySchema,
@@ -134,7 +142,7 @@ const channel = {
             // id: TODO
         };
     }
-}
+};
 
 const form = {
     schema: schemas.genericEntitySchema,
@@ -156,9 +164,113 @@ const form = {
             // id: TODO
         };
     }
-}
+};
 
-// TODO: const list ...
+/*
+
+activities:
+  CUD,
+  fields ( CUD ),
+  imports ( CUD, statusChange ),
+  subs ( CUD, statusChange ) <- might be in a separate listTracker sigset
+
+fields:
+  (listId, activityType, issuedBy)
+  fieldId
+  importId
+  importStatus
+  subId
+  subStatus
+
+*/
+
+const list = { // global
+    schema: {
+        ...schemas.genericEntitySchema,
+        fieldId: {
+            type: SignalType.INTEGER,
+            name: 'Field ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+        },
+        importId: {
+            type: SignalType.INTEGER,
+            name: 'Import ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+        },
+        importStatus: {
+            type: SignalType.INTEGER,
+            name: 'Import ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+        },
+        // TODO: this one might be included, but only for manual edits, and
+        // then it shall be duplicated in tracker - uncomment when sure
+        /*
+        subscriptionId: {
+            type: SignalType.INTEGER,
+            name: 'Subscription ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+        },*/
+    }
+    // ensure, ingest
+};
+
+const listTracker = { // tracks only subscriptions // per list
+    schema: {
+        timestamp: {
+            type: SignalType.DATE_TIME,
+            name: 'Timestamp',
+            settings: {},
+            indexed: true,
+            weight_list: 0,
+            weight_edit: 0
+        },
+        activityType: {
+            type: SignalType.INTEGER,
+            name: 'Activity Type',
+            settings: {},
+            indexed: true,
+            weight_list: 1,
+            weight_edit: 1
+        },
+        subscriptionId: {
+            type: SignalType.INTEGER,
+            name: 'Subscription ID',
+            settings: {},
+            indexed: true,
+            weight_list: 2,
+            weight_edit: 2
+        },
+        subscriptionStatus: {
+            type: SignalType.INTEGER,
+            name: 'Subscription Status',
+            settings: {},
+            indexed: true,
+            weight_list: 3,
+            weight_edit: 3
+        },
+        previousSubscriptionStatus: {
+            type: SignalType.INTEGER,
+            name: 'Previous Subscription Status',
+            settings: {},
+            indexed: true,
+            weight_list: 4,
+            weight_edit: 4
+        },
+    }
+    // ensure, ingest
+};
 
 const namespace = {
     schema: schemas.genericEntitySchema,
@@ -180,7 +292,7 @@ const namespace = {
             // id: TODO
         };
     }
-}
+};
 
 const reportTemplate = {
     schema: schemas.genericEntitySchema,
@@ -202,7 +314,7 @@ const reportTemplate = {
             // id: TODO
         };
     }
-}
+};
 
 const report = {
     schema: {
@@ -234,7 +346,7 @@ const report = {
             // id: TODO
         };
     }
-}
+};
 
 const sendConfiguration = {
     schema: schemas.genericEntitySchema,
@@ -256,7 +368,7 @@ const sendConfiguration = {
             // id: TODO
         };
     }
-}
+};
 
 const share = {
     schema: {
@@ -327,7 +439,7 @@ const share = {
             // id: TODO
         };
     }
-}
+};
 
 const template = {
     schema: schemas.genericEntitySchema,
@@ -349,7 +461,7 @@ const template = {
             // id: TODO
         };
     }
-}
+};
 
 const mosaicoTemplate = {
     schema: schemas.genericEntitySchema,
@@ -371,7 +483,7 @@ const mosaicoTemplate = {
             // id: TODO
         };
     }
-}
+};
 
 const user = {
     schema: schemas.genericEntitySchema,
@@ -393,7 +505,7 @@ const user = {
             // id: TODO
         };
     }
-}
+};
 
 module.exports = {
     blacklist,
@@ -401,7 +513,8 @@ module.exports = {
     campaignTracker,
     channel,
     form,
-    // list,
+    list,
+    listTracker,
     namespace,
     reportTemplate,
     report,
