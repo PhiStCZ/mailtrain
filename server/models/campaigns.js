@@ -768,7 +768,8 @@ statusFieldMapping.set(CampaignMessageStatus.BOUNCED, 'bounced');
 statusFieldMapping.set(CampaignMessageStatus.COMPLAINED, 'complained');
 
 const messageStatusActivityLogMapping = new Map()
-    .set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT)
+    // .set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT)
+    // not valid because a message is sent only once, so hopefully this mapping should never happen
     .set(CampaignMessageStatus.BOUNCED, CampaignTrackerActivityType.BOUNCED)
     .set(CampaignMessageStatus.UNSUBSCRIBED, CampaignTrackerActivityType.UNSUBSCRIBED)
     .set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.COMPLAINED);
