@@ -9,72 +9,53 @@ const signalSets = require('../../../ivis-core/server/models/signal-sets');
 const { getLastId } = require('../../../ivis-core/server/models/signal-storage');
 const { SignalType } = require('../../../ivis-core/shared/signals');
 
+// the entity activity types need to have `ensure()`, `ingest(record)`, and `schema` entries
 const entityActivity = require('./entity-activity');
-const blacklist = require('./blacklist');
-const share = require('./share');
-
-
-// the types need to have `ensure()`, `ingest(record)`, and `schema` entries
-const types = {
-    blacklist,
-    // share,
-    // entityActivity,
-}
 
 router.postAsync('/events', async (req, res) => {
     const batch = req.body;
-
-    const recordsByType = {};
-    const signalSetWithSignalMapByType = {};
-    const lastIdsByType = {};
-
-    for (const type in types) {
-        recordsByType[type] = [];
-        let sigSet = await types[type].ensure(req.context);
-        signalSetWithSignalMapByType[type] = sigSet;
-        lastIdsByType[type] = (await getLastId(sigSet)) || 0;
-    }
+    const recordsAndLastIdsBySignalSet = new Map();
 
     for (const dataEntry of batch.data) {
         const type = dataEntry.typeId;
+        const sigSet = entityActivity[type].ensureAndGetSignalSet(dataEntry);
+
+        let recordsAndLastId = recordsAndLastIdsBySignalSet.get(sigSet);
+        if (!recordsAndLastId) {
+            recordsAndLastId = {records: [], lastId: (await getLastId(sigSet)) || 1};
+            recordsAndLastIdsBySignalSet.set(sigSet, recordsAndLastId);
+        }
+
         const record = {
-            id: ++(lastIdsByType[type]),
+            id: (recordsAndLastId.lastId)++,
             // becuase of simple functionality, this is not done with templates
             signals: { timestamp: moment(dataEntry.timestamp) }
         };
-
 
         for (const fieldId in dataEntry.data) {
             if (fieldId == 'typeId' || fieldId == 'timestamp') {
                 throw new Error(`Invalid data field "${fieldId}"`);
             }
-            if (!(fieldId in types[type].schema)) {
+            if (!(fieldId in entityActivity[type].schema)) {
                 throw new Error(`Unknown data field "${fieldId}"`);
             }
 
             let value = dataEntry.data[fieldId];
-
-            if (types[type].schema[fieldId].type === SignalType.DATE_TIME) {
+            if (entityActivity[type].schema[fieldId].type === SignalType.DATE_TIME) {
                 value = moment(value);
             }
-
             record.signals[fieldId] = value;
         }
 
-        recordsByType[type].push(record);
+        recordsAndLastId.records.push(record);
     }
 
-    for (const type in types) {
-        if (recordsByType[type].length > 0) {
-            await signalSets.insertRecords(
-                req.context,
-                signalSetWithSignalMapByType[type],
-                recordsByType[type]
-            );
-        }
+    for (const [signalSet, recordsAndLastId] of recordsAndLastIdsBySignalSet) {
+        await signalSets.insertRecords(req.context, signalSet, recordsAndLastId.records);
     }
 
     return res.json();
 });
+
 
 module.exports = router;

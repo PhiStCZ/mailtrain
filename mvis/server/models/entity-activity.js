@@ -5,8 +5,54 @@ const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const schemas = require('./schemas');
 
+function _nameToSignalSetId(name) {
+    return name.toLowerCase().replace(/ /g, '-');
+}
+
+async function _ensureAndGetSignalSet(self, dataEntry) {
+    if (self._signalSet) {
+        return self._signalSet;
+    }
+    const name = self._getSignalSetName(dataEntry);
+    // possibly add self._getSignalSetDescription
+    self._signalSet = await signalSets.ensure(
+        context,
+        {
+            cid: _nameToSignalSetId(name),
+            name,
+            description: '',
+            namespace: config.mailtrain.namespace,
+        },
+        self.schema
+    );
+
+    return self._signalSet;
+}
+
+async function _ensureAndGetNamedSignalSet(self, dataEntry) {
+    const name = self._getSignalSetName(dataEntry);
+    self._signalSets ??= {};
+
+    let signalSet = self._signalSets[name];
+    if (signalSet) {
+        return signalSet;
+    }
+    signalSet = await signalSets.ensure(
+        context,
+        {
+            cid: _nameToSignalSetId(name),
+            name,
+            description: '',
+            namespace: config.mailtrain.namespace,
+        },
+        self.schema
+    );
+
+    self._signalSets[name] = signalSet;
+    return signalSet;
+}
+
 const blacklist = {
-    // name?
     schema: {
         timestamp: {
             type: SignalType.DATE_TIME,
@@ -40,8 +86,15 @@ const blacklist = {
             weight_list: 3,
             weight_edit: 3
         },
+    },
+    _getSignalSetName: (_) => 'Blacklist',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ingest: async function (record) {
+        // let id = getLastId(...);
+        return {
+            // id: TODO
+        };
     }
-    // ensure, ingest
 };
 
 const campaign = {
@@ -64,24 +117,9 @@ const campaign = {
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX
         }
     },
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'campaign',
-                name: 'Campaign',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Campaign',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const campaignTracker = { // per campaign
@@ -118,52 +156,24 @@ const campaignTracker = { // per campaign
             weight_list: 3,
             weight_edit: 3
         },
-    }
-    // ensure, ingest
+    },
+    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + dataEntry.data.campaign, // TODO: enforce not-null?
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetNamedSignalSet(this, dataEntry),
+    // ingest
 };
 
 const channel = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'channel',
-                name: 'Channel',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Channel',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const form = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'form',
-                name: 'Form',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Form',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 /*
@@ -222,8 +232,10 @@ const list = { // global
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
         },*/
-    }
-    // ensure, ingest
+    },
+    _getSignalSetName: (_) => 'List',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const listTracker = { // tracks only subscriptions // per list
@@ -252,6 +264,7 @@ const listTracker = { // tracks only subscriptions // per list
             weight_list: 2,
             weight_edit: 2
         },
+        // mail hash
         subscriptionStatus: {
             type: SignalType.INTEGER,
             name: 'Subscription Status',
@@ -268,52 +281,24 @@ const listTracker = { // tracks only subscriptions // per list
             weight_list: 4,
             weight_edit: 4
         },
-    }
-    // ensure, ingest
+    },
+    _getSignalSetName: (dataEntry) => 'List Tracker ' + dataEntry.data.list, // TODO: enforce not-null?
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetNamedSignalSet(this, dataEntry),
+    // ingest
 };
 
 const namespace = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'namespace',
-                name: 'Namespace',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Namespace',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const reportTemplate = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'report-template',
-                name: 'Report Template',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Report Template',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const report = {
@@ -328,46 +313,16 @@ const report = {
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX
         }
     },
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'namespace',
-                name: 'Namespace',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Report',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const sendConfiguration = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'send-configuration',
-                name: 'Send Configuration',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Send Configuration',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const share = {
@@ -421,106 +376,47 @@ const share = {
             weight_edit: 5
         },
     },
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'share',
-                name: 'Share',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Share',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const template = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'template',
-                name: 'Template',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Template',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
+
 };
 
 const mosaicoTemplate = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'mosaicoTemplate',
-                name: 'mosaicoTemplate',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'Mosaico Template',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 const user = {
     schema: schemas.genericEntitySchema,
-    ensure: async function(context) {
-        return await signalSets.ensure(
-            context,
-            {
-                cid: 'user',
-                name: 'User',
-                description: '',
-                namespace: config.mailtrain.namespace,
-            },
-            this.schema
-        );
-    },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
+    _getSignalSetName: (_) => 'User',
+    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    // ingest
 };
 
 module.exports = {
     blacklist,
     campaign,
-    campaignTracker,
+    campaign_tracker: campaignTracker,
     channel,
     form,
     list,
-    listTracker,
+    list_tracker: listTracker,
     namespace,
-    reportTemplate,
+    report_template: reportTemplate,
     report,
-    sendConfiguration,
+    send_configuration: sendConfiguration,
     share,
     template,
-    mosaicoTemplate,
+    mosaico_template: mosaicoTemplate,
     user
 };
