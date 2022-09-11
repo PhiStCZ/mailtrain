@@ -10,7 +10,7 @@ const { getLastId } = require('../../../ivis-core/server/models/signal-storage')
 const { SignalType } = require('../../../ivis-core/shared/signals');
 
 // the entity activity types need to have `ensure()`, `ingest(record)`, and `schema` entries
-const entityActivity = require('./entity-activity');
+const entityActivity = require('../../models/entity-activity');
 
 router.postAsync('/events', async (req, res) => {
     const batch = req.body;
