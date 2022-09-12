@@ -30,13 +30,16 @@ async function _ensureAndGetSignalSet(self, dataEntry) {
 }
 
 async function _ensureAndGetNamedSignalSet(self, dataEntry) {
-    const name = self._getSignalSetName(dataEntry);
-    self._signalSets ??= {};
+    if (!self._signalSets) {
+        self._signalSets = {};
+    }
 
+    const name = self._getSignalSetName(dataEntry);
     let signalSet = self._signalSets[name];
     if (signalSet) {
         return signalSet;
     }
+
     signalSet = await signalSets.ensure(
         context,
         {
