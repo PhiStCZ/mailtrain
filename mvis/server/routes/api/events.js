@@ -18,7 +18,7 @@ router.postAsync('/events', async (req, res) => {
 
     for (const dataEntry of batch.data) {
         const type = dataEntry.typeId;
-        const sigSet = entityActivity[type].ensureAndGetSignalSet(dataEntry);
+        const sigSet = entityActivity[type].ensureAndGetSignalSet(req.context, dataEntry);
 
         let recordsAndLastId = recordsAndLastIdsBySignalSet.get(sigSet);
         if (!recordsAndLastId) {

@@ -9,13 +9,13 @@ function _nameToSignalSetId(name) {
     return name.toLowerCase().replace(/ /g, '-');
 }
 
-async function _ensureAndGetSignalSet(self, dataEntry) {
-    if (self._signalSet) {
-        return self._signalSet;
+async function _ensureAndGetSignalSet(instance, context, dataEntry) {
+    if (instance._signalSet) {
+        return instance._signalSet;
     }
-    const name = self._getSignalSetName(dataEntry);
+    const name = instance._getSignalSetName(dataEntry);
     // possibly add self._getSignalSetDescription
-    self._signalSet = await signalSets.ensure(
+    instance._signalSet = await signalSets.ensure(
         context,
         {
             cid: _nameToSignalSetId(name),
@@ -23,19 +23,19 @@ async function _ensureAndGetSignalSet(self, dataEntry) {
             description: '',
             namespace: config.mailtrain.namespace,
         },
-        self.schema
+        instance.schema
     );
 
-    return self._signalSet;
+    return instance._signalSet;
 }
 
-async function _ensureAndGetNamedSignalSet(self, dataEntry) {
-    if (!self._signalSets) {
-        self._signalSets = {};
+async function _ensureAndGetNamedSignalSet(instance, context, dataEntry) {
+    if (!instance._signalSets) {
+        instance._signalSets = {};
     }
 
-    const name = self._getSignalSetName(dataEntry);
-    let signalSet = self._signalSets[name];
+    const name = instance._getSignalSetName(dataEntry);
+    let signalSet = instance._signalSets[name];
     if (signalSet) {
         return signalSet;
     }
@@ -48,10 +48,10 @@ async function _ensureAndGetNamedSignalSet(self, dataEntry) {
             description: '',
             namespace: config.mailtrain.namespace,
         },
-        self.schema
+        instance.schema
     );
 
-    self._signalSets[name] = signalSet;
+    instance._signalSets[name] = signalSet;
     return signalSet;
 }
 
@@ -91,7 +91,7 @@ const blacklist = {
         },
     },
     _getSignalSetName: (_) => 'Blacklist',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     ingest: async function (record) {
         // let id = getLastId(...);
         return {
@@ -121,7 +121,7 @@ const campaign = {
         }
     },
     _getSignalSetName: (_) => 'Campaign',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
@@ -161,21 +161,21 @@ const campaignTracker = { // per campaign
         },
     },
     _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + dataEntry.data.campaign, // TODO: enforce not-null?
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetNamedSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const channel = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Channel',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const form = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Form',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
@@ -237,7 +237,7 @@ const list = { // global
         },*/
     },
     _getSignalSetName: (_) => 'List',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
@@ -286,21 +286,21 @@ const listTracker = { // tracks only subscriptions // per list
         },
     },
     _getSignalSetName: (dataEntry) => 'List Tracker ' + dataEntry.data.list, // TODO: enforce not-null?
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetNamedSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const namespace = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Namespace',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const reportTemplate = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Report Template',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
@@ -317,14 +317,14 @@ const report = {
         }
     },
     _getSignalSetName: (_) => 'Report',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const sendConfiguration = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Send Configuration',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
@@ -380,14 +380,14 @@ const share = {
         },
     },
     _getSignalSetName: (_) => 'Share',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const template = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Template',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 
 };
@@ -395,14 +395,14 @@ const template = {
 const mosaicoTemplate = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Mosaico Template',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
 const user = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'User',
-    ensureAndGetSignalSet: async (dataEntry) => _ensureAndGetSignalSet(this, dataEntry),
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
 };
 
