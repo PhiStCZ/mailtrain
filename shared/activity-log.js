@@ -36,13 +36,13 @@ const ListActivityType = {
     CREATE_FIELD: EntityActivityType.MAX + 5,
     UPDATE_FIELD: EntityActivityType.MAX + 6,
     REMOVE_FIELD: EntityActivityType.MAX + 7,
-    CREATE_SEGMENT: EntityActivityType.MAX + 5,
-    UPDATE_SEGMENT: EntityActivityType.MAX + 6,
-    REMOVE_SEGMENT: EntityActivityType.MAX + 7,
-    CREATE_IMPORT: EntityActivityType.MAX + 8,
-    UPDATE_IMPORT: EntityActivityType.MAX + 9,
-    REMOVE_IMPORT: EntityActivityType.MAX + 10,
-    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 11,
+    CREATE_SEGMENT: EntityActivityType.MAX + 8,
+    UPDATE_SEGMENT: EntityActivityType.MAX + 9,
+    REMOVE_SEGMENT: EntityActivityType.MAX + 10,
+    CREATE_IMPORT: EntityActivityType.MAX + 11,
+    UPDATE_IMPORT: EntityActivityType.MAX + 12,
+    REMOVE_IMPORT: EntityActivityType.MAX + 13,
+    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14,
 };
 
 const ReportActivityType = {
