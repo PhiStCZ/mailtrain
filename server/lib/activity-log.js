@@ -10,7 +10,8 @@ const activityLog = require('../../shared/activity-log');
 const APIToken = config.get('mvis.apiToken');
 const activityQueueLengthThreshold = 1; // 100;
 const activityQueueTimeoutMs = 1000;
-const activityQueue = [];
+let activityQueue = [];
+let activityQueue2 = [];
 
 const apiUrlBase = config.get('mvis.apiUrlBase');
 const apiurl = `${apiUrlBase}/api/events?global_access_token=${APIToken}`;
@@ -25,13 +26,14 @@ async function processQueue() {
 
     processQueueIsRunning = true;
     lastProcess = new Date();
+    [activityQueue2, activityQueue] = [activityQueue, activityQueue2];
 
     // TODO: remove the console.logs when done debugging
     console.log('logging data:')
-    console.log(JSON.stringify(activityQueue))
+    console.log(JSON.stringify(activityQueue2))
     if (apiurl) {
         try {
-            await axios.post(apiurl, { data: activityQueue });
+            await axios.post(apiurl, { data: activityQueue2 });
         } catch (e) {
             console.log('failure to send activity-log data');
         }
@@ -39,7 +41,7 @@ async function processQueue() {
         // when writing to activityQueue between this and the splice
     }
 
-    activityQueue.splice(0);
+    activityQueue2.splice(0);
     processQueueIsRunning = false;
 }
 
