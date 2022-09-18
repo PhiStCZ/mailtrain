@@ -224,6 +224,14 @@ const list = { // global
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
         },
+        segmentId: {
+            type: SignalType.INTEGER,
+            name: 'Segment ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+        },
         // TODO: this one might be included, but only for manual edits, and
         // then it shall be duplicated in tracker - uncomment when sure
         /*
@@ -232,8 +240,8 @@ const list = { // global
             name: 'Subscription ID',
             settings: {},
             indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
         },*/
     },
     _getSignalSetName: (_) => 'List',
