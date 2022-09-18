@@ -239,7 +239,7 @@ async function updateWithConsistencyCheck(context, user, isOwnAccount) {
 
         await shares.rebuildPermissionsTx(tx, { userId: user.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.UPDATE, id);
+        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.UPDATE, user.id);
     });
 }
 
@@ -257,7 +257,7 @@ async function remove(context, userId) {
 
         await tx('users').where('id', userId).del();
 
-        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, 'user', EntityActivityType.REMOVE, userId);
     });
 }
 

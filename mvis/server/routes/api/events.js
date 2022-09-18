@@ -23,7 +23,7 @@ router.postAsync('/events', async (req, res) => {
         let recordsAndLastId = recordsAndLastIdsBySignalSet.get(sigSet);
         if (!recordsAndLastId) {
             const lastId = (await getLastId(sigSet)) || 0;
-            recordsAndLastId = {records: [], lastId: lastId + 1};
+            recordsAndLastId = {records: [], lastId: parseInt(lastId) + 1};
             recordsAndLastIdsBySignalSet.set(sigSet, recordsAndLastId);
         }
 

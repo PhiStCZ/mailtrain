@@ -80,8 +80,8 @@ list:
 async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
     const data = {
         ...extraData,
-        type: activityType,
-        entity: entityId
+        activityType,
+        entityId
     };
 
     await _logActivity(entityTypeId, data);

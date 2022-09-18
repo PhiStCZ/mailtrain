@@ -27,7 +27,7 @@ const genericEntitySchema = {
         weight_list: 2,
         weight_edit: 2
     },
-    id: {
+    entityId: {
         type: SignalType.INTEGER,
         name: 'Entity ID',
         settings: {},

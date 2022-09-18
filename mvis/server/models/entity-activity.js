@@ -321,6 +321,30 @@ const report = {
     // ingest
 };
 
+const settings = {
+    schema: {
+        timestamp: {
+            type: SignalType.DATE_TIME,
+            name: 'Timestamp',
+            settings: {},
+            indexed: true,
+            weight_list: 0,
+            weight_edit: 0
+        },
+        issuedBy: {
+            type: SignalType.INTEGER,
+            name: 'Issued by',
+            settings: {},
+            indexed: true,
+            weight_list: 1,
+            weight_edit: 1,
+        }
+    },
+    _getSignalSetName: (_) => 'Settings',
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
+    // ingest
+}
+
 const sendConfiguration = {
     schema: schemas.genericEntitySchema,
     _getSignalSetName: (_) => 'Send Configuration',
@@ -417,6 +441,7 @@ module.exports = {
     namespace,
     report_template: reportTemplate,
     report,
+    settings,
     send_configuration: sendConfiguration,
     share,
     template,
