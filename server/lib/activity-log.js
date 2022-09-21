@@ -45,8 +45,9 @@ async function processQueue() {
     processQueueIsRunning = false;
 }
 
-async function _logActivity(typeId, data) {
+async function _logActivity(typeId, data, extraIds = {}) {
     activityQueue.push({
+        ...extraIds,
         typeId,
         data,
         timestamp: moment.utc().toISOString()
@@ -99,13 +100,12 @@ async function logEntityActivityWithContext(context, entityTypeId, activityType,
 async function logCampaignTrackerActivity(activityType, campaignId, listId, subscriptionId, extraData = {}) {
     const data = {
         ...extraData,
-        type: activityType,
-        campaign: campaignId,
-        list: listId,
-        subscription: subscriptionId
+        activityType,
+        listId,
+        subscriptionId
     };
 
-    await _logActivity('campaign_tracker', data);
+    await _logActivity('campaign_tracker', data, {campaignId});
 }
 
 async function logBlacklistActivity(context, activityType, email) {
@@ -160,12 +160,10 @@ async function logListActivity(context, activityType, listId, extraData = {}) {
     }
 }
 
-async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined, extraData = {}) {
+async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined) {
     const data = {
-        ...extraData,
-        type: activityType,
-        list: listId,
-        subscription: subscriptionId,
+        activityType,
+        subscriptionId,
     };
     if (subscriptionStatus) {
         data.subscriptionStatus = subscriptionStatus;
@@ -174,7 +172,7 @@ async function logListTrackerActivity(activityType, listId, subscriptionId, subs
         data.previousSubscriptionStatus = previousSubscriptionStatus;
     }
 
-    await _logActivity('list_tracker', data);
+    await _logActivity('list_tracker', data, {listId});
 }
 
 function periodicLog() {

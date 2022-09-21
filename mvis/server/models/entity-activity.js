@@ -135,32 +135,48 @@ const campaignTracker = { // per campaign
             weight_list: 0,
             weight_edit: 0
         },
+        activityType: {
+            type: SignalType.INTEGER,
+            name: 'Activity Type',
+            settings: {},
+            indexed: true,
+            weight_list: 1,
+            weight_edit: 1
+        },
         listId: {
             type: SignalType.INTEGER,
             name: 'List ID',
             settings: {},
             indexed: true,
-            weight_list: 1,
-            weight_edit: 1
+            weight_list: 2,
+            weight_edit: 2
         },
         subscriptionId: {
             type: SignalType.INTEGER,
             name: 'Subscription ID',
             settings: {},
             indexed: true,
-            weight_list: 2,
-            weight_edit: 2
+            weight_list: 3,
+            weight_edit: 3
         },
         linkId: {
             type: SignalType.INTEGER,
             name: 'Link ID',
             settings: {},
             indexed: true,
-            weight_list: 3,
-            weight_edit: 3
+            weight_list: 4,
+            weight_edit: 4
         },
+        triggerId: {
+            type: SignalType.INTEGER,
+            name: 'Trigger ID',
+            settings: {},
+            indexed: true,
+            weight_list: 5,
+            weight_edit: 5
+        }
     },
-    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + dataEntry.data.campaign, // TODO: enforce not-null?
+    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + dataEntry.campaignId, // TODO: enforce not-null?
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };
@@ -275,7 +291,7 @@ const listTracker = { // tracks only subscriptions // per list
             weight_list: 2,
             weight_edit: 2
         },
-        // mail hash
+        // TODO: add mail hash
         subscriptionStatus: {
             type: SignalType.INTEGER,
             name: 'Subscription Status',
@@ -293,7 +309,7 @@ const listTracker = { // tracks only subscriptions // per list
             weight_edit: 4
         },
     },
-    _getSignalSetName: (dataEntry) => 'List Tracker ' + dataEntry.data.list, // TODO: enforce not-null?
+    _getSignalSetName: (dataEntry) => 'List Tracker ' + dataEntry.listId, // TODO: enforce not-null?
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };
