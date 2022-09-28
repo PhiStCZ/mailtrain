@@ -4,6 +4,9 @@ const fork = require('./fork').fork;
 const log = require('./log');
 const path = require('path');
 const bluebird = require('bluebird');
+const crypto = require('crypto');
+
+const apiToken = crypto.randomBytes(20).toString('hex').toLowerCase();
 
 let mvisProcess;
 
@@ -14,7 +17,10 @@ function spawn(callback) {
     
     mvisProcess = fork(path.join(wDir, 'index.js'), [], {
         cwd: wDir,
-        env: {NODE_ENV: process.env.NODE_ENV}
+        env: {
+            NODE_ENV: process.env.NODE_ENV,
+            API_TOKEN: apiToken
+        }
     });
 
     mvisProcess.on('message', msg => {
@@ -25,4 +31,5 @@ function spawn(callback) {
     });
 };
 
+module.exports.apiToken = apiToken;
 module.exports.spawn = bluebird.promisify(spawn);

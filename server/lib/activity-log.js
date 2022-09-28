@@ -5,16 +5,14 @@ const config = require('config');
 const axios = require('axios').default;
 
 const activityLog = require('../../shared/activity-log');
-// global access token is loaded from config
-// TODO: generate and save a token during installation
-const APIToken = config.get('mvis.apiToken');
-const activityQueueLengthThreshold = 1; // 100;
+const apiToken = require('./mvis').apiToken;
+const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
 let activityQueue = [];
 let activityQueue2 = [];
 
 const apiUrlBase = config.get('mvis.apiUrlBase');
-const apiurl = `${apiUrlBase}/api/events?global_access_token=${APIToken}`;
+const apiurl = `${apiUrlBase}/api/events?global_access_token=${apiToken}`;
 
 let processQueueIsRunning = false;
 let lastProcess = new Date();

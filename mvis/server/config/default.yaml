@@ -23,10 +23,6 @@ www:
   trustedUrlBase: http://localhost:3010
   sandboxUrlBase: http://localhost:3011
 
-  # a global authentication token for logging activity data to ivis
-  apiToken: mvis
-
-
 roles:
   global:
     mailtrainUser:

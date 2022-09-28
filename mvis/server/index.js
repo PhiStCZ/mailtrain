@@ -3,9 +3,8 @@
 require('./extensions-common');
 const em = require('../ivis-core/server/lib/extension-manager');
 const path = require('path');
-const config = require('config');
 
-const APIToken = config.get('www.apiToken');
+const APIToken = process.env.API_TOKEN;
 
 async function init() {
     em.set('app.clientDist', path.join(__dirname, '..', 'client', 'dist'));

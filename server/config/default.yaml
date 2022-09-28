@@ -127,9 +127,6 @@ mvis:
   sandboxUrlBase: http://localhost:3011
   apiUrlBase: http://localhost:3012
 
-  # a global authentication token for logging activity data to ivis
-  apiToken: mvis
-
 mysql:
   host: localhost
   user: mailtrain
