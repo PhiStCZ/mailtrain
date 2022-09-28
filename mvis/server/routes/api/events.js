@@ -23,13 +23,13 @@ router.postAsync('/events', async (req, res) => {
         let recordsAndLastId = recordsAndLastIdsBySignalSet.get(sigSet);
         if (!recordsAndLastId) {
             const lastId = (await getLastId(sigSet)) || 0;
-            recordsAndLastId = {records: [], lastId: parseInt(lastId) + 1};
+            recordsAndLastId = {records: [], nextId: parseInt(lastId) + 1};
             recordsAndLastIdsBySignalSet.set(sigSet, recordsAndLastId);
         }
 
         const record = {
-            id: (recordsAndLastId.lastId)++,
-            // becuase of simple functionality, this is not done with templates
+            // supports 10^10 entries (enough for all 32-bit int values)
+            id: ((recordsAndLastId.nextId)++).toString().padStart(10, '0'),
             signals: { timestamp: moment(dataEntry.timestamp) }
         };
 
