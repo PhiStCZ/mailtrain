@@ -89,7 +89,6 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
             if (await _countLink(linkId, true)) {
                 await tx('links').increment('visits').where('id', linkId);
 
-                // TODO: here we could log clicks for the concrete link, not the whole campaign
                 await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId});
 
                 if (await _countLink(LinkId.GENERAL_CLICK, false)) {
@@ -126,8 +125,11 @@ async function addOrGet(campaignId, url) {
                 url
             });
 
-            // TODO: log this information? also log cid or id?
-            // await activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { url });
+            // TODO: log this information? It would be logged once for every
+            // link in every campaign (not that many,but not necessarily few
+            // either), likely logged info : url, campaignId, linkId - possibly
+            // useful for comparisons of links across campaigns
+            await activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { campaignId, url });
 
             return {
                 id: ids[0],

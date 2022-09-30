@@ -195,6 +195,31 @@ const form = {
     // ingest
 };
 
+const link = {
+    schema: {
+        ...schemas.genericEntitySchema,
+        campaignId: {
+            type: SignalType.INTEGER,
+            name: 'Campaign ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+        },
+        url: {
+            type: SignalType.TEXT,
+            name: 'Link URL',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+        },
+    },
+    _getSignalSetName: (_) => 'Link',
+    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
+    // ingest
+}
+
 /*
 
 activities:
@@ -460,6 +485,7 @@ module.exports = {
     campaign_tracker: campaignTracker,
     channel,
     form,
+    link,
     list,
     list_tracker: listTracker,
     namespace,
