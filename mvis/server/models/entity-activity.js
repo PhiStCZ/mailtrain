@@ -108,16 +108,16 @@ const campaign = {
             name: 'Campaign Status',
             settings: {},
             indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
         },
         triggerId: {
             type: SignalType.INTEGER,
             name: 'Campaign Trigger ID',
             settings: {},
             indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
         }
     },
     _getSignalSetName: (_) => 'Campaign',
@@ -361,8 +361,8 @@ const report = {
             name: 'Trigger Status',
             settings: {},
             indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
         }
     },
     _getSignalSetName: (_) => 'Report',
@@ -420,7 +420,7 @@ const share = {
             weight_edit: 1,
         },
         entityTypeId: {
-            type: SignalType.INTEGER,
+            type: SignalType.TEXT,
             name: 'Entity Type ID',
             settings: {},
             indexed: true,

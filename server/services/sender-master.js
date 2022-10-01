@@ -408,14 +408,6 @@ async function scheduleCampaigns() {
         const now = nowDate.valueOf();
 
         const expirationThreshold = new Date(now - config.queue.retention.campaign * 1000);
-        // const expiredCampaigns = await knex('campaigns')
-        //     .whereIn('campaigns.type', [CampaignType.REGULAR, CampaignType.RSS_ENTRY])
-        //     .whereIn('campaigns.status', [CampaignStatus.SCHEDULED, CampaignStatus.PAUSED])
-        //     .where('campaigns.start_at', '<', expirationThreshold)
-        //     .update({status: CampaignStatus.FINISHED});
-        // for (const cpg of expiredCampaigns) {
-        //     await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, cpg.id, {status: CampaignStatus.FINISHED});
-        // }
         const expiredCampaigns = await knex.transaction(async tx => {
             const ids = await tx('campaigns')
                 .whereIn('campaigns.type', [CampaignType.REGULAR, CampaignType.RSS_ENTRY])

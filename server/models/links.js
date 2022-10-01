@@ -125,10 +125,6 @@ async function addOrGet(campaignId, url) {
                 url
             });
 
-            // TODO: log this information? It would be logged once for every
-            // link in every campaign (not that many,but not necessarily few
-            // either), likely logged info : url, campaignId, linkId - possibly
-            // useful for comparisons of links across campaigns
             await activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { campaignId, url });
 
             return {

@@ -171,7 +171,6 @@ async function remove(context, id) {
 }
 
 async function sendAsTransactionalEmail(context, templateId, sendConfigurationId, emails, subject, mergeTags, attachments) {
-    // TODO: should this be logged?
     const template = await getById(context, templateId, false);
 
     await shares.enforceEntityPermission(context, 'sendConfiguration', sendConfigurationId, 'sendWithoutOverrides');

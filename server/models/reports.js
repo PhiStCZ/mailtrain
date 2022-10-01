@@ -167,7 +167,7 @@ async function changeState(id, newState, last_run = undefined) {
 async function bulkChangeState(oldState, newState) {
     return knex.transaction(async tx => {
         const ids = await knex('reports').where('state', oldState).select('id');
-        // TODO: fix?
+
         for (const id of ids) {
             await activityLog.logEntityActivity('report', ReportActivityType.STATUS_CHANGE, id, {status: newState});
         }
