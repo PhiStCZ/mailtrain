@@ -474,11 +474,28 @@ const share = {
 };
 
 const template = {
-    schema: schemas.genericEntitySchema,
+    schema: {
+        ...schemas.genericEntitySchema,
+        listId: {
+            type: SignalType.INTEGER,
+            name: 'List ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+        },
+        subscriptionId: {
+            type: SignalType.INTEGER,
+            name: 'Subscription ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+        }
+    },
     _getSignalSetName: (_) => 'Template',
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
     // ingest
-
 };
 
 const mosaicoTemplate = {

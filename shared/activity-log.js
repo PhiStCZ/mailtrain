@@ -52,6 +52,10 @@ const ReportActivityType = {
     STOP: EntityActivityType.MAX + 3
 };
 
+const TemplateActivityType = {
+    TEST_SEND: EntityActivityType.MAX + 1
+};
+
 const UserActivityType = {
     RESET_ACCESS_TOKEN: EntityActivityType.MAX + 1,
     RESET_PASSWORD: EntityActivityType.MAX + 2
@@ -68,4 +72,5 @@ module.exports.CampaignActivityType = CampaignActivityType;
 module.exports.ListActivityType = ListActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
 module.exports.ReportActivityType = ReportActivityType;
+module.exports.TemplateActivityType = TemplateActivityType;
 module.exports.UserActivityType = UserActivityType;

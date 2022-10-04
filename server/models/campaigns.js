@@ -25,7 +25,7 @@ const {convertFileURLs} = require('../lib/campaign-content');
 const messageSender = require('../lib/message-sender');
 const lists = require('./lists');
 
-const {EntityActivityType, CampaignActivityType, CampaignTrackerActivityType} = require('../../shared/activity-log');
+const {EntityActivityType, CampaignActivityType, CampaignTrackerActivityType, TemplateActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeysCommon = ['name', 'description', 'namespace', 'channel',
@@ -1018,11 +1018,6 @@ async function testSend(context, data) {
 
         const processSubscriber = async (sendConfigurationId, listId, subscriptionId, messageData) => {
             await messageSender.queueCampaignMessageTx(tx, sendConfigurationId, listId, subscriptionId, messageSender.MessageType.TEST, messageData);
-
-            // TODO: perhaps also log template test-send?
-            if (campaignId) {
-                await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, campaignId, {list: listId, subscription: subscriptionId});
-            }
         };
 
         if (campaignId) { // This means we are sending a campaign
@@ -1073,16 +1068,20 @@ async function testSend(context, data) {
 
                 if (data.subscriptionCid) {
                     const subscriber = await subscriptions.getByCidTx(tx, context, listId, data.subscriptionCid, true, true);
+                    await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {listId, subscriptionId: subscriber.id});
                     await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
 
                 } else {
                     const subscribers = await subscriptions.listTestUsersTx(tx, context, listId, segmentId);
+                    await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {listId});
                     for (const subscriber of subscribers) {
                         await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
                     }
                 }
 
             } else {
+                await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {});
+
                 for (const lstSeg of campaign.lists) {
                     await enforceSendPermissionTx(tx, context, campaign, true, lstSeg.list);
 
@@ -1115,6 +1114,8 @@ async function testSend(context, data) {
             await shares.enforceEntityPermissionTx(tx, context, 'list', list.id, 'sendToTestUsers');
 
             await processSubscriber(data.sendConfigurationId, list.id, subscriber.id, messageData);
+
+            await activityLog.logEntityActivityWithContext(context, 'template', TemplateActivityType.TEST_SEND, data.templateId, {listId: list.id, subscriptionId: subscriber.id});
         }
     });
 
