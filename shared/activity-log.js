@@ -19,13 +19,14 @@ const CampaignActivityType = {
 
 const CampaignTrackerActivityType = {
     SENT: 1,
-    BOUNCED: 2,
-    UNSUBSCRIBED: 3,
-    COMPLAINED: 4,
-    OPENED: 5,
-    CLICKED: 6,
-
-    TRIGGERED: 7 // TODO: decide if to remove or keep
+    TEST_SENT: 2,
+    BOUNCED: 3,
+    UNSUBSCRIBED: 4,
+    COMPLAINED: 5,
+    OPENED: 6,
+    CLICKED: 7,
+    TRIGGERED: 8,
+    FAILED: 9
 };
 
 const ListActivityType = {

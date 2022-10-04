@@ -49,6 +49,9 @@ async function processCampaignMessages(campaignId, messages) {
                 log.verbose(err.responseCode);
                 log.verbose(err.stack);
             }
+            if (err.campaignMessageErrorType === CampaignMessageErrorType.PERMANENT) {
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.FAILED, campaignId, campaignMessage.list, campaignMessage.subscription);
+            }
         }
     }
 
@@ -88,8 +91,13 @@ async function processQueuedMessages(sendConfigurationId, messages) {
         try {
             await messageSender.sendQueuedMessage(queuedMessage);
 
-            if ((messageType === MessageType.TRIGGERED || messageType === MessageType.TEST) && msgData.campaignId && msgData.listId && msgData.subscriptionId) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.SENT, msgData.campaignId, msgData.listId, msgData.subscriptionId);
+            if (msgData.campaignId && msgData.listId && msgData.subscriptionId) {
+                if (messageType === MessageType.TRIGGERED) {
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.SENT, msgData.campaignId, msgData.listId, msgData.subscriptionId);
+                }
+                else if (messageType === MessageType.TEST) {
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.TEST_SENT, msgData.campaignId, msgData.listId, msgData.subscriptionId);
+                }
             }
 
             log.verbose('Senders', `Message sent and status updated for ${target}`);
@@ -104,6 +112,7 @@ async function processQueuedMessages(sendConfigurationId, messages) {
 
                 try {
                     await messageSender.dropQueuedMessage(queuedMessage);
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.FAILED, msgData.campaignId, msgData.listId, msgData.subscriptionId);
                 } catch (err) {
                     log.error(err.stack);
                 }

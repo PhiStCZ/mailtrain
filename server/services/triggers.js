@@ -167,8 +167,7 @@ async function run() {
 
                     log.verbose('Triggers', `Triggered ${trigger.name} (${trigger.id}) for subscriber ${subscriber.id}`);
 
-                    // TODO: decide if to log this in this or some other table
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.TRIGGERED, campaign.id, cpgList, subscriber.id, {triggerId: trigger.id});
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.TRIGGERED, campaign.id, cpgList.list, subscriber.id, {triggerId: trigger.id});
                 }
             }
 
