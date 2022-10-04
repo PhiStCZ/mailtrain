@@ -9,6 +9,13 @@ function _nameToSignalSetId(name) {
     return name.toLowerCase().replace(/ /g, '-');
 }
 
+function _enforceValid(field, fieldName) {
+    if (!field) {
+        throw new Error(`Field '${fieldName}' value is invalid.`);
+    }
+    return field;
+}
+
 async function _ensureAndGetSignalSet(instance, context, dataEntry) {
     if (instance._signalSet) {
         return instance._signalSet;
@@ -192,7 +199,7 @@ const campaignTracker = { // per campaign
             weight_edit: 5
         }
     },
-    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + dataEntry.campaignId, // TODO: enforce not-null?
+    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + _enforceValid(dataEntry.campaignId, 'campaignId'),
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };
@@ -275,7 +282,7 @@ const list = { // global
         },
         importStatus: {
             type: SignalType.INTEGER,
-            name: 'Import ID',
+            name: 'Import Status',
             settings: {},
             indexed: true,
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
@@ -289,9 +296,6 @@ const list = { // global
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
         },
-        // TODO: this one might be included, but only for manual edits, and
-        // then it shall be duplicated in tracker - uncomment when sure
-        /*
         subscriptionId: {
             type: SignalType.INTEGER,
             name: 'Subscription ID',
@@ -299,7 +303,7 @@ const list = { // global
             indexed: true,
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
-        },*/
+        }
     },
     _getSignalSetName: (_) => 'List',
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
@@ -332,7 +336,6 @@ const listTracker = { // tracks only subscriptions // per list
             weight_list: 2,
             weight_edit: 2
         },
-        // TODO: add mail hash
         subscriptionStatus: {
             type: SignalType.INTEGER,
             name: 'Subscription Status',
@@ -349,8 +352,9 @@ const listTracker = { // tracks only subscriptions // per list
             weight_list: 4,
             weight_edit: 4
         },
+        // TODO: add mail hash and possibly other trackable user data
     },
-    _getSignalSetName: (dataEntry) => 'List Tracker ' + dataEntry.listId, // TODO: enforce not-null?
+    _getSignalSetName: (dataEntry) => 'List Tracker ' + _enforceValid(dataEntry.listId, 'listId'),
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
     // ingest
 };

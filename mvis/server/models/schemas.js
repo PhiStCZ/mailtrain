@@ -35,7 +35,6 @@ const genericEntitySchema = {
         weight_list: 3,
         weight_edit: 3
     }
-    // TODO: add summary field... maybe?
 };
 
 const GENERIC_ENTITY_SCHEMA_MAX = 3;

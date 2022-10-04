@@ -4,7 +4,6 @@ const moment = require('moment');
 const config = require('config');
 const axios = require('axios').default;
 
-const activityLog = require('../../shared/activity-log');
 const apiToken = require('./mvis').apiToken;
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
@@ -24,19 +23,13 @@ async function processQueue() {
 
     processQueueIsRunning = true;
     lastProcess = new Date();
+
+    // the switch is to prevent data loss when activityQueue
+    // is written to before returning from the axios.post
     [activityQueue2, activityQueue] = [activityQueue, activityQueue2];
 
-    // TODO: remove the console.logs when done debugging
-    console.log('logging data:')
-    console.log(JSON.stringify(activityQueue2))
     if (apiurl) {
-        try {
-            await axios.post(apiurl, { data: activityQueue2 });
-        } catch (e) {
-            console.log('failure to send activity-log data');
-        }
-        // thats all i guess? think about how to prevent a race condition
-        // when writing to activityQueue between this and the splice
+        await axios.post(apiurl, { data: activityQueue2 });
     }
 
     activityQueue2.splice(0);
@@ -64,20 +57,6 @@ function _assignIssuedBy(context, data) {
     }
 }
 
-/*
-Extra data:
-
-campaign:
-- status : CampaignStatus
-
-list:
-- subscriptionId
-- subscriptionStatus : SubscriptionStatus
-- fieldId
-- segmentId
-- importId
-- importStatus : ImportStatus
-*/
 async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
     const data = {
         ...extraData,
@@ -93,7 +72,15 @@ async function logEntityActivityWithContext(context, entityTypeId, activityType,
     logEntityActivity(entityTypeId, activityType, entityId, extraData);
 }
 
+async function logBlacklistActivity(context, activityType, email) {
+    const data = {
+        type: activityType,
+        email
+    };
+    _assignIssuedBy(context, data);
 
+    await _logActivity('blacklist', data);
+}
 
 async function logCampaignTrackerActivity(activityType, campaignId, listId, subscriptionId, extraData = {}) {
     const data = {
@@ -106,56 +93,8 @@ async function logCampaignTrackerActivity(activityType, campaignId, listId, subs
     await _logActivity('campaign_tracker', data, {campaignId});
 }
 
-async function logBlacklistActivity(context, activityType, email) {
-    const data = {
-        type: activityType,
-        email
-    };
-    _assignIssuedBy(context, data);
-
-    await _logActivity('blacklist', data);
-}
-
-async function logShareActivity(context, entityTypeId, entityId, userId, role) {
-    const data = {
-        userId,
-        entityTypeId,
-        entityId,
-        role
-    };
-    _assignIssuedBy(context, data);
-    await _logActivity('share', data);
-}
-
-async function logSettingsActivity(context) {
-    const data = {};
-    _assignIssuedBy(context, data);
-    await _logActivity('settings', data);
-}
-
-const listLogNoGlobal = [
-    activityLog.ListActivityType.CREATE_SUBSCRIPTION,
-    activityLog.ListActivityType.REMOVE_SUBSCRIPTION,
-    activityLog.ListActivityType.UPDATE_SUBSCRIPTION,
-    activityLog.ListActivityType.SUBSCRIPTION_STATUS_CHANGE
-];
-
-/**
- * Allowed extra data:
- * - subscriptionId
- * - subscriptionStatus : SubscriptionStatus
- * - fieldId
- * - segmentId
- * - importId
- * - importStatus : ImportStatus
- */
 async function logListActivity(context, activityType, listId, extraData = {}) {
-    // if activityType is subscription-add/remove/change, log only to the list signal set
-    // otherwise, log both to list sigset and global list sigset
     await logEntityActivityWithContext(context, 'list', activityType, listId, extraData);
-    if (listLogNoGlobal.includes(activityType)) {
-        // also log in global index ... ?
-    }
 }
 
 async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined) {
@@ -171,6 +110,23 @@ async function logListTrackerActivity(activityType, listId, subscriptionId, subs
     }
 
     await _logActivity('list_tracker', data, {listId});
+}
+
+async function logSettingsActivity(context) {
+    const data = {};
+    _assignIssuedBy(context, data);
+    await _logActivity('settings', data);
+}
+
+async function logShareActivity(context, entityTypeId, entityId, userId, role) {
+    const data = {
+        userId,
+        entityTypeId,
+        entityId,
+        role
+    };
+    _assignIssuedBy(context, data);
+    await _logActivity('share', data);
 }
 
 function periodicLog() {

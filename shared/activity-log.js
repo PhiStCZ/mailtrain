@@ -7,14 +7,17 @@ const EntityActivityType = {
     MAX: 3
 };
 
+const BlacklistActivityType = {
+    ADD: 1,
+    REMOVE: 2
+};
+
 const CampaignActivityType = {
     STATUS_CHANGE: EntityActivityType.MAX + 1,
     TEST_SEND: EntityActivityType.MAX + 2,
-    
-    // right place?
     CREATE_TRIGGER: EntityActivityType.MAX + 3,
     UPDATE_TRIGGER: EntityActivityType.MAX + 4,
-    REMOVE_TRIGGER: EntityActivityType.MAX + 5,
+    REMOVE_TRIGGER: EntityActivityType.MAX + 5
 };
 
 const CampaignTrackerActivityType = {
@@ -43,7 +46,7 @@ const ListActivityType = {
     CREATE_IMPORT: EntityActivityType.MAX + 11,
     UPDATE_IMPORT: EntityActivityType.MAX + 12,
     REMOVE_IMPORT: EntityActivityType.MAX + 13,
-    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14,
+    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14
 };
 
 const ReportActivityType = {
@@ -61,16 +64,11 @@ const UserActivityType = {
     RESET_PASSWORD: EntityActivityType.MAX + 2
 };
 
-const BlacklistActivityType = {
-    ADD: 1,
-    REMOVE: 2
-};
-
 module.exports.EntityActivityType = EntityActivityType;
 module.exports.BlacklistActivityType = BlacklistActivityType;
 module.exports.CampaignActivityType = CampaignActivityType;
-module.exports.ListActivityType = ListActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
+module.exports.ListActivityType = ListActivityType;
 module.exports.ReportActivityType = ReportActivityType;
 module.exports.TemplateActivityType = TemplateActivityType;
 module.exports.UserActivityType = UserActivityType;
