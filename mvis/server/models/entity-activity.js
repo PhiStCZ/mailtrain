@@ -118,6 +118,22 @@ const campaign = {
             indexed: true,
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
             weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+        },
+        listId: {
+            type: SignalType.INTEGER,
+            name: 'List ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+        },
+        subscriptionId: {
+            type: SignalType.INTEGER,
+            name: 'Subscription ID',
+            settings: {},
+            indexed: true,
+            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
         }
     },
     _getSignalSetName: (_) => 'Campaign',
@@ -358,7 +374,7 @@ const report = {
         ...schemas.genericEntitySchema,
         status: {
             type: SignalType.INTEGER,
-            name: 'Trigger Status',
+            name: 'Report Status',
             settings: {},
             indexed: true,
             weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,

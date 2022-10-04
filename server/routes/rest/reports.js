@@ -6,10 +6,12 @@ const reportProcessor = require('../../lib/report-processor');
 const reportHelpers = require('../../lib/report-helpers');
 const shares = require('../../models/shares');
 const contextHelpers = require('../../lib/context-helpers');
+const activityLog = require('../../lib/activity-log');
 
 const router = require('../../lib/router-async').create();
 const {castToInteger} = require('../../lib/helpers');
 const fs = require('fs-extra');
+const { ReportActivityType } = require('../../../shared/activity-log');
 
 router.getAsync('/reports/:reportId', passport.loggedIn, async (req, res) => {
     const report = await reports.getByIdWithTemplate(req.context, castToInteger(req.params.reportId));
@@ -47,6 +49,7 @@ router.postAsync('/report-start/:id', passport.loggedIn, passport.csrfProtection
     await shares.enforceEntityPermission(req.context, 'reportTemplate', report.report_template, 'execute');
 
     await reportProcessor.start(id);
+    activityLog.logEntityActivityWithContext(req.context, 'report', ReportActivityType.START, id);
     res.json();
 });
 
@@ -59,6 +62,7 @@ router.postAsync('/report-stop/:id', async (req, res) => {
     await shares.enforceEntityPermission(req.context, 'reportTemplate', report.report_template, 'execute');
 
     await reportProcessor.stop(id);
+    activityLog.logEntityActivityWithContext(req.context, 'report', ReportActivityType.STOP, id);
     res.json();
 });
 
