@@ -14,6 +14,7 @@ const shortid = require('../lib/shortid');
 const {enforce} = require('../lib/helpers');
 const { EntityActivityType, CampaignTrackerActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
+const config = require('../lib/config');
 
 const LinkId = {
     OPEN: -1,
@@ -83,27 +84,36 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
             await tx(subscriptions.getSubscriptionTableName(list.id)).update(latestUpdates).where('id', subscription.id);
         }
 
+        const logRepeated = config.get('mvis.logRepeatedEvents');
+
         // Update clicks
         if (linkId > LinkId.GENERAL_CLICK && !campaign.click_tracking_disabled) {
             await tx('links').increment('hits').where('id', linkId);
-            if (await _countLink(linkId, true)) {
+            const firstTimeClicked = await _countLink(linkId, true);
+            if (firstTimeClicked) {
                 await tx('links').increment('visits').where('id', linkId);
-
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId});
 
                 if (await _countLink(LinkId.GENERAL_CLICK, false)) {
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
+
+                    // general click probably doesn't need to be repeatedly logged
                     await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK});
                 }
+            }
+            if (firstTimeClicked || logRepeated) {
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId});
             }
         }
 
 
         // Update opens. We count a click as an open too.
         if (!campaign.open_tracking_disabled) {
-            if (await _countLink(LinkId.OPEN, true)) {
+            const firstTimeOpened = await _countLink(LinkId.OPEN, true);
+            if (firstTimeOpened) {
                 await tx('campaigns').increment('opened').where('id', campaign.id);
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {});
+            }
+            if (firstTimeOpened || logRepeated) {
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id);
             }
         }
     });
