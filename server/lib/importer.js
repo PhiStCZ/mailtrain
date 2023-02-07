@@ -7,6 +7,7 @@ const path = require('path');
 const {ImportStatus, RunStatus} = require('../../shared/imports');
 const {ListActivityType} = require('../../shared/activity-log');
 const activityLog = require('./activity-log');
+const mvisApiToken = require('./mvis').apiToken;
 const bluebird = require('bluebird');
 
 let messageTid = 0;
@@ -34,7 +35,10 @@ function spawn(callback) {
     }).then(() => {
         importerProcess = fork(path.join(__dirname, '..', 'services', 'importer.js'), [], {
             cwd: path.join(__dirname, '..'),
-            env: {NODE_ENV: process.env.NODE_ENV}
+            env: {
+                NODE_ENV: process.env.NODE_ENV,
+                MVIS_API_TOKEN: mvisApiToken
+            }
         });
 
         importerProcess.on('message', msg => {

@@ -6,7 +6,7 @@ const path = require('path');
 const bluebird = require('bluebird');
 const crypto = require('crypto');
 
-const apiToken = crypto.randomBytes(20).toString('hex').toLowerCase();
+const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
 
 let mvisProcess;
 

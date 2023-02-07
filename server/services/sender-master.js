@@ -9,6 +9,7 @@ const {CampaignStatus, CampaignType, CampaignMessageStatus} = require('../../sha
 const campaigns = require('../models/campaigns');
 const builtinZoneMta = require('../lib/builtin-zone-mta');
 const {CampaignActivityType} = require('../../shared/activity-log');
+const mvisApiToken = require('../lib/mvis').apiToken;
 const activityLog = require('../lib/activity-log');
 const {MessageType} = require('../lib/message-sender');
 require('../lib/fork');
@@ -639,7 +640,8 @@ async function spawnWorker(workerId) {
             cwd: path.join(__dirname, '..'),
             env: {
                 NODE_ENV: process.env.NODE_ENV,
-                BUILTIN_ZONE_MTA_PASSWORD: builtinZoneMta.getPassword()
+                BUILTIN_ZONE_MTA_PASSWORD: builtinZoneMta.getPassword(),
+                MVIS_API_TOKEN: mvisApiToken
             }
         });
 
