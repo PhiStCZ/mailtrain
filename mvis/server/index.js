@@ -2,6 +2,7 @@
 
 require('./extensions-common');
 const em = require('../ivis-core/server/lib/extension-manager');
+const log = require('../ivis-core/server/lib/log');
 const path = require('path');
 
 const APIToken = process.env.API_TOKEN;
@@ -25,6 +26,8 @@ async function init() {
     em.on('app.validateGlobalAccess', data => {
         data.accept = APIToken && (data.token === APIToken);
     });
+
+    log.heading = '(mvis)';
 
     require('../ivis-core/server/index');
 }
