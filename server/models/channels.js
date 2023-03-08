@@ -13,7 +13,7 @@ const { CampaignSource, } = require('../../shared/campaigns');
 const segments = require('./segments');
 const dependencyHelpers = require('../lib/dependency-helpers');
 
-const {EntityActivityType, CampaignActivityType} = require('../../shared/activity-log');
+const {LogTypeId, EntityActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'namespace', 'cpg_name', 'cpg_description',
@@ -156,7 +156,7 @@ async function _createTx(tx, context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'channel', entityId: id });
 
-        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -192,7 +192,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'channel', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -207,7 +207,7 @@ async function remove(context, id) {
 
         await tx('channels').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, 'channel', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, EntityActivityType.REMOVE, id);
     });
 }
 

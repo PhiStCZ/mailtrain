@@ -12,9 +12,10 @@ const { getPublicUrl } = require('../lib/urls');
 const tools = require('../lib/tools');
 const shortid = require('../lib/shortid');
 const {enforce} = require('../lib/helpers');
-const { EntityActivityType, CampaignTrackerActivityType } = require('../../shared/activity-log');
+const { LogTypeId, EntityActivityType, CampaignTrackerActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 const config = require('../lib/config');
+const logRepeated = config.get('mvis.logRepeatedEvents');
 
 const LinkId = {
     OPEN: -1,
@@ -84,8 +85,6 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
             await tx(subscriptions.getSubscriptionTableName(list.id)).update(latestUpdates).where('id', subscription.id);
         }
 
-        const logRepeated = config.get('mvis.logRepeatedEvents');
-
         // Update clicks
         if (linkId > LinkId.GENERAL_CLICK && !campaign.click_tracking_disabled) {
             await tx('links').increment('hits').where('id', linkId);
@@ -97,11 +96,11 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
 
                     // general click probably doesn't need to be repeatedly logged
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK});
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK, country, deviceType: device.type});
                 }
             }
             if (firstTimeClicked || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId});
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId, country, deviceType: device.type});
             }
         }
 
@@ -113,7 +112,7 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                 await tx('campaigns').increment('opened').where('id', campaign.id);
             }
             if (firstTimeOpened || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id);
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {country, deviceType: device.type});
             }
         }
     });
@@ -135,7 +134,7 @@ async function addOrGet(campaignId, url) {
                 url
             });
 
-            await activityLog.logEntityActivity('link', EntityActivityType.CREATE, id, { campaignId, url });
+            await activityLog.logEntityActivity(LogTypeId.LINK, EntityActivityType.CREATE, id, { campaignId, url });
 
             return {
                 id: ids[0],

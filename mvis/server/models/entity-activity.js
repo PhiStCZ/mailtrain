@@ -197,7 +197,23 @@ const campaignTracker = { // per campaign
             indexed: true,
             weight_list: 5,
             weight_edit: 5
-        }
+        },
+        country: {
+            type: SignalType.TEXT,
+            name: 'Country',
+            settings: {},
+            indexed: true,
+            weight_list: 6,
+            weight_edit: 6
+        },
+        deviceType: {
+            type: SignalType.TEXT,
+            name: 'Device Type',
+            settings: {},
+            indexed: true,
+            weight_list: 7,
+            weight_edit: 7
+        },
     },
     _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + _enforceValid(dataEntry.campaignId, 'campaignId'),
     ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },

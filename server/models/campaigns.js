@@ -25,7 +25,7 @@ const {convertFileURLs} = require('../lib/campaign-content');
 const messageSender = require('../lib/message-sender');
 const lists = require('./lists');
 
-const {EntityActivityType, CampaignActivityType, CampaignTrackerActivityType, TemplateActivityType} = require('../../shared/activity-log');
+const {LogTypeId, EntityActivityType, CampaignActivityType, CampaignTrackerActivityType, TemplateActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeysCommon = ['name', 'description', 'namespace', 'channel',
@@ -562,7 +562,7 @@ async function _createTx(tx, context, entity, content) {
                 }).where('id', id);
         }
 
-        await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.CREATE, id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {status: filteredEntity.status});
 
         return id;
     });
@@ -632,7 +632,7 @@ async function updateWithConsistencyCheck(context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'campaign', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.UPDATE, entity.id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, entity.id, {status: filteredEntity.status});
     });
 }
 
@@ -673,7 +673,7 @@ async function _removeTx(tx, context, id, existing = null, overrideTypeCheck = f
 
     await tx('campaigns').where('id', id).del();
 
-    await activityLog.logEntityActivityWithContext(context, 'campaign', EntityActivityType.REMOVE, id);
+    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.REMOVE, id);
 }
 
 
@@ -768,13 +768,13 @@ statusFieldMapping.set(CampaignMessageStatus.BOUNCED, 'bounced');
 statusFieldMapping.set(CampaignMessageStatus.COMPLAINED, 'complained');
 
 const messageStatusActivityLogMapping = new Map()
-    // .set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT)
-    // not valid because a message is sent only once, so hopefully this mapping should never happen
+    .set(CampaignMessageStatus.SENT, CampaignTrackerActivityType.SENT)
     .set(CampaignMessageStatus.BOUNCED, CampaignTrackerActivityType.BOUNCED)
     .set(CampaignMessageStatus.UNSUBSCRIBED, CampaignTrackerActivityType.UNSUBSCRIBED)
-    .set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.COMPLAINED);
+    .set(CampaignMessageStatus.COMPLAINED, CampaignTrackerActivityType.COMPLAINED)
+    .set(CampaignMessageStatus.FAILED, CampaignTrackerActivityType.FAILED);
     // CampaignTrackerActivityType.OPENED|.CLICKED are logged elsewhere, not mapped from CampaignMessageStatus
-    // CampaignMessageStatus.SCHEDULED|.FAILED don't map to CampainTrackerActivityType and are not logged
+    // CampaignMessageStatus.SCHEDULED doesn't map to CampainTrackerActivityType and is not logged
 
 async function _changeStatusByMessageTx(tx, context, message, campaignMessageStatus) {
     enforce(statusFieldMapping.has(campaignMessageStatus));
@@ -924,7 +924,7 @@ async function _changeStatus(context, campaignId, permittedCurrentStates, newSta
 
         await tx('campaigns').where('id', campaignId).update(updateData);
 
-        await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
     });
 
     senders.scheduleCheck();
@@ -967,8 +967,8 @@ async function reset(context, campaignId) {
         await tx('campaign_messages').where('campaign', campaignId).del();
         await tx('campaign_links').where('campaign', campaignId).del();
         await tx('links').where('campaign', campaignId).del();
-        
-        await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.IDLE});
+
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.RESET, campaignId, {status: CampaignStatus.IDLE});
     });
 }
 
@@ -1068,19 +1068,19 @@ async function testSend(context, data) {
 
                 if (data.subscriptionCid) {
                     const subscriber = await subscriptions.getByCidTx(tx, context, listId, data.subscriptionCid, true, true);
-                    await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {listId, subscriptionId: subscriber.id});
+                    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {listId, subscriptionId: subscriber.id});
                     await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
 
                 } else {
                     const subscribers = await subscriptions.listTestUsersTx(tx, context, listId, segmentId);
-                    await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {listId});
+                    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {listId});
                     for (const subscriber of subscribers) {
                         await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
                     }
                 }
 
             } else {
-                await activityLog.logEntityActivityWithContext(context, 'campaign', CampaignActivityType.TEST_SEND, {});
+                await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {});
 
                 for (const lstSeg of campaign.lists) {
                     await enforceSendPermissionTx(tx, context, campaign, true, lstSeg.list);

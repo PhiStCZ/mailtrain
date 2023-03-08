@@ -13,7 +13,7 @@ const {convertFileURLs} = require('../lib/campaign-content');
 const { allTagLanguages } = require('../../shared/templates');
 const messageSender = require('../lib/message-sender');
 const activityLog = require('../lib/activity-log');
-const { EntityActivityType } = require('../../shared/activity-log');
+const { EntityActivityType, LogTypeId } = require('../../shared/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'type', 'tag_language', 'data', 'html', 'text', 'namespace']);
 
@@ -111,7 +111,7 @@ async function create(context, entity) {
             await tx('templates').update(filteredEntity).where('id', id);
         }
 
-        await activityLog.logEntityActivityWithContext(context, 'template', EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.TEMPLATE, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -144,7 +144,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'template', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'template', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.TEMPLATE, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -166,7 +166,7 @@ async function remove(context, id) {
 
         await tx('templates').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, 'template', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.TEMPLATE, EntityActivityType.REMOVE, id);
     });
 }
 

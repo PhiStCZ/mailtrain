@@ -8,7 +8,7 @@ const knex = require('../lib/knex');
 const {CampaignStatus, CampaignType, CampaignMessageStatus} = require('../../shared/campaigns');
 const campaigns = require('../models/campaigns');
 const builtinZoneMta = require('../lib/builtin-zone-mta');
-const {CampaignActivityType} = require('../../shared/activity-log');
+const {CampaignActivityType, LogTypeId} = require('../../shared/activity-log');
 const mvisApiToken = require('../lib/mvis').apiToken;
 const activityLog = require('../lib/activity-log');
 const {MessageType} = require('../lib/message-sender');
@@ -327,7 +327,7 @@ async function processCampaign(campaignId) {
             campaignMessageQueue.delete(campaignId);
 
             await knex('campaigns').where('id', campaignId).update({status: newStatus});
-            await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
+            await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
         }
     }
 
@@ -417,7 +417,7 @@ async function scheduleCampaigns() {
                 .select('id');
 
             for (const id of ids) {
-                await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, id, {status: CampaignStatus.FINISHED});
+                await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, id, {status: CampaignStatus.FINISHED});
             }
 
             return await tx('campaigns')
@@ -457,7 +457,7 @@ async function scheduleCampaigns() {
 
                 if (scheduledCampaign) {
                     await tx('campaigns').where('id', scheduledCampaign.id).update({status: CampaignStatus.SENDING});
-                    await activityLog.logEntityActivity('campaign', CampaignActivityType.STATUS_CHANGE, scheduledCampaign.id, {status: CampaignStatus.SENDING});
+                    await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, scheduledCampaign.id, {status: CampaignStatus.SENDING});
                     campaignId = scheduledCampaign.id;
                 }
             });

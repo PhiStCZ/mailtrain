@@ -10,7 +10,7 @@ const {ImportSource, MappingType, ImportStatus, RunStatus, prepFinished, prepFin
 const fs = require('fs-extra-promise');
 const path = require('path');
 const importer = require('../lib/importer');
-const {ListActivityType} = require('../../shared/activity-log');
+const {LogTypeId, ListActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const files = require('./files');
@@ -119,7 +119,7 @@ async function create(context, listId, entity, files) {
         const ids = await tx('imports').insert(filteredEntity);
         const id = ids[0];
 
-        await activityLog.logListActivity(context, ListActivityType.CREATE_IMPORT, listId, {importId: id, importStatus: entity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.CREATE_IMPORT, listId, {importId: id, importStatus: entity.status});
 
         return id;
     });
@@ -153,7 +153,7 @@ async function updateWithConsistencyCheck(context, listId, entity) {
 
         await tx('imports').where({list: listId, id: entity.id}).update(filteredEntity);
 
-        await activityLog.logListActivity(context, ListActivityType.UPDATE_IMPORT, listId, {importId: entity.id, importStatus: entity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.UPDATE_IMPORT, listId, {importId: entity.id, importStatus: entity.status});
     });
 }
 
@@ -177,7 +177,7 @@ async function removeTx(tx, context, listId, id) {
     await tx('import_runs').where('import', id).del();
     await tx('imports').where({list: listId, id}).del();
 
-    await activityLog.logListActivity(context, ListActivityType.REMOVE_IMPORT, listId, {importId: id});
+    await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.REMOVE_IMPORT, listId, {importId: id});
 }
 
 async function remove(context, listId, id) {
@@ -217,7 +217,7 @@ async function start(context, listId, id) {
             mapping: entity.mapping
         });
 
-        await activityLog.logListActivity(context, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_SCHEDULED});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_SCHEDULED});
     });
 
     importer.scheduleCheck();
@@ -245,7 +245,7 @@ async function stop(context, listId, id) {
             status: RunStatus.STOPPING
         });
 
-        await activityLog.logListActivity(context, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_STOPPING});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.IMPORT_STATUS_CHANGE, listId, {importId: id, importStatus: ImportStatus.RUN_STOPPING});
     });
 
     importer.scheduleCheck();

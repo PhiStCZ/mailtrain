@@ -1,5 +1,25 @@
 'use strict';
 
+const LogTypeId = {
+    BLACKLIST: 'blacklist',
+    CAMPAIGN: 'campaign',
+    CAMPAIGN_TRACKER: 'campaign_tracker',
+    CHANNEL: 'channel',
+    FORM: 'form',
+    LINK: 'link',
+    LIST: 'list',
+    LIST_TRACKER: 'list_tracker',
+    NAMESPACE: 'namespace',
+    REPORT_TEMPLATE: 'report_template',
+    REPORT: 'report',
+    SETTINGS: 'settings',
+    SEND_CONFIGURATION: 'send_configuration',
+    SHARE: 'share',
+    TEMPLATE: 'template',
+    MOSAICO_TEMPLATE: 'mosaico_template',
+    USER: 'user',
+};
+
 const EntityActivityType = {
     CREATE: 1,
     UPDATE: 2,
@@ -14,10 +34,11 @@ const BlacklistActivityType = {
 
 const CampaignActivityType = {
     STATUS_CHANGE: EntityActivityType.MAX + 1,
-    TEST_SEND: EntityActivityType.MAX + 2,
-    CREATE_TRIGGER: EntityActivityType.MAX + 3,
-    UPDATE_TRIGGER: EntityActivityType.MAX + 4,
-    REMOVE_TRIGGER: EntityActivityType.MAX + 5
+    RESET: EntityActivityType.MAX + 2,
+    TEST_SEND: EntityActivityType.MAX + 3,
+    CREATE_TRIGGER: EntityActivityType.MAX + 4,
+    UPDATE_TRIGGER: EntityActivityType.MAX + 5,
+    REMOVE_TRIGGER: EntityActivityType.MAX + 6
 };
 
 const CampaignTrackerActivityType = {
@@ -64,6 +85,7 @@ const UserActivityType = {
     RESET_PASSWORD: EntityActivityType.MAX + 2
 };
 
+module.exports.LogTypeId = LogTypeId;
 module.exports.EntityActivityType = EntityActivityType;
 module.exports.BlacklistActivityType = BlacklistActivityType;
 module.exports.CampaignActivityType = CampaignActivityType;

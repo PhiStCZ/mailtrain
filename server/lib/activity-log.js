@@ -7,6 +7,9 @@ const axios = require('axios').default;
 const apiToken = require('./mvis').apiToken;
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
+const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
+const { LogTypeId } = require('../../shared/activity-log');
+
 let activityQueue = [];
 let activityQueue2 = [];
 
@@ -57,6 +60,7 @@ function _assignIssuedBy(context, data) {
     }
 }
 
+
 async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
     const data = {
         ...extraData,
@@ -72,6 +76,7 @@ async function logEntityActivityWithContext(context, entityTypeId, activityType,
     logEntityActivity(entityTypeId, activityType, entityId, extraData);
 }
 
+
 async function logBlacklistActivity(context, activityType, email) {
     const data = {
         type: activityType,
@@ -79,8 +84,26 @@ async function logBlacklistActivity(context, activityType, email) {
     };
     _assignIssuedBy(context, data);
 
-    await _logActivity('blacklist', data);
+    await _logActivity(LogTypeId.BLACKLIST, data);
 }
+
+async function logSettingsActivity(context) {
+    const data = {};
+    _assignIssuedBy(context, data);
+    await _logActivity(LogTypeId.SETTINGS, data);
+}
+
+async function logShareActivity(context, entityTypeId, entityId, userId, role) {
+    const data = {
+        userId,
+        entityTypeId,
+        entityId,
+        role
+    };
+    _assignIssuedBy(context, data);
+    await _logActivity(LogTypeId.SHARE, data);
+}
+
 
 async function logCampaignTrackerActivity(activityType, campaignId, listId, subscriptionId, extraData = {}) {
     const data = {
@@ -89,12 +112,12 @@ async function logCampaignTrackerActivity(activityType, campaignId, listId, subs
         listId,
         subscriptionId
     };
+    if (!logSensitiveUserData) {
+        delete data.country;
+        delete data.deviceType;
+    }
 
-    await _logActivity('campaign_tracker', data, {campaignId});
-}
-
-async function logListActivity(context, activityType, listId, extraData = {}) {
-    await logEntityActivityWithContext(context, 'list', activityType, listId, extraData);
+    await _logActivity(LogTypeId.CAMPAIGN_TRACKER, data, {campaignId});
 }
 
 async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined) {
@@ -109,25 +132,9 @@ async function logListTrackerActivity(activityType, listId, subscriptionId, subs
         data.previousSubscriptionStatus = previousSubscriptionStatus;
     }
 
-    await _logActivity('list_tracker', data, {listId});
+    await _logActivity(LogTypeId.LIST_TRACKER, data, {listId});
 }
 
-async function logSettingsActivity(context) {
-    const data = {};
-    _assignIssuedBy(context, data);
-    await _logActivity('settings', data);
-}
-
-async function logShareActivity(context, entityTypeId, entityId, userId, role) {
-    const data = {
-        userId,
-        entityTypeId,
-        entityId,
-        role
-    };
-    _assignIssuedBy(context, data);
-    await _logActivity('share', data);
-}
 
 function periodicLog() {
     // if a queue limit was reached recently, chances are we don't need extra logs from timeout
@@ -145,7 +152,6 @@ module.exports.logBlacklistActivity = logBlacklistActivity;
 module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
 module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
-module.exports.logListActivity = logListActivity;
 module.exports.logListTrackerActivity = logListTrackerActivity;
 module.exports.logShareActivity = logShareActivity;
 module.exports.logSettingsActivity = logSettingsActivity;

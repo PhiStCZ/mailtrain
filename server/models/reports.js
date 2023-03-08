@@ -15,7 +15,7 @@ const {LinkId} = require('./links');
 const subscriptions = require('./subscriptions');
 const {Readable} = require('stream');
 const activityLog = require('../lib/activity-log');
-const { EntityActivityType, ReportActivityType } = require('../../shared/activity-log');
+const { EntityActivityType, ReportActivityType, LogTypeId } = require('../../shared/activity-log');
 
 const ReportState = require('../../shared/reports').ReportState;
 
@@ -84,7 +84,7 @@ async function create(context, entity) {
     const reportProcessor = require('../lib/report-processor');
     await reportProcessor.start(id);
 
-    await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.CREATE, id);
+    await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.CREATE, id);
 
     return id;
 }
@@ -118,7 +118,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'report', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.UPDATE, entity.id);
     });
 
     // This require is here to avoid cyclic dependency
@@ -136,7 +136,7 @@ async function removeTx(tx, context, id) {
 
     await tx('reports').where('id', id).del();
 
-    await activityLog.logEntityActivityWithContext(context, 'report', EntityActivityType.REMOVE, id);
+    await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.REMOVE, id);
 }
 
 async function remove(context, id) {
@@ -159,7 +159,7 @@ async function changeState(id, newState, last_run = undefined) {
         fields.last_run = last_run;
     }
 
-    await activityLog.logEntityActivity('report', ReportActivityType.STATUS_CHANGE, id, {status: newState});
+    await activityLog.logEntityActivity(LogTypeId.REPORT, ReportActivityType.STATUS_CHANGE, id, {status: newState});
 
     return await updateFields(id, fields);
 }
@@ -169,7 +169,7 @@ async function bulkChangeState(oldState, newState) {
         const ids = await knex('reports').where('state', oldState).select('id');
 
         for (const id of ids) {
-            await activityLog.logEntityActivity('report', ReportActivityType.STATUS_CHANGE, id, {status: newState});
+            await activityLog.logEntityActivity(LogTypeId.REPORT, ReportActivityType.STATUS_CHANGE, id, {status: newState});
         }
 
         return await tx('reports').whereIn('id', ids).update('state', newState);

@@ -14,7 +14,7 @@ const imports = require('./imports');
 const entitySettings = require('../lib/entity-settings');
 const dependencyHelpers = require('../lib/dependency-helpers');
 
-const {EntityActivityType} = require('../../shared/activity-log');
+const {LogTypeId, EntityActivityType} = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const {UnsubscriptionMode, FieldWizard} = require('../../shared/lists');
@@ -241,7 +241,7 @@ async function create(context, entity) {
             await fields.createTx(tx, context, id, fld);
         }
 
-        await activityLog.logListActivity(context, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -269,7 +269,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'list', entityId: entity.id });
 
-        await activityLog.logListActivity(context, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -294,7 +294,7 @@ async function remove(context, id) {
         await tx('lists').where('id', id).del();
         await knex.schema.dropTableIfExists('subscription__' + id);
 
-        await activityLog.logListActivity(context, EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, EntityActivityType.REMOVE, id);
     });
 }
 

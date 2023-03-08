@@ -11,7 +11,7 @@ const files = require('./files');
 const dependencyHelpers = require('../lib/dependency-helpers');
 const { allTagLanguages } = require('../../shared/templates');
 
-const { EntityActivityType } = require('../../shared/activity-log');
+const { EntityActivityType, LogTypeId } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeys = new Set(['name', 'description', 'type', 'tag_language', 'data', 'namespace']);
@@ -70,7 +70,7 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: id });
 
-        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -100,7 +100,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -135,7 +135,7 @@ async function remove(context, id) {
 
         await tx('mosaico_templates').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, 'mosaico_template', EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.REMOVE, id);
     });
 }
 
