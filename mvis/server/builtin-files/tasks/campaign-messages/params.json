@@ -1,0 +1,34 @@
+[
+    {
+        "id": "campaignId",
+        "type": "integer",
+        "label": "Campaign ID",
+        "help": "ID of target campaign"
+    },
+    {
+        "id": "creationTimestamp",
+        "type": "string",
+        "label": "Creation timestamp",
+        "help": "When was the campaign created"
+    },
+    {
+        "id": "campaign",
+        "type": "signalSet",
+        "label": "Campaign Signal Set",
+        "help": "Global campaign signal set",
+        "includeSignals": true
+    },
+    {
+        "id": "campaignTracker",
+        "type": "signalSet",
+        "label": "Campaign Tracker",
+        "help": "Campaign tracker to process",
+        "includeSignals": true
+    },
+    {
+        "id": "campaignMessagesCid",
+        "type": "string",
+        "label": "Campaign messages CID",
+        "help": "CID of campaign messages signal set"
+    }
+]
