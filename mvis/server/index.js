@@ -5,7 +5,9 @@ const em = require('../ivis-core/server/lib/extension-manager');
 const log = require('../ivis-core/server/lib/log');
 const path = require('path');
 
-const APIToken = process.env.API_TOKEN;
+const entityActivity = require('./models/entity-activity');
+
+const apiToken = process.env.API_TOKEN;
 
 async function init() {
     em.set('app.clientDist', path.join(__dirname, '..', 'client', 'dist'));
@@ -24,7 +26,13 @@ async function init() {
     });
 
     em.on('app.validateGlobalAccess', data => {
-        data.accept = APIToken && (data.token === APIToken);
+        data.accept = apiToken && (data.token === apiToken);
+    });
+
+    em.on('services.start', async () => {
+        // this is for setting up any global namespaces, users, signal sets, workspaces and panels
+
+        await entityActivity.init();
     });
 
     log.heading = '(mvis)';
