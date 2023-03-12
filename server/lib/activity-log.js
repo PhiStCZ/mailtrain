@@ -8,7 +8,8 @@ const apiToken = require('./mvis').apiToken;
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
 const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
-const { LogTypeId } = require('../../shared/activity-log');
+const { LogTypeId, ListActivityType } = require('../../shared/activity-log');
+const { hashEmail } = require('./helpers');
 
 let activityQueue = [];
 let activityQueue2 = [];
@@ -39,13 +40,10 @@ async function processQueue() {
     processQueueIsRunning = false;
 }
 
-async function _logActivity(typeId, data, extraIds = {}) {
-    activityQueue.push({
-        ...extraIds,
-        typeId,
-        data,
-        timestamp: moment.utc().toISOString()
-    });
+async function _logActivity(typeId, data) {
+    data.typeId = typeId;
+    data.timestamp = moment.utc().toISOString();
+    activityQueue.push(data);
 
     if (activityQueue.length >= activityQueueLengthThreshold) {
         // noinspection ES6MissingAwait
@@ -55,12 +53,19 @@ async function _logActivity(typeId, data, extraIds = {}) {
 
 function _assignIssuedBy(context, data) {
     // if the data's issued by is already filled, then that data has more priority and won't be overwritten
-    if (data.issuedBy === undefined) {
+    if (data.issuedBy && context && context.user && context.user.id) {
         data.issuedBy = context.user.id;
     }
 }
 
 
+/**
+ * Log a general activity of an entity.
+ * @param entityTypeId
+ * @param activityType defined in ../../shared/activity-log.js
+ * @param entityId
+ * @param extraData different entity types may accept different extra data
+ */
 async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
     const data = {
         ...extraData,
@@ -71,6 +76,14 @@ async function logEntityActivity(entityTypeId, activityType, entityId, extraData
     await _logActivity(entityTypeId, data);
 }
 
+/**
+ * Log a general activity of an entity. The context will include the user who issued the activity.
+ * @param context only needed for issued-by assignment; can be null
+ * @param entityTypeId
+ * @param activityType defined in ../../shared/activity-log.js
+ * @param entityId
+ * @param extraData different entity types may accept different extra data
+ */
 async function logEntityActivityWithContext(context, entityTypeId, activityType, entityId, extraData = {}) {
     _assignIssuedBy(context, extraData);
     logEntityActivity(entityTypeId, activityType, entityId, extraData);
@@ -105,34 +118,73 @@ async function logShareActivity(context, entityTypeId, entityId, userId, role) {
 }
 
 
+/**
+ * Log campaign tracker activity.
+ * @param activityType
+ * @param campaignId
+ * @param listid
+ * @param subscriptionId
+ * @param extraData possible keys: { linkId, ip, country, deviceType, triggerId }
+ */
 async function logCampaignTrackerActivity(activityType, campaignId, listId, subscriptionId, extraData = {}) {
     const data = {
         ...extraData,
         activityType,
         listId,
-        subscriptionId
+        subscriptionId,
+        campaignId,
     };
     if (!logSensitiveUserData) {
+        delete data.ip;
         delete data.country;
         delete data.deviceType;
     }
 
-    await _logActivity(LogTypeId.CAMPAIGN_TRACKER, data, {campaignId});
+    await _logActivity(LogTypeId.CAMPAIGN_TRACKER, data);
 }
 
-async function logListTrackerActivity(activityType, listId, subscriptionId, subscriptionStatus = undefined, previousSubscriptionStatus = undefined) {
-    const data = {
-        activityType,
-        subscriptionId,
-    };
-    if (subscriptionStatus) {
-        data.subscriptionStatus = subscriptionStatus;
-    }
-    if (previousSubscriptionStatus) {
-        data.previousSubscriptionStatus = previousSubscriptionStatus;
+// TODO: perhaps change previousSubscriptionStatus to an absolute sub count, maybe even split the tables into more...
+/**
+ * Log list tracker activity. If email is entered, email hash is automatically deduced.
+ * @param activityType
+ * @param listId
+ * @param subscriptionId
+ * @param extraData possible keys: { isTest, subscriptionStatus, previousSubscriptionStatus, email }
+ */
+async function logListTrackerActivity(activityType, listId, subscriptionId, extraData = {}) {
+    if (extraData.email) {
+        extraData.emailHash = hashEmail(extraData.email);
     }
 
-    await _logActivity(LogTypeId.LIST_TRACKER, data, {listId});
+    const data = {
+        ...extraData,
+        activityType,
+        subscriptionId,
+        listId,
+    };
+    if (!logSensitiveUserData) {
+        delete data.email;
+    }
+
+    if (
+        activityType === ListActivityType.UPDATE_SUBSCRIPTION &&
+        data.subscriptionStatus &&
+        data.subscriptionStatus !== data.previousSubscriptionStatus
+    ) {
+        const statusChangeData = {
+            activityType: ListActivityType.SUBSCRIPTION_STATUS_CHANGE,
+            subscriptionId,
+            listId,
+            subscriptionStatus: data.subscriptionStatus,
+            previousSubscriptionStatus: data.previousSubscriptionStatus,
+        };
+        delete data.subscriptionStatus;
+        delete data.previousSubscriptionStatus;
+
+        await _logActivity(LogTypeId.LIST_TRACKER, statusChangeData);
+    }
+
+    await _logActivity(LogTypeId.LIST_TRACKER, data);
 }
 
 

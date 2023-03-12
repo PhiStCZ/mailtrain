@@ -1,553 +1,366 @@
 'use strict';
 
 const config = require('../../ivis-core/server/lib/config');
+const contextHelpers = require('../../ivis-core/server/lib/context-helpers');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
+const { LogTypeId } = require('../../../shared/activity-log');
 const schemas = require('./schemas');
+const activityLog = require('../lib/activity-log');
 
-function _nameToSignalSetId(name) {
-    return name.toLowerCase().replace(/ /g, '-');
-}
+/**
+ * All signal sets not bound to any entity instance.
+ * At runtime it also contains cached signal sets.
+ */
+const staticSignalSets = {
+    [LogTypeId.BLACKLIST]: {
+        schema: {
+            timestamp: {
+                type: SignalType.DATE_TIME,
+                name: 'Timestamp',
+                settings: {},
+                indexed: true,
+                weight_list: 0,
+                weight_edit: 0
+            },
+            issuedBy: {
+                type: SignalType.INTEGER,
+                name: 'Issued by',
+                settings: {},
+                indexed: true,
+                weight_list: 1,
+                weight_edit: 1,
+            },
+            type: {
+                type: SignalType.INTEGER,
+                name: 'Activity Type',
+                settings: {},
+                indexed: true,
+                weight_list: 2,
+                weight_edit: 2
+            },
+            email: {
+                type: SignalType.TEXT,
+                name: 'Email address',
+                settings: {},
+                indexed: true,
+                weight_list: 3,
+                weight_edit: 3
+            },
+        },
+        name: 'Blacklist',
+        
+        ingest: async function (record) {
+            // let id = getLastId(...);
+            return {
+                // id: TODO
+            };
+        }
+    },
+    [LogTypeId.CAMPAIGN]: {
+        schema: {
+            ...schemas.genericEntitySchema,
+            status: {
+                type: SignalType.INTEGER,
+                name: 'Campaign Status',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            },
+            triggerId: {
+                type: SignalType.INTEGER,
+                name: 'Campaign Trigger ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+            },
+            listId: {
+                type: SignalType.INTEGER,
+                name: 'List ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+            },
+            subscriptionId: {
+                type: SignalType.INTEGER,
+                name: 'Subscription ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+            }
+        },
+        name: 'Campaign',
+        // ingest
+    },
+    [LogTypeId.CHANNEL]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Channel',
+        
+        // ingest
+    },
+    [LogTypeId.FORM]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Form',
+        // ingest
+    },
+    [LogTypeId.LINK]: {
+        schema: {
+            ...schemas.genericEntitySchema,
+            campaignId: {
+                type: SignalType.INTEGER,
+                name: 'Campaign ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            },
+            url: {
+                type: SignalType.TEXT,
+                name: 'Link URL',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+            },
+        },
+        name: 'Link',
+        // ingest
+    },
+    [LogTypeId.LIST]: {
+        schema: {
+            ...schemas.genericEntitySchema,
+            fieldId: {
+                type: SignalType.INTEGER,
+                name: 'Field ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            },
+            importId: {
+                type: SignalType.INTEGER,
+                name: 'Import ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+            },
+            importStatus: {
+                type: SignalType.INTEGER,
+                name: 'Import Status',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+            },
+            segmentId: {
+                type: SignalType.INTEGER,
+                name: 'Segment ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+            },
+            subscriptionId: {
+                type: SignalType.INTEGER,
+                name: 'Subscription ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
+            }
+        },
+        name: 'List',
+        // ingest
+    },
+    [LogTypeId.NAMESPACE]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Namespace',
+        
+        // ingest
+    },
+    [LogTypeId.REPORT_TEMPLATE]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Report Template',
+        
+        // ingest
+    },
+    [LogTypeId.REPORT]: {
+        schema: {
+            ...schemas.genericEntitySchema,
+            status: {
+                type: SignalType.INTEGER,
+                name: 'Report Status',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            }
+        },
+        name: 'Report',
+        
+        // ingest
+    },
+    [LogTypeId.SETTINGS]: {
+        schema: {
+            timestamp: {
+                type: SignalType.DATE_TIME,
+                name: 'Timestamp',
+                settings: {},
+                indexed: true,
+                weight_list: 0,
+                weight_edit: 0
+            },
+            issuedBy: {
+                type: SignalType.INTEGER,
+                name: 'Issued by',
+                settings: {},
+                indexed: true,
+                weight_list: 1,
+                weight_edit: 1,
+            }
+        },
+        name: 'Settings',
+        
+        // ingest
+    },
+    [LogTypeId.SEND_CONFIGURATION]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Send Configuration',
+        
+        // ingest
+    },
+    [LogTypeId.SHARE]: {
+        schema: {
+            timestamp: {
+                type: SignalType.DATE_TIME,
+                name: 'Timestamp',
+                settings: {},
+                indexed: true,
+                weight_list: 0,
+                weight_edit: 0
+            },
+            issuedBy: {
+                type: SignalType.INTEGER,
+                name: 'Issued by',
+                settings: {},
+                indexed: true,
+                weight_list: 1,
+                weight_edit: 1,
+            },
+            entityTypeId: {
+                type: SignalType.TEXT,
+                name: 'Entity Type ID',
+                settings: {},
+                indexed: true,
+                weight_list: 2,
+                weight_edit: 2
+            },
+            entityId: {
+                type: SignalType.INTEGER,
+                name: 'Entity ID',
+                settings: {},
+                indexed: true,
+                weight_list: 3,
+                weight_edit: 3
+            },
+            userId: {
+                type: SignalType.INTEGER,
+                name: 'User ID',
+                settings: {},
+                indexed: true,
+                weight_list: 4,
+                weight_edit: 4
+            },
+            role: {
+                type: SignalType.TEXT,
+                name: 'Assigned Role',
+                settings: {},
+                indexed: true,
+                weight_list: 5,
+                weight_edit: 5
+            },
+        },
+        name: 'Share',
+        
+        // ingest
+    },
+    [LogTypeId.TEMPLATE]: {
+        schema: {
+            ...schemas.genericEntitySchema,
+            listId: {
+                type: SignalType.INTEGER,
+                name: 'List ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            },
+            subscriptionId: {
+                type: SignalType.INTEGER,
+                name: 'Subscription ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+            }
+        },
+        name: 'Template',
+        
+        // ingest
+    },
+    [LogTypeId.MOSAICO_TEMPLATE]: {
+        schema: schemas.genericEntitySchema,
+        name: 'Mosaico Template',
+        
+        // ingest
+    },
+    [LogTypeId.USER]: {
+        schema: schemas.genericEntitySchema,
+        name: 'User',
+        
+        // ingest
+    },
+};
 
-function _enforceValid(field, fieldName) {
-    if (!field) {
-        throw new Error(`Field '${fieldName}' value is invalid.`);
+async function getCachedStaticSignalSet(context, eventTypeId) {
+    const cached = staticSignalSets[eventTypeId].cached
+    if (cached) {
+        return cached;
     }
-    return field;
-}
 
-async function _ensureAndGetSignalSet(instance, context, dataEntry) {
-    if (instance._signalSet) {
-        return instance._signalSet;
-    }
-    const name = instance._getSignalSetName(dataEntry);
-    // possibly add self._getSignalSetDescription
-    instance._signalSet = await signalSets.ensure(
+    const signalSetConfig = staticSignalSets[eventTypeId];
+    const name = signalSetConfig.name;
+
+    const sigSet = await signalSets.ensure(
         context,
         {
-            cid: _nameToSignalSetId(name),
+            eventTypeId,
             name,
             description: '',
             namespace: config.mailtrain.namespace,
         },
-        instance.schema
+        signalSetConfig.schema
     );
 
-    return instance._signalSet;
+    staticSignalSets[eventTypeId].cached = sigSet;
+    return sigSet;
 }
 
-async function _ensureAndGetNamedSignalSet(instance, context, dataEntry) {
-    if (!instance._signalSets) {
-        instance._signalSets = {};
+async function init() {
+    for (const typeId in staticSignalSets) {
+        await getCachedStaticSignalSet(contextHelpers.getAdminContext(), typeId);
+
+        activityLog.on(typeId, async (context, records) => {
+            const sigSetEntry = staticSignalSets[typeId];
+            await activityLog.transformAndStoreEvents(context, records, sigSetEntry.cached, sigSetEntry.schema);
+        });
     }
-
-    const name = instance._getSignalSetName(dataEntry);
-    let signalSet = instance._signalSets[name];
-    if (signalSet) {
-        return signalSet;
-    }
-
-    signalSet = await signalSets.ensure(
-        context,
-        {
-            cid: _nameToSignalSetId(name),
-            name,
-            description: '',
-            namespace: config.mailtrain.namespace,
-        },
-        instance.schema
-    );
-
-    instance._signalSets[name] = signalSet;
-    return signalSet;
 }
 
-const blacklist = {
-    schema: {
-        timestamp: {
-            type: SignalType.DATE_TIME,
-            name: 'Timestamp',
-            settings: {},
-            indexed: true,
-            weight_list: 0,
-            weight_edit: 0
-        },
-        issuedBy: {
-            type: SignalType.INTEGER,
-            name: 'Issued by',
-            settings: {},
-            indexed: true,
-            weight_list: 1,
-            weight_edit: 1,
-        },
-        type: {
-            type: SignalType.INTEGER,
-            name: 'Activity Type',
-            settings: {},
-            indexed: true,
-            weight_list: 2,
-            weight_edit: 2
-        },
-        email: {
-            type: SignalType.TEXT,
-            name: 'Email address',
-            settings: {},
-            indexed: true,
-            weight_list: 3,
-            weight_edit: 3
-        },
-    },
-    _getSignalSetName: (_) => 'Blacklist',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    ingest: async function (record) {
-        // let id = getLastId(...);
-        return {
-            // id: TODO
-        };
-    }
-};
-
-const campaign = {
-    schema: {
-        ...schemas.genericEntitySchema,
-        status: {
-            type: SignalType.INTEGER,
-            name: 'Campaign Status',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-        },
-        triggerId: {
-            type: SignalType.INTEGER,
-            name: 'Campaign Trigger ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
-        },
-        listId: {
-            type: SignalType.INTEGER,
-            name: 'List ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
-        },
-        subscriptionId: {
-            type: SignalType.INTEGER,
-            name: 'Subscription ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
-        }
-    },
-    _getSignalSetName: (_) => 'Campaign',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const campaignTracker = { // per campaign
-    schema: {
-        timestamp: {
-            type: SignalType.DATE_TIME,
-            name: 'Timestamp',
-            settings: {},
-            indexed: true,
-            weight_list: 0,
-            weight_edit: 0
-        },
-        activityType: {
-            type: SignalType.INTEGER,
-            name: 'Activity Type',
-            settings: {},
-            indexed: true,
-            weight_list: 1,
-            weight_edit: 1
-        },
-        listId: {
-            type: SignalType.INTEGER,
-            name: 'List ID',
-            settings: {},
-            indexed: true,
-            weight_list: 2,
-            weight_edit: 2
-        },
-        subscriptionId: {
-            type: SignalType.INTEGER,
-            name: 'Subscription ID',
-            settings: {},
-            indexed: true,
-            weight_list: 3,
-            weight_edit: 3
-        },
-        linkId: {
-            type: SignalType.INTEGER,
-            name: 'Link ID',
-            settings: {},
-            indexed: true,
-            weight_list: 4,
-            weight_edit: 4
-        },
-        triggerId: {
-            type: SignalType.INTEGER,
-            name: 'Trigger ID',
-            settings: {},
-            indexed: true,
-            weight_list: 5,
-            weight_edit: 5
-        },
-        country: {
-            type: SignalType.TEXT,
-            name: 'Country',
-            settings: {},
-            indexed: true,
-            weight_list: 6,
-            weight_edit: 6
-        },
-        deviceType: {
-            type: SignalType.TEXT,
-            name: 'Device Type',
-            settings: {},
-            indexed: true,
-            weight_list: 7,
-            weight_edit: 7
-        },
-    },
-    _getSignalSetName: (dataEntry) => 'Campaign Tracker ' + _enforceValid(dataEntry.campaignId, 'campaignId'),
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const channel = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Channel',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const form = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Form',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const link = {
-    schema: {
-        ...schemas.genericEntitySchema,
-        campaignId: {
-            type: SignalType.INTEGER,
-            name: 'Campaign ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-        },
-        url: {
-            type: SignalType.TEXT,
-            name: 'Link URL',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
-        },
-    },
-    _getSignalSetName: (_) => 'Link',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-}
-
-/*
-
-activities:
-  CUD,
-  fields ( CUD ),
-  imports ( CUD, statusChange ),
-  subs ( CUD, statusChange ) <- might be in a separate listTracker sigset
-
-fields:
-  (listId, activityType, issuedBy)
-  fieldId
-  importId
-  importStatus
-  subId
-  subStatus
-
-*/
-
-const list = { // global
-    schema: {
-        ...schemas.genericEntitySchema,
-        fieldId: {
-            type: SignalType.INTEGER,
-            name: 'Field ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-        },
-        importId: {
-            type: SignalType.INTEGER,
-            name: 'Import ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
-        },
-        importStatus: {
-            type: SignalType.INTEGER,
-            name: 'Import Status',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
-        },
-        segmentId: {
-            type: SignalType.INTEGER,
-            name: 'Segment ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
-        },
-        subscriptionId: {
-            type: SignalType.INTEGER,
-            name: 'Subscription ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
-        }
-    },
-    _getSignalSetName: (_) => 'List',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const listTracker = { // tracks only subscriptions // per list
-    schema: {
-        timestamp: {
-            type: SignalType.DATE_TIME,
-            name: 'Timestamp',
-            settings: {},
-            indexed: true,
-            weight_list: 0,
-            weight_edit: 0
-        },
-        activityType: {
-            type: SignalType.INTEGER,
-            name: 'Activity Type',
-            settings: {},
-            indexed: true,
-            weight_list: 1,
-            weight_edit: 1
-        },
-        subscriptionId: {
-            type: SignalType.INTEGER,
-            name: 'Subscription ID',
-            settings: {},
-            indexed: true,
-            weight_list: 2,
-            weight_edit: 2
-        },
-        subscriptionStatus: {
-            type: SignalType.INTEGER,
-            name: 'Subscription Status',
-            settings: {},
-            indexed: true,
-            weight_list: 3,
-            weight_edit: 3
-        },
-        previousSubscriptionStatus: {
-            type: SignalType.INTEGER,
-            name: 'Previous Subscription Status',
-            settings: {},
-            indexed: true,
-            weight_list: 4,
-            weight_edit: 4
-        },
-        // TODO: add mail hash and possibly other trackable user data
-    },
-    _getSignalSetName: (dataEntry) => 'List Tracker ' + _enforceValid(dataEntry.listId, 'listId'),
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetNamedSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const namespace = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Namespace',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const reportTemplate = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Report Template',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const report = {
-    schema: {
-        ...schemas.genericEntitySchema,
-        status: {
-            type: SignalType.INTEGER,
-            name: 'Report Status',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-        }
-    },
-    _getSignalSetName: (_) => 'Report',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const settings = {
-    schema: {
-        timestamp: {
-            type: SignalType.DATE_TIME,
-            name: 'Timestamp',
-            settings: {},
-            indexed: true,
-            weight_list: 0,
-            weight_edit: 0
-        },
-        issuedBy: {
-            type: SignalType.INTEGER,
-            name: 'Issued by',
-            settings: {},
-            indexed: true,
-            weight_list: 1,
-            weight_edit: 1,
-        }
-    },
-    _getSignalSetName: (_) => 'Settings',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-}
-
-const sendConfiguration = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Send Configuration',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const share = {
-    schema: {
-        timestamp: {
-            type: SignalType.DATE_TIME,
-            name: 'Timestamp',
-            settings: {},
-            indexed: true,
-            weight_list: 0,
-            weight_edit: 0
-        },
-        issuedBy: {
-            type: SignalType.INTEGER,
-            name: 'Issued by',
-            settings: {},
-            indexed: true,
-            weight_list: 1,
-            weight_edit: 1,
-        },
-        entityTypeId: {
-            type: SignalType.TEXT,
-            name: 'Entity Type ID',
-            settings: {},
-            indexed: true,
-            weight_list: 2,
-            weight_edit: 2
-        },
-        entityId: {
-            type: SignalType.INTEGER,
-            name: 'Entity ID',
-            settings: {},
-            indexed: true,
-            weight_list: 3,
-            weight_edit: 3
-        },
-        userId: {
-            type: SignalType.INTEGER,
-            name: 'User ID',
-            settings: {},
-            indexed: true,
-            weight_list: 4,
-            weight_edit: 4
-        },
-        role: {
-            type: SignalType.TEXT,
-            name: 'Assigned Role',
-            settings: {},
-            indexed: true,
-            weight_list: 5,
-            weight_edit: 5
-        },
-    },
-    _getSignalSetName: (_) => 'Share',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const template = {
-    schema: {
-        ...schemas.genericEntitySchema,
-        listId: {
-            type: SignalType.INTEGER,
-            name: 'List ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-        },
-        subscriptionId: {
-            type: SignalType.INTEGER,
-            name: 'Subscription ID',
-            settings: {},
-            indexed: true,
-            weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-            weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
-        }
-    },
-    _getSignalSetName: (_) => 'Template',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const mosaicoTemplate = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'Mosaico Template',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-const user = {
-    schema: schemas.genericEntitySchema,
-    _getSignalSetName: (_) => 'User',
-    ensureAndGetSignalSet: function (context, dataEntry) { return _ensureAndGetSignalSet(this, context, dataEntry); },
-    // ingest
-};
-
-module.exports = {
-    blacklist,
-    campaign,
-    campaign_tracker: campaignTracker,
-    channel,
-    form,
-    link,
-    list,
-    list_tracker: listTracker,
-    namespace,
-    report_template: reportTemplate,
-    report,
-    settings,
-    send_configuration: sendConfiguration,
-    share,
-    template,
-    mosaico_template: mosaicoTemplate,
-    user
-};
+module.exports.getCachedStaticSignalSet = getCachedStaticSignalSet;
+module.exports.init = init;

@@ -96,11 +96,11 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
 
                     // general click probably doesn't need to be repeatedly logged
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK, country, deviceType: device.type});
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK, ip: remoteIp, country, deviceType: device.type});
                 }
             }
             if (firstTimeClicked || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId, country, deviceType: device.type});
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId, ip: remoteIp, country, deviceType: device.type});
             }
         }
 
@@ -112,7 +112,7 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                 await tx('campaigns').increment('opened').where('id', campaign.id);
             }
             if (firstTimeOpened || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {country, deviceType: device.type});
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {ip: remoteIp, country, deviceType: device.type});
             }
         }
     });

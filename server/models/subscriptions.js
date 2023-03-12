@@ -684,20 +684,31 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
         meta.cid = meta.existing.cid; // The cid is needed by /confirm/subscribe/:cid
 
         const subscriptionId = meta.existing.id;
-        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, subscriptionId);
-        if ('status' in filteredEntity && filteredEntity.status !== meta.existing.status) {
-            await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, subscriptionId, filteredEntity.status, meta.existing.status);
+        const extraData = {};
+        if (filteredEntity.email != meta.existing.email) {
+            extraData.email = filteredEntity.email;
         }
+        if (!!filteredEntity.is_test != meta.existing.isTest) {
+            extraData.is_test = !!filteredEntity.is_test;
+        }
+        if ('status' in filteredEntity) {
+            extraData.subscriptionStatus = filteredEntity.status;
+            extraData.previousSubscriptionStatus = meta.existing.status;
+        }
+        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, subscriptionId, extraData);
 
-        return meta.existing.id;
+        return subscriptionId;
 
     } else {
         filteredEntity.cid = shortid.generate();
         meta.cid = filteredEntity.cid; // The cid is needed by /confirm/subscribe/:cid
         const id = await _create(tx, listId, filteredEntity);
 
-        await activityLog.logListTrackerActivity(ListActivityType.CREATE_SUBSCRIPTION, listId, id, filteredEntity.status);
-
+        await activityLog.logListTrackerActivity(ListActivityType.CREATE_SUBSCRIPTION, listId, id, {
+            email: filteredEntity.email,
+            is_test: !!filteredEntity.is_test,
+            subscriptionStatus: filteredEntity.status
+        });
         return id;
     }
 }
@@ -738,10 +749,18 @@ async function updateWithConsistencyCheck(context, listId, entity, source) {
 
         await _update(tx, listId, groupedFieldsMap, existing, filteredEntity);
 
-        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, existing.id);
-        if ('status' in filteredEntity && filteredEntity.status !== existing.status) {
-            await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, existing.id, filteredEntity.status, existing.status);
+        const extraData = {};
+        if (filteredEntity.email != meta.existing.email) {
+            extraData.email = filteredEntity.email;
         }
+        if (!!filteredEntity.is_test != meta.existing.isTest) {
+            extraData.is_test = !!filteredEntity.is_test;
+        }
+        if ('status' in filteredEntity) {
+            extraData.subscriptionStatus = filteredEntity.status;
+            extraData.previousSubscriptionStatus = existing.status;
+        }
+        await activityLog.logListTrackerActivity(ListActivityType.UPDATE_SUBSCRIPTION, listId, existing.id, extraData);
     });
 }
 
@@ -754,7 +773,9 @@ async function _removeAndGetTx(tx, context, listId, existing) {
 
     await _remove(tx, listId, existing);
 
-    await activityLog.logListTrackerActivity(ListActivityType.REMOVE_SUBSCRIPTION, listId, existing.id, existing.status);
+    await activityLog.logListTrackerActivity(ListActivityType.REMOVE_SUBSCRIPTION, listId, existing.id, {
+        subscriptionStatus: existing.status
+    });
 
     return existing;
 }
@@ -781,10 +802,13 @@ async function _changeStatusTx(tx, context, listId, existing, newStatus) {
 
     await shares.enforceEntityPermissionTx(tx, context, 'list', listId, 'manageSubscriptions');
 
-    await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, existing.id, newStatus, existing.status);
-
     await _update(tx, listId, groupedFieldsMap, existing, {
         status: newStatus
+    });
+
+    await activityLog.logListTrackerActivity(ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listId, existing.id, {
+        subscriptionStatus: newStatus,
+        previousSubscriptionStatus: existing.status
     });
 }
 
