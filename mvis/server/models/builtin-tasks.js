@@ -20,7 +20,7 @@ const mvisBuiltinTasks = [
 async function load() {
     for (const builtinTask of mvisBuiltinTasks) {
         const taskDir = path.join(__dirname, '..', 'builtin-files', 'tasks', builtinTask.name);
-        ensureCodeAndParamsForBuiltinTask(builtinTask, taskDir);
+        await ensureCodeAndParamsForBuiltinTask(builtinTask, taskDir);
     }
 
     em.on('builtinTasks.add', builtinTasks => {

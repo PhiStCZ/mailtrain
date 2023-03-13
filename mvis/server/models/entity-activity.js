@@ -339,10 +339,11 @@ async function getCachedStaticSignalSet(context, eventTypeId) {
     const sigSet = await signalSets.ensure(
         context,
         {
-            eventTypeId,
+            cid: eventTypeId,
             name,
             description: '',
             namespace: config.mailtrain.namespace,
+            // A different kind can be used to avoid having to insert timestamp everytime
         },
         signalSetConfig.schema
     );

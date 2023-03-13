@@ -15,7 +15,7 @@ let activityQueue = [];
 let activityQueue2 = [];
 
 const apiUrlBase = config.get('mvis.apiUrlBase');
-const apiurl = `${apiUrlBase}/api/events?global_access_token=${apiToken}`;
+const apiurl = `${apiUrlBase}/api/events`;
 
 let processQueueIsRunning = false;
 let lastProcess = new Date();
@@ -33,7 +33,9 @@ async function processQueue() {
     [activityQueue2, activityQueue] = [activityQueue, activityQueue2];
 
     if (apiurl) {
-        await axios.post(apiurl, { data: activityQueue2 });
+        await axios.post(apiurl, { data: activityQueue2 }, {
+            headers: { 'global-access-token': apiToken }
+        });
     }
 
     activityQueue2.splice(0);
@@ -53,7 +55,7 @@ async function _logActivity(typeId, data) {
 
 function _assignIssuedBy(context, data) {
     // if the data's issued by is already filled, then that data has more priority and won't be overwritten
-    if (data.issuedBy && context && context.user && context.user.id) {
+    if (!data.issuedBy && context && context.user && context.user.id) {
         data.issuedBy = context.user.id;
     }
 }

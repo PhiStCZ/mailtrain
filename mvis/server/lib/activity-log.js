@@ -9,6 +9,7 @@ const { SignalType } = require('../../ivis-core/shared/signals');
 const listenersMap = new Map();
 
 function formatRecordId(recordId) {
+    // supports 10^10 entries (enough for all 32-bit int values)
     return recordId.toString().padStart(10, '0');
 }
 
@@ -20,16 +21,16 @@ function formatRecordId(recordId) {
  */
 function groupEventsByField(events, fieldName, deleteField = true) {
     const buckets = new Map();
-    for (const event of events) {
-        const fieldValue = event[fieldName];
-        const bucketEvent = { ...event };
+    for (const evt of events) {
+        const fieldValue = evt[fieldName];
+        const bucketEvent = { ...evt };
         if (deleteField) {
             delete bucketEvent[fieldName];
         }
 
         const bucket = buckets.get(fieldValue);
         if (!bucket) {
-            buckets.set([bucketEvent]);
+            buckets.set(fieldValue, [bucketEvent]);
         } else {
             bucket.push(bucketEvent);
         }
@@ -48,24 +49,23 @@ function groupEventsByField(events, fieldName, deleteField = true) {
 async function transformAndStoreEvents(context, events, signalSet, signalSetSchema) {
     const records = [];
     let nextId = 1;
-    const previousId = getLastId(signalSet);
+    const previousId = await getLastId(signalSet);
     if (previousId) {
         nextId = parseInt(previousId) + 1;
     }
 
-    for (const event of events) {
+    for (const evt of events) {
         const record = {
-            // supports 10^10 entries (enough for all 32-bit int values)
             id: formatRecordId(nextId++),
             signals: {},
         };
 
-        for (const fieldId in event.data) {
-            // if (!(fieldId in entityActivity[type].schema)) {
-            //     throw new Error(`Unknown data field "${fieldId}"`);
-            // }
+        for (const fieldId in evt) {
+            if (!(fieldId in signalSetSchema)) {
+                throw new Error(`Unknown data field "${fieldId}"`);
+            }
 
-            let value = event.data[fieldId];
+            let value = evt[fieldId];
             if (signalSetSchema[fieldId].type == SignalType.DATE_TIME) {
                 value = moment(value);
             }
