@@ -1,6 +1,5 @@
 'use strict';
 
-const { LogTypeId } = require("../../../shared/activity-log");
 const config = require('../../ivis-core/server/lib/config');
 const knex = require('../../ivis-core/server/lib/knex');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
@@ -85,6 +84,10 @@ const listTrackerSchema = {
     // TODO: other possibly trackable data (in mailtrain/server/subscriptions.js/createTxWithGroupedFieldsMap() - ip, country, timezone = subscription.tz)
 };
 
+
+/** Indicates that a signal set was searched for but wasn't found. */
+const CACHED_NONEXISTENT = -1;
+
 const listTrackersByListId = new Map();
 
 async function createListTracker(context, listId) {
@@ -96,7 +99,7 @@ async function createListTracker(context, listId) {
             description: '',
             namespace: config.mailtrain.namespace,
         },
-        campaignTrackerSchema
+        listTrackerSchema
     );
 
     listTrackersByListId.set(listId, signalSetWithSignalCidMap);

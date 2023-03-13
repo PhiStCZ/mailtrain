@@ -5,11 +5,11 @@ const jobs = require('../../ivis-core/server/models/jobs');
 const panels = require('../../ivis-core/server/models/panels');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { LogTypeId } = require('../../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 const { removePanelByName, removeJobByName } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
+const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 
 const signalSetSchema = {
     // not included: test_sent, clicked, triggered

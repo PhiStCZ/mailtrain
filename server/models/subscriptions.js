@@ -688,8 +688,8 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
         if (filteredEntity.email != meta.existing.email) {
             extraData.email = filteredEntity.email;
         }
-        if (!!filteredEntity.is_test != meta.existing.isTest) {
-            extraData.is_test = !!filteredEntity.is_test;
+        if (!!filteredEntity.is_test != meta.existing.is_test) {
+            extraData.isTest = !!filteredEntity.is_test;
         }
         if ('status' in filteredEntity) {
             extraData.subscriptionStatus = filteredEntity.status;
@@ -706,7 +706,7 @@ async function createTxWithGroupedFieldsMap(tx, context, listId, groupedFieldsMa
 
         await activityLog.logListTrackerActivity(ListActivityType.CREATE_SUBSCRIPTION, listId, id, {
             email: filteredEntity.email,
-            is_test: !!filteredEntity.is_test,
+            isTest: !!filteredEntity.is_test,
             subscriptionStatus: filteredEntity.status
         });
         return id;
@@ -753,8 +753,8 @@ async function updateWithConsistencyCheck(context, listId, entity, source) {
         if (filteredEntity.email != meta.existing.email) {
             extraData.email = filteredEntity.email;
         }
-        if (!!filteredEntity.is_test != meta.existing.isTest) {
-            extraData.is_test = !!filteredEntity.is_test;
+        if (!!filteredEntity.is_test != meta.existing.is_test) {
+            extraData.isTest = !!filteredEntity.is_test;
         }
         if ('status' in filteredEntity) {
             extraData.subscriptionStatus = filteredEntity.status;

@@ -9,12 +9,8 @@ const { LogTypeId, EntityActivityType } = require('../../../shared/activity-log'
 const { removeWorkspaceByName } = require('../lib/helpers');
 const campaignMessages = require('./campaign-messages');
 const entityActivity = require('./entity-activity');
-const jobs = require('../../ivis-core/server/models/jobs');
 const log = require('../../ivis-core/server/lib/log');
 
-
-/** Indicates that a signal set was searched for but wasn't found. */
-const CACHED_NONEXISTENT = -1;
 
 function workspaceName(campaignId) {
     return `Campaign ${campaignId} workspace`;
@@ -92,6 +88,10 @@ const campaignTrackerSchema = {
         weight_edit: 7
     },
 };
+
+
+/** Indicates that a signal set was searched for but wasn't found. */
+const CACHED_NONEXISTENT = -1;
 
 const campaignTrackersByCampaignId = new Map();
 

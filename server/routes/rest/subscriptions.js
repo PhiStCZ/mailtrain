@@ -28,7 +28,7 @@ router.postAsync('/subscriptions/:listId', passport.loggedIn, passport.csrfProte
     const listId = castToInteger(req.params.listId);
     const subscriptionId = await subscriptions.create(req.context, listId, req.body, SubscriptionSource.ADMIN_FORM, {});
     await activityLog.logEntityActivityWithContext(req.context, LogTypeId.LIST, ListActivityType.CREATE_SUBSCRIPTION, listId, {subscriptionId});
-    return res.json(result);
+    return res.json(subscriptionId);
 });
 
 router.putAsync('/subscriptions/:listId/:subscriptionId', passport.loggedIn, passport.csrfProtection, async (req, res) => {

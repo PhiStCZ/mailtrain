@@ -1,11 +1,13 @@
 'use strict';
 
+const path = require('path');
+const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { TaskType, TaskSource } = require('../../ivis-core/shared/tasks');
 const { ensureCodeAndParamsForBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 const em = require('../../ivis-core/server/lib/extension-manager');
 
 const campaignMessagesTask = {
-    name: 'Campaign Messages',
+    name: BuiltinTaskNames.CAMPAIGN_MESSAGES,
     description: 'Task used to aggregate and accumulate campaign message statistics',
     type: TaskType.PYTHON,
     source: TaskSource.BUILTIN,
