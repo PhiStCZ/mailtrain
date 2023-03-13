@@ -3,19 +3,19 @@
 const moment = require('moment');
 const config = require('config');
 const axios = require('axios').default;
-
-const apiToken = require('./mvis').apiToken;
-const activityQueueLengthThreshold = 100;
-const activityQueueTimeoutMs = 1000;
-const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
 const { LogTypeId, ListActivityType } = require('../../shared/activity-log');
 const { hashEmail } = require('./helpers');
 
 let activityQueue = [];
 let activityQueue2 = [];
 
+const apiToken = require('./mvis').apiToken;
+const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
 const apiUrlBase = config.get('mvis.apiUrlBase');
 const apiurl = `${apiUrlBase}/api/events`;
+
+const activityQueueLengthThreshold = 100;
+const activityQueueTimeoutMs = 1000;
 
 let processQueueIsRunning = false;
 let lastProcess = new Date();

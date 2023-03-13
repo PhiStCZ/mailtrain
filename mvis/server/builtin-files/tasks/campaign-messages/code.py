@@ -100,7 +100,7 @@ def create_campaign_messages_with_first_entry():
 
 if owned['signalSets'].get(campaign_messages_cid) is None:
   create_campaign_messages_with_first_entry()
-
+  exit(0)
 
 # now the campaign messages should be created and present
 campaign_messages = get_signal_set(campaign_messages_cid)

@@ -6,6 +6,11 @@ const log = require('../ivis-core/server/lib/log');
 const path = require('path');
 
 const entityActivity = require('./models/entity-activity');
+const campaignTracker = require('./models/campaign-tracker');
+const listTracker = require('./models/list-tracker');
+
+const builtinTasks = require('./models/builtin-tasks');
+const builtinTemplates = require('./models/builtin-templates');
 
 const apiToken = process.env.API_TOKEN;
 
@@ -29,10 +34,15 @@ async function init() {
         data.accept = apiToken && (data.token === apiToken);
     });
 
+    await builtinTasks.load();
+    await builtinTemplates.load();
+
     em.on('services.start', async () => {
         // this is for setting up any global namespaces, users, signal sets, workspaces and panels
 
         await entityActivity.init();
+        await campaignTracker.init();
+        await listTracker.init();
     });
 
     log.heading = '(mvis)';

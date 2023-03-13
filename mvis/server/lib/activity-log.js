@@ -105,7 +105,7 @@ async function processEvents(context, events) {
                 await action(context, typedEvents);
             }
         } else {
-            log.error('Mvis', `Unregistered event type id '${typeId}'`);
+            log.error('activity-log', `Unregistered event type id '${typeId}'`);
         }
     }
 }
