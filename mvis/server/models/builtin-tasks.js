@@ -25,7 +25,7 @@ async function addBuiltinTasks(builtinTasks) {
         await ensureCodeAndParamsForBuiltinTask(builtinTask, taskDir);
     }
 
-    builtinTasks.push(...builtinTasks);
+    builtinTasks.push(...mvisBuiltinTasks);
 }
 
 module.exports.addBuiltinTasks = addBuiltinTasks;

@@ -10,6 +10,7 @@ const { removePanelByName, removeJobByName } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
+const { JobState } = require('../../ivis-core/shared/jobs');
 
 const signalSetSchema = {
     // not included: test_sent, clicked, triggered

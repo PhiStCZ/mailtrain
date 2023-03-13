@@ -10,7 +10,7 @@ const { removeWorkspaceByName } = require('../lib/helpers');
 const campaignMessages = require('./campaign-messages');
 const entityActivity = require('./entity-activity');
 const log = require('../../ivis-core/server/lib/log');
-
+const workspaces = require('../../ivis-core/server/models/workspaces');
 
 function workspaceName(campaignId) {
     return `Campaign ${campaignId} workspace`;
@@ -163,7 +163,7 @@ async function onCreateCampaign(context, campaignId, creationTimestamp) {
  * Remove the campaign's linked panels, workspace, jobs and signal sets.
  */
 async function onRemoveCampaign(context, campaignId) {
-    await campaignMessages.removePanel(campaignId);
+    await campaignMessages.removePanel(context, campaignId);
 
     await removeWorkspaceByName(context, workspaceName(campaignId));
 

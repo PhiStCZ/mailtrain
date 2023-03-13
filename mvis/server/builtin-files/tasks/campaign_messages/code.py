@@ -70,15 +70,19 @@ def insert_zeros_record(timestamp):
   es.index(index=get_signal_set(campaign_messages_cid)['index'], id=timestamp, doc_type='_doc', body=doc)
 
 def create_campaign_messages_with_first_entry():
+  i = 0
   transformed_signals = [{
     'cid': TIMESTAMP_CID,
     'name': 'Timestamp',
     'namespace': campaign_namespace,
     'type': 'date',
     'indexed': True,
+    'weight_list': i,
+    'weight_edit': i,
   }]
 
   for event_type in RELEVANT_EVENTS:
+    i += 1
     transformed_signals.append({
       'cid': event_type,
       'name': f'{event_type} messages',
@@ -86,6 +90,8 @@ def create_campaign_messages_with_first_entry():
       'namespace': campaign_namespace,
       'type': 'integer',
       'indexed': False,
+      'weight_list': i,
+      'weight_edit': i,
     })
 
   ivis.create_signal_set(

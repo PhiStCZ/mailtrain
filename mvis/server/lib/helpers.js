@@ -9,18 +9,18 @@ const workspaces = require('../../ivis-core/server/models/workspaces');
 //       are identified by their name; this may be changed in the future
 
 async function removeJobByName(context, name) {
-    await knex('jobs').where('name', name).select('id').first();
-    await jobs.remove(context, id);
+    const res = await knex('jobs').where('name', name).select('id').first();
+    await jobs.remove(context, res.id);
 }
 
 async function removePanelByName(context, name) {
-    await knex('panels').where('name', name).select('id').first();
-    await panels.remove(context, id);
+    const res = await knex('panels').where('name', name).select('id').first();
+    await panels.remove(context, res.id);
 }
 
 async function removeWorkspaceByName(context, name) {
-    await knex('workspaces').where('name', name).select('id').first();
-    await workspaces.remove(context, id);
+    const res = await knex('workspaces').where('name', name).select('id').first();
+    await workspaces.remove(context, res.id);
 }
 
 module.exports.removeJobByName = removeJobByName;
