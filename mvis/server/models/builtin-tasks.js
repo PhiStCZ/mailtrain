@@ -19,17 +19,13 @@ const mvisBuiltinTasks = [
     campaignMessagesTask,
 ];
 
-async function load() {
+async function addBuiltinTasks(builtinTasks) {
     for (const builtinTask of mvisBuiltinTasks) {
         const taskDir = path.join(__dirname, '..', 'builtin-files', 'tasks', builtinTask.name);
         await ensureCodeAndParamsForBuiltinTask(builtinTask, taskDir);
     }
 
-    em.on('builtinTasks.add', builtinTasks => {
-        for (const builtinTask of mvisBuiltinTasks) {
-            builtinTasks.push(builtinTask);
-        }
-    });
+    builtinTasks.push(...builtinTasks);
 }
 
-module.exports.load = load;
+module.exports.addBuiltinTasks = addBuiltinTasks;

@@ -9,8 +9,8 @@ const entityActivity = require('./models/entity-activity');
 const campaignTracker = require('./models/campaign-tracker');
 const listTracker = require('./models/list-tracker');
 
-const builtinTasks = require('./models/builtin-tasks');
-const builtinTemplates = require('./models/builtin-templates');
+const { addBuiltinTasks } = require('./models/builtin-tasks');
+const { addBuiltinTemplates } = require('./models/builtin-templates');
 
 const apiToken = process.env.API_TOKEN;
 
@@ -34,8 +34,13 @@ async function init() {
         data.accept = apiToken && (data.token === apiToken);
     });
 
-    await builtinTasks.load();
-    await builtinTemplates.load();
+    em.on('builtinTasks.add', async builtinTasks => {
+        await addBuiltinTasks(builtinTasks);
+    });
+
+    em.on('builtinTemplates.add', async builtinTasks => {
+        await addBuiltinTemplates(builtinTasks);
+    });
 
     em.on('services.start', async () => {
         // this is for setting up any global namespaces, users, signal sets, workspaces and panels

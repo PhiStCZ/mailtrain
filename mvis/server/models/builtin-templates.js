@@ -11,20 +11,16 @@ const mvisBuiltinTemplates = {
     }
 };
 
-async function load() {
+async function addBuiltinTemplates(builtinTemplates) {
     for (const builtinTemplateId in mvisBuiltinTemplates) {
         const template = mvisBuiltinTemplates[builtinTemplateId];
         const templateDir = path.join(__dirname, '..', 'builtin-files', 'templates', builtinTemplateId);
-        await ensureCodeAndParamsForBuiltinTemplate(template, templateDir);
-    }
 
-    em.on('builtinTemplates.add', builtinTemplates => {
-        for (const builtinTemplateId in mvisBuiltinTemplates) {
-            const template = mvisBuiltinTemplates[builtinTemplateId];
-            builtinTemplates[builtinTemplateId] = template;
-        }
-    });
+        await ensureCodeAndParamsForBuiltinTemplate(template, templateDir);
+
+        builtinTemplates[builtinTemplateId] = template;
+    }
 }
 
 
-module.exports.load = load;
+module.exports.addBuiltinTemplates = addBuiltinTemplates;
