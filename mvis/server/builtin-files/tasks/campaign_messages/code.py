@@ -6,35 +6,13 @@ Aggregates and accumulates different activity type counts from a given campaign 
 Relevant activity types are (sent, failed, bounced, opened, unsubscribed, complained).
 '''
 
-CAMPAIGN_TRACKER_ACTIVITY_TYPE = {
-  'sent': 1,
-  'test-sent': 2,
-  'bounced': 3,
-  'unsubscribed': 4,
-  'complained': 5,
-  'opened': 6,
-  'clicked': 7,
-  'triggered': 8,
-  'failed': 9
-}
-RELEVANT_EVENTS = [ 'sent', 'failed', 'bounced', 'opened', 'unsubscribed', 'complained' ]
-TIMESTAMP_CID = 'timestamp'
-CAMPAIGN_ACTIVITY_RESET_ID = 5
-CAMPAIGN_QUERY_SIZE = 100
-INTERVAL = '60s' # bucket size interval
-INTERVAL_MILLIS = 60_000
+#region HELPER_FUNCTIONS_AND_VARS
 
 es = ivis.elasticsearch
-state = ivis.state
+state = ivis.state or {}
 params = ivis.params
 entities = ivis.entities
 owned = ivis.owned
-
-campaign_id = params['campaignId']
-creation_timestamp = params['creationTimestamp']
-campaign_tracker_cid = params['campaignTracker']
-campaign_cid = params['campaign']
-campaign_messages_cid = params['campaignMessagesCid']
 
 
 def parse_date(iso_date):
@@ -48,23 +26,52 @@ def get_signal_set(sigset_cid):
 def get_signal(sigset_cid, signal_cid):
   return entities['signals'][sigset_cid][signal_cid]
 
+#endregion
+
+
+ACTIVITY_TYPE = {
+  'sent': 1,
+  # 'test-sent': 2,
+  'bounced': 3,
+  'unsubscribed': 4,
+  'complained': 5,
+  'opened': 6,
+  # 'clicked': 7,
+  # 'triggered': 8,
+  'failed': 9
+}
+TIMESTAMP_CID = 'timestamp'
+CAMPAIGN_ACTIVITY_RESET_ID = 5
+CAMPAIGN_QUERY_SIZE = 100
+
+# bucket size interval
+INTERVAL = '60s'
+INTERVAL_MILLIS = 60_000
+
+campaign_id = params['campaignId']
+creation_timestamp = params['creationTimestamp']
+campaign_tracker_cid = params['campaignTracker']
+campaign_cid = params['campaign']
+campaign_messages_cid = params['campaignMessagesCid']
+
+last_timestamp = state.get('last_output_ts')
 
 campaign_tracker = get_signal_set(campaign_tracker_cid)
 campaign_tracker_timestamp = get_signal(campaign_tracker_cid, TIMESTAMP_CID)
 campaign_tracker_activity_type = get_signal(campaign_tracker_cid, 'activityType')
-
-campaign_namespace = campaign_tracker['namespace']
 
 campaign = get_signal_set(campaign_cid)
 campaign_timestamp = get_signal(campaign_cid, TIMESTAMP_CID)
 campaign_activity_signal = get_signal(campaign_cid, 'activityType')
 campaign_id_signal = get_signal(campaign_cid, 'entityId')
 
+target_namespace = campaign_tracker['namespace']
+
 
 def insert_zeros_record(timestamp):
   doc = { get_signal(campaign_messages_cid, TIMESTAMP_CID)['field']: timestamp }
 
-  for event_type in RELEVANT_EVENTS:
+  for event_type in ACTIVITY_TYPE:
     doc[get_signal(campaign_messages_cid, event_type)['field']] = 0
 
   es.index(index=get_signal_set(campaign_messages_cid)['index'], id=timestamp, doc_type='_doc', body=doc)
@@ -74,20 +81,20 @@ def create_campaign_messages_with_first_entry():
   transformed_signals = [{
     'cid': TIMESTAMP_CID,
     'name': 'Timestamp',
-    'namespace': campaign_namespace,
+    'namespace': target_namespace,
     'type': 'date',
     'indexed': True,
     'weight_list': i,
     'weight_edit': i,
   }]
 
-  for event_type in RELEVANT_EVENTS:
+  for event_type in ACTIVITY_TYPE:
     i += 1
     transformed_signals.append({
       'cid': event_type,
       'name': f'{event_type} messages',
       'description': f'Number of {event_type} messages',
-      'namespace': campaign_namespace,
+      'namespace': target_namespace,
       'type': 'integer',
       'indexed': False,
       'weight_list': i,
@@ -96,8 +103,8 @@ def create_campaign_messages_with_first_entry():
 
   ivis.create_signal_set(
     campaign_messages_cid,
-    campaign_namespace,
-    f'Campaign messages {campaign_id}',
+    target_namespace,
+    f'Campaign {campaign_id} messages',
     f'message activity for campaign {campaign_id}',
     None,
     transformed_signals)
@@ -115,12 +122,12 @@ campaign_messages_timestamp = get_signal(campaign_messages_cid, TIMESTAMP_CID)
 
 def get_campaign_tracker_count_aggregations():
   count_aggs = {}
-  for event_type in RELEVANT_EVENTS:
+  for event_type in ACTIVITY_TYPE:
     count_aggs[event_type] = {
       'filter': {
         'term': {
           campaign_tracker_activity_type['field']: {
-            'value': CAMPAIGN_TRACKER_ACTIVITY_TYPE[event_type]
+            'value': ACTIVITY_TYPE[event_type]
           }
         }
       },
@@ -128,7 +135,6 @@ def get_campaign_tracker_count_aggregations():
   return count_aggs
 
 def get_campaign_tracker_query():
-  last_timestamp = state.get('last_output_ts')
   if last_timestamp is not None:
     query_content = {
       'bool': {
@@ -201,16 +207,13 @@ def get_campaign_query(page_num):
     })
 
   return {
-    'from': 100 * page_num,
-    'size': 100,
+    'from': CAMPAIGN_QUERY_SIZE * page_num,
+    'size': CAMPAIGN_QUERY_SIZE,
     'query': query_content,
     'sort': [ { campaign_timestamp['field']: 'asc' } ]
   }
 
 
-if state is None: state = {}
-
-last_timestamp = state.get('last_output_ts')
 if last_timestamp is not None:
   to_delete_time = parse_date(last_timestamp) + timedelta(milliseconds=INTERVAL_MILLIS)
   # Last calculated aggregation has to be redone, because new data points may have been added to it
@@ -275,7 +278,7 @@ def get_last_reset_in_ts_range(resets, after, before):
 cached_last_values = {
   event_type: (
     state.get(event_type) or 0
-  ) for event_type in RELEVANT_EVENTS
+  ) for event_type in ACTIVITY_TYPE
 }
 
 get_next_reset_date(reset_dates)
@@ -300,7 +303,7 @@ for hit in campaign_tracker_response['aggregations']['values_by_time_interval'][
     insert_zeros_record(target_reset_timestamp)
 
   updated = (target_reset_timestamp is not None)
-  for event_type in RELEVANT_EVENTS:
+  for event_type in ACTIVITY_TYPE:
     last_value = cached_last_values[event_type] or 0
 
 

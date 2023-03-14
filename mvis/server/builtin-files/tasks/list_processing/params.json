@@ -1,0 +1,27 @@
+[
+    {
+        "id": "listId",
+        "type": "integer",
+        "label": "List ID",
+        "help": "ID of target list"
+    },
+    {
+        "id": "creationTimestamp",
+        "type": "string",
+        "label": "Creation timestamp",
+        "help": "When was the list created"
+    },
+    {
+        "id": "listTracker",
+        "type": "signalSet",
+        "label": "List Tracker",
+        "help": "List tracker to process",
+        "includeSignals": true
+    },
+    {
+        "id": "listSubscriptionsCid",
+        "type": "string",
+        "label": "List subscriptions CID",
+        "help": "CID of list subscriptions signal set"
+    }
+]

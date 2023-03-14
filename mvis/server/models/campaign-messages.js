@@ -73,17 +73,20 @@ const signalSetSchema = {
 };
 
 
-function signalSetName(campaignId) {
-    return `Campaign messages ${campaignId}`;
-}
 function signalSetCid(campaignId) {
     return `campaign_messages_${campaignId}`;
 }
-function jobName(campaignId) {
-    return `Campaign messages ${campaignId}`;
+
+function signalSetName(campaignId) {
+    return `Campaign ${campaignId} messages`;
 }
+
+function jobName(campaignId) {
+    return `Campaign ${campaignId} messages`;
+}
+
 function panelName(campaignId) {
-    return `Campaign messages ${campaignId}`;
+    return `Campaign ${campaignId} messages`;
 }
 
 
@@ -121,7 +124,7 @@ async function removeSignalSet(context, campaignId) {
 
 
 async function createJob(context, campaignId, campaignTrackerSigSet, campaignSigSet, creationTimestamp) {
-    const task = await getBuiltinTask(BuiltinTaskNames.CAMPAIGN_MESSAGES);
+    const task = await getBuiltinTask(BuiltinTaskNames.CAMPAIGN);
     const job = {
         name: jobName(campaignId),
         description: '',
@@ -145,12 +148,8 @@ async function createJob(context, campaignId, campaignTrackerSigSet, campaignSig
     };
     const jobId = await jobs.create(context, job, true);
 
-    // run the first 
-    try {
-        await jobs.run(context, jobId);
-    } catch (err) {
-        log.error('activity-log', err)
-    }
+    // the job will initialize the campaign messages signal set
+    await jobs.run(context, jobId);
 
     return jobId;
 }
@@ -177,7 +176,7 @@ async function createPanel(context, campaignId, campaignWorkspaceId) {
 
     await panels.create(context, campaignWorkspaceId, {
         name: panelName(campaignId),
-        description: '',
+        description: `Message activity for campaign ${campaignId}`,
         builtin_template: BuiltinTemplateIds.LINECHART,
         namespace: config.mailtrain.namespace,
         params,

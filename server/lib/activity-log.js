@@ -168,24 +168,6 @@ async function logListTrackerActivity(activityType, listId, subscriptionId, extr
         delete data.email;
     }
 
-    if (
-        activityType === ListActivityType.UPDATE_SUBSCRIPTION &&
-        data.subscriptionStatus &&
-        data.subscriptionStatus !== data.previousSubscriptionStatus
-    ) {
-        const statusChangeData = {
-            activityType: ListActivityType.SUBSCRIPTION_STATUS_CHANGE,
-            subscriptionId,
-            listId,
-            subscriptionStatus: data.subscriptionStatus,
-            previousSubscriptionStatus: data.previousSubscriptionStatus,
-        };
-        delete data.subscriptionStatus;
-        delete data.previousSubscriptionStatus;
-
-        await _logActivity(LogTypeId.LIST_TRACKER, statusChangeData);
-    }
-
     await _logActivity(LogTypeId.LIST_TRACKER, data);
 }
 

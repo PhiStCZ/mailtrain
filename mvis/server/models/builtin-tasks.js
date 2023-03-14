@@ -6,18 +6,26 @@ const { TaskType, TaskSource } = require('../../ivis-core/shared/tasks');
 const { ensureCodeAndParamsForBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 const em = require('../../ivis-core/server/lib/extension-manager');
 
-const campaignMessagesTask = {
-    name: BuiltinTaskNames.CAMPAIGN_MESSAGES,
-    description: 'Task used to aggregate and accumulate campaign message statistics',
-    type: TaskType.PYTHON,
-    source: TaskSource.BUILTIN,
-    settings: {},
-};
 
 const mvisBuiltinTasks = [
-    // TODO: add other builtin tasks
-    campaignMessagesTask,
+    {
+        name: BuiltinTaskNames.CAMPAIGN,
+        description: 'Task used to process campaign-related statistics (message activity)',
+        type: TaskType.PYTHON,
+        source: TaskSource.BUILTIN,
+        settings: {
+            // builtin_reinitOnUpdate: true ?
+        },
+    },
+    {
+        name: BuiltinTaskNames.LIST,
+        description: 'Task used to process list-related statistics (subscription counts)',
+        type: TaskType.PYTHON,
+        source: TaskSource.BUILTIN,
+        settings: {},
+    },
 ];
+
 
 async function addBuiltinTasks(builtinTasks) {
     for (const builtinTask of mvisBuiltinTasks) {

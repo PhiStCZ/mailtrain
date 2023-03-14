@@ -1,7 +1,8 @@
 'use strict';
 
 const BuiltinTaskNames = {
-    CAMPAIGN_MESSAGES: 'campaign_messages',
+    CAMPAIGN: 'campaign_messages',
+    LIST: 'list_processing',
 };
 
 module.exports.BuiltinTaskNames = BuiltinTaskNames;
