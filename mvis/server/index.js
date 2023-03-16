@@ -38,8 +38,8 @@ async function init() {
         await addBuiltinTasks(builtinTasks);
     });
 
-    em.on('builtinTemplates.add', async builtinTasks => {
-        await addBuiltinTemplates(builtinTasks);
+    em.on('builtinTemplates.add', async builtinTemplates => {
+        await addBuiltinTemplates(builtinTemplates);
     });
 
     em.on('services.start', async () => {

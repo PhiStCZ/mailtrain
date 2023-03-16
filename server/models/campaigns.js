@@ -1062,26 +1062,25 @@ async function testSend(context, data) {
             }
 
             const segmentId = data.segmentId;
+            const logData = {}
 
             if (listId) {
                 await enforceSendPermissionTx(tx, context, campaign, true, listId);
+                logData.listId = listId;
 
                 if (data.subscriptionCid) {
                     const subscriber = await subscriptions.getByCidTx(tx, context, listId, data.subscriptionCid, true, true);
-                    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {listId, subscriptionId: subscriber.id});
+                    logData.subscriptionId = subscriber.id;
                     await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
 
                 } else {
                     const subscribers = await subscriptions.listTestUsersTx(tx, context, listId, segmentId);
-                    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {listId});
                     for (const subscriber of subscribers) {
                         await processSubscriber(sendConfigurationId, listId, subscriber.id, messageData);
                     }
                 }
 
             } else {
-                await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, {});
-
                 for (const lstSeg of campaign.lists) {
                     await enforceSendPermissionTx(tx, context, campaign, true, lstSeg.list);
 
@@ -1091,6 +1090,8 @@ async function testSend(context, data) {
                     }
                 }
             }
+
+            await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, campaignId, logData);
 
         } else { // This means we are sending a template
             /*
@@ -1115,7 +1116,10 @@ async function testSend(context, data) {
 
             await processSubscriber(data.sendConfigurationId, list.id, subscriber.id, messageData);
 
-            await activityLog.logEntityActivityWithContext(context, 'template', TemplateActivityType.TEST_SEND, data.templateId, {listId: list.id, subscriptionId: subscriber.id});
+            await activityLog.logEntityActivityWithContext(context, LogTypeId.TEMPLATE, TemplateActivityType.TEST_SEND, data.templateId, {
+                listId: list.id,
+                subscriptionId: subscriber.id
+            });
         }
     });
 

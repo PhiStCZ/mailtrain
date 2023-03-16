@@ -182,7 +182,7 @@ async function init() {
                 await activityLog.transformAndStoreEvents(context, campaignEvents, campaignTracker, campaignTrackerSchema);
             } else {
                 // this may happen e.g. when a link is clicked from a deleted campaign, so it may not be as much of an error
-                log.error('activity-log', 'Unrecognised campaign with id ' + campaignId);
+                log.error('Activity-log', 'Unrecognised campaign with id ' + campaignId);
             }
         }
     });

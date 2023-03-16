@@ -153,7 +153,7 @@ async function init() {
                 await activityLog.transformAndStoreEvents(context, listEvents, listTracker, listTrackerSchema);
             } else {
                 // this may happen e.g. when a someone tries to unsubscribe from a deleted list, so it may not be as much of an error
-                log.error('activity-log', 'Unrecognised list with id ' + listId);
+                log.error('Activity-log', 'Unrecognised list with id ' + listId);
             }
         }
     });
