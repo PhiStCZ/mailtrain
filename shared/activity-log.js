@@ -6,7 +6,6 @@ const LogTypeId = {
     CAMPAIGN_TRACKER: 'campaign_tracker',
     CHANNEL: 'channel',
     FORM: 'form',
-    LINK: 'link',
     LIST: 'list',
     LIST_TRACKER: 'list_tracker',
     NAMESPACE: 'namespace',
@@ -38,7 +37,8 @@ const CampaignActivityType = {
     TEST_SEND: EntityActivityType.MAX + 3,
     CREATE_TRIGGER: EntityActivityType.MAX + 4,
     UPDATE_TRIGGER: EntityActivityType.MAX + 5,
-    REMOVE_TRIGGER: EntityActivityType.MAX + 6
+    REMOVE_TRIGGER: EntityActivityType.MAX + 6,
+    ADD_LINK: EntityActivityType.MAX + 7,
 };
 
 const CampaignTrackerActivityType = {
@@ -50,7 +50,9 @@ const CampaignTrackerActivityType = {
     OPENED: 6,
     CLICKED: 7,
     TRIGGERED: 8,
-    FAILED: 9
+    FAILED: 9,
+    GENERAL_CLICK: 10, // without linkId
+    ADD_LINK: 11,
 };
 
 const ListActivityType = {

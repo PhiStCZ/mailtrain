@@ -8,7 +8,7 @@ more by the system rather than by the users, and would require additional
 logging (e.g. in /server/services/gdpr-cleanup) for little benefit.
 '''
 
-#region HELPERS
+#region HELPER_FUNCTIONS_AND_VARS
 
 es = ivis.elasticsearch
 state = ivis.state or {}
@@ -16,44 +16,17 @@ params = ivis.params
 entities = ivis.entities
 owned = ivis.owned
 
-def log(message):
-  print(message)
 
 def parse_date(iso_date):
   # elasticsearch returns UTC iso format to a millisecond range, ended by 'Z'
   parseable_date = iso_date[:-1] + '000' # add microseconds
   return datetime.strptime(parseable_date, '%Y-%m-%dT%H:%M:%S.%f')
 
-class Signal:
-  def __init__(self, sigset_cid, signal_cid):
-    self.cid = signal_cid
-    signal = entities['signals'][sigset_cid][signal_cid]
-    self.field = signal['field']
-    self.name = signal['name']
-    self.namespace = signal['namespace']
-
-class SignalSet:
-  def __init__(self, sigset_cid):
-    sigset = entities['signalSets'][sigset_cid]
-    self.cid = sigset_cid
-    self.index = sigset['index']
-    self.name = sigset['name']
-    self.namespace = sigset['namespace']
-
-  def get_signal(self, signal_cid):
-    return Signal(self.cid, signal_cid)
-
-  def es_index_doc(self, id, doc):
-    return es.index(index=self.index, id=id, doc_type='_doc', body=doc)
-
-  def es_search(self, req_body):
-    return es.search(index=self.index, body=req_body)
-
-  def es_delete_by_query(self, req_body):
-    return es.delete_by_query(index=self.index, body=req_body)
-
 def get_signal_set(sigset_cid):
-  return SignalSet(sigset_cid)
+  return entities['signalSets'][sigset_cid]
+
+def get_signal(sigset_cid, signal_cid):
+  return entities['signals'][sigset_cid][signal_cid]
 
 #endregion
 
@@ -78,38 +51,35 @@ list_subs_cid = params['listSubscriptionsCid']
 last_output_ts = state.get('last_output_ts')
 
 list_tracker = get_signal_set(list_tracker_cid)
-list_tracker_ts = list_tracker.get_signal(TIMESTAMP_CID)
-list_tracker_status = list_tracker.get_signal('subscriptionStatus')
-list_tracker_prev_status = list_tracker.get_signal('previousSubscriptionStatus')
+list_tracker_ts = get_signal(list_tracker_cid, TIMESTAMP_CID)
+list_tracker_status = get_signal(list_tracker_cid, 'subscriptionStatus')
+list_tracker_prev_status = get_signal(list_tracker_cid, 'previousSubscriptionStatus')
 
-target_namespace = list_tracker.namespace
+target_namespace = list_tracker['namespace']
 
-def get_bucket_end_ts(bucket_start_timestamp):
-  b_end = parse_date(bucket_start_timestamp)
-  b_end += timedelta(milliseconds=INTERVAL_MILLIS)
-  return b_end.isoformat()
 
 def insert_zeros_record(timestamp):
-  list_subs = get_signal_set(list_subs_cid)
-  doc = { list_subs.get_signal(TIMESTAMP_CID).field: timestamp }
+  doc = { get_signal(list_subs_cid, TIMESTAMP_CID)['field']: timestamp }
 
   for status in SUBSCRIPTION_STATUS:
-    doc[list_subs.get_signal(status).field] = 0
+    doc[get_signal(list_subs_cid, status)['field']] = 0
 
-  list_subs.es_index_doc(timestamp, doc)
+  es.index(index=get_signal_set(list_subs_cid)['index'], id=timestamp, doc_type='_doc', body=doc)
 
 def create_list_subs_with_first_entry():
+  i = 0
   signals = [{
     'cid': TIMESTAMP_CID,
     'name': 'Timestamp',
     'namespace': target_namespace,
     'type': 'date',
     'indexed': True,
-    'weight_list': 0,
-    'weight_edit': 0,
+    'weight_list': i,
+    'weight_edit': i,
   }]
 
-  for i, status in enumerate(SUBSCRIPTION_STATUS):
+  for status in SUBSCRIPTION_STATUS:
+    i += 1
     signals.append({
       'cid': status,
       'name': f'{status} subscriptions',
@@ -117,8 +87,8 @@ def create_list_subs_with_first_entry():
       'namespace': target_namespace,
       'type': 'integer',
       'indexed': False,
-      'weight_list': i + 1,
-      'weight_edit': i + 1,
+      'weight_list': i,
+      'weight_edit': i,
     })
 
   ivis.create_signal_set(
@@ -134,12 +104,11 @@ def create_list_subs_with_first_entry():
 
 if owned['signalSets'].get(list_subs_cid) is None:
   create_list_subs_with_first_entry()
-  log('Signal set initialisation complete.')
   exit(0)
 
 
 list_subs = get_signal_set(list_subs_cid)
-list_subs_ts = list_subs.get_signal(TIMESTAMP_CID)
+list_subs_ts = get_signal(list_subs_cid, TIMESTAMP_CID)
 
 
 def get_count_aggs():
@@ -148,7 +117,7 @@ def get_count_aggs():
     count_aggs[status] = {
       'filter': {
         'term': {
-          list_tracker_status.field: {
+          list_tracker_status['field']: {
             'value': SUBSCRIPTION_STATUS[status]
           }
         }
@@ -157,7 +126,7 @@ def get_count_aggs():
     count_aggs[f'prev_{status}'] = {
       'filter': {
         'term': {
-          list_tracker_prev_status.field: {
+          list_tracker_prev_status['field']: {
             'value': SUBSCRIPTION_STATUS[status]
           }
         }
@@ -171,7 +140,7 @@ def get_list_subs_query():
       'bool': {
         'filter': {
           'range': {
-            list_tracker_ts.field: { 'gte': last_output_ts }
+            list_tracker_ts['field']: { 'gte': last_output_ts }
           }
         }
       }
@@ -186,7 +155,7 @@ def get_list_subs_query():
     'aggs': {
       'values_by_time_interval': {
         'date_histogram': {
-          'field': list_tracker_ts.field,
+          'field': list_tracker_ts['field'],
           # on update to newer elasticsearch, update to fixed_interval
           'interval': INTERVAL
         },
@@ -198,13 +167,13 @@ def get_list_subs_query():
 
 if last_output_ts is not None:
   # Last calculated aggregation has to be redone, because new data points may have been added to it
-  list_subs.es_delete_by_query({
+  es.delete_by_query(index=list_subs['index'], body={
     'query': {
-      'match': { list_subs_ts.field: last_output_ts }
+      'match': { list_subs_ts['field']: last_output_ts }
     }
   })
 
-list_tracker_response = list_tracker.es_search(get_list_subs_query())
+list_tracker_response = es.search(index=list_tracker['index'], body=get_list_subs_query())
 
 cached_last_values = {
   status: ( state.get(status) or 0 ) for status in SUBSCRIPTION_STATUS
@@ -213,20 +182,24 @@ cached_last_values = {
 for hit in list_tracker_response['aggregations']['values_by_time_interval']['buckets']:
   last_output_ts = hit['key_as_string']
 
+  last_timestamp_time = parse_date(last_output_ts)
+  next_timestamp_time = last_timestamp_time + timedelta(milliseconds=INTERVAL_MILLIS)
+  next_timestamp = next_timestamp_time.isoformat()
+
   doc = {
-    list_subs_ts.field: get_bucket_end_ts(last_output_ts)
+    list_subs_ts['field']: next_timestamp
   }
 
   updated = False
   for status in SUBSCRIPTION_STATUS:
     last_value = cached_last_values[status]
 
-    field = list_subs.get_signal(status).field
+    status_field = get_signal(list_subs_cid, status)['field']
 
     new_subs = hit[status]['doc_count']
     prev_subs = hit[f'prev_{status}']['doc_count']
     next_value = last_value + new_subs - prev_subs
-    doc[field] = next_value
+    doc[status_field] = next_value
 
     if next_value != last_value: updated = True
 
@@ -236,7 +209,7 @@ for hit in list_tracker_response['aggregations']['values_by_time_interval']['buc
 
   if updated:
     # difference of id and timestamp may not be optimal but is not an error, as entries from the last id need to be searched
-    list_subs.es_index_doc(last_output_ts, doc)
+    es.index(index=list_subs['index'], id=last_output_ts, doc_type='_doc', body=doc)
 
 state['last_output_ts'] = last_output_ts
 ivis.store_state(state)

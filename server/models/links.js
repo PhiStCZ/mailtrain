@@ -12,7 +12,7 @@ const { getPublicUrl } = require('../lib/urls');
 const tools = require('../lib/tools');
 const shortid = require('../lib/shortid');
 const {enforce} = require('../lib/helpers');
-const { LogTypeId, EntityActivityType, CampaignTrackerActivityType } = require('../../shared/activity-log');
+const { CampaignTrackerActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 const config = require('../lib/config');
 const logRepeated = config.get('mvis.logRepeatedEvents');
@@ -96,11 +96,20 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
 
                     // general click probably doesn't need to be repeatedly logged
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId: LinkId.GENERAL_CLICK, ip: remoteIp, country, deviceType: device.type});
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.GENERAL_CLICK, campaign.id, list.id, subscription.id, {
+                        ip: remoteIp,
+                        country,
+                        deviceType: device.type
+                    });
                 }
             }
             if (firstTimeClicked || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {linkId, ip: remoteIp, country, deviceType: device.type});
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED, campaign.id, list.id, subscription.id, {
+                    linkId,
+                    ip: remoteIp,
+                    country,
+                    deviceType: device.type
+                });
             }
         }
 
@@ -112,7 +121,11 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                 await tx('campaigns').increment('opened').where('id', campaign.id);
             }
             if (firstTimeOpened || logRepeated) {
-                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {ip: remoteIp, country, deviceType: device.type});
+                await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.OPENED, campaign.id, list.id, subscription.id, {
+                    ip: remoteIp,
+                    country,
+                    deviceType: device.type
+                });
             }
         }
     });
@@ -133,23 +146,27 @@ async function addOrGet(campaignId, url) {
                 cid,
                 url
             });
+            const linkId = ids[0];
 
-            await activityLog.logEntityActivity(LogTypeId.LINK, EntityActivityType.CREATE, id, { campaignId, url });
+            await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.ADD_LINK, campaignId, { linkId, url });
+            await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.ADD_LINK, campaignId, null, null, { linkId });
 
             return {
-                id: ids[0],
+                linkId,
                 cid
             };
         } catch (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                const link = await knex('links').select(['id', 'cid']).where({
-                    campaign: campaignId,
-                    url
-                }).first();
-
-                enforce(link);
-                return link;
+            if (err.code !== 'ER_DUP_ENTRY') {
+                throw err;
             }
+
+            const link = await knex('links').select(['id', 'cid']).where({
+                campaign: campaignId,
+                url
+            }).first();
+
+            enforce(link);
+            return link;
         }
 
     } else {

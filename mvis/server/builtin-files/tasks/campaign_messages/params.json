@@ -12,13 +12,6 @@
         "help": "When was the campaign created"
     },
     {
-        "id": "campaign",
-        "type": "signalSet",
-        "label": "Campaign Signal Set",
-        "help": "Global campaign signal set",
-        "includeSignals": true
-    },
-    {
         "id": "campaignTracker",
         "type": "signalSet",
         "label": "Campaign Tracker",

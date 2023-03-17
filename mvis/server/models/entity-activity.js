@@ -91,7 +91,23 @@ const staticSignalSets = {
                 indexed: true,
                 weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
                 weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
-            }
+            },
+            linkId: {
+                type: SignalType.INTEGER,
+                name: 'Link ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
+            },
+            url: {
+                type: SignalType.TEXT,
+                name: 'Link URL',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6
+            },
         },
         name: 'Campaign',
         // ingest
@@ -105,29 +121,6 @@ const staticSignalSets = {
     [LogTypeId.FORM]: {
         schema: schemas.genericEntitySchema,
         name: 'Form',
-        // ingest
-    },
-    [LogTypeId.LINK]: {
-        schema: {
-            ...schemas.genericEntitySchema,
-            campaignId: {
-                type: SignalType.INTEGER,
-                name: 'Campaign ID',
-                settings: {},
-                indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
-            },
-            url: {
-                type: SignalType.TEXT,
-                name: 'Link URL',
-                settings: {},
-                indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
-            },
-        },
-        name: 'Link',
         // ingest
     },
     [LogTypeId.LIST]: {
