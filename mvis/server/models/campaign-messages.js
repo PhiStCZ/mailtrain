@@ -1,19 +1,13 @@
 'use strict';
 
 const config = require('../../ivis-core/server/lib/config');
-const jobs = require('../../ivis-core/server/models/jobs');
 const panels = require('../../ivis-core/server/models/panels');
-const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const activityLog = require('../lib/activity-log');
-const { removePanelByName, removeJobByName } = require('../lib/helpers');
+const { removePanelByName } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
-const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
-const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
-const { JobState } = require('../../ivis-core/shared/jobs');
 
 const signalSetSchema = {
-    // not included: test_sent, clicked, triggered
+    // not included: test_sent, triggered
     timestamp: {
         type: SignalType.DATE_TIME,
         name: 'Timestamp',
@@ -70,8 +64,15 @@ const signalSetSchema = {
         weight_list: 6,
         weight_edit: 6
     },
+    clicked: {
+        type: SignalType.INTEGER,
+        name: 'Clicked',
+        settings: {},
+        indexed: false,
+        weight_list: 7,
+        weight_edit: 7
+    }
 };
-
 
 function signalSetCid(campaignId) {
     return `campaign_messages_${campaignId}`;
@@ -81,83 +82,20 @@ function signalSetName(campaignId) {
     return `Campaign ${campaignId} messages`;
 }
 
-function jobName(campaignId) {
-    return `Campaign ${campaignId} messages`;
-}
 
 function panelName(campaignId) {
     return `Campaign ${campaignId} messages`;
 }
 
-
-async function createSignalSet(context, campaignId, creationTimestamp) {
-    const signalSet = await signalSets.ensure(
-        context,
-        {
-            cid: signalSetCid(campaignId),
-            name: signalSetName(campaignId),
-            description: '',
-            namespace: config.mailtrain.namespace,
-        },
-        campaignMessagesSchema
-    );
-
-    // insert first (empty) record
-    const initRecord = {
-        id: activityLog.formatRecordId(1),
-        signals: {}
-    };
-    for (const field in campaignMessagesSchema) {
-        if (field == 'timestamp') {
-            initRecord.signals[field] = creationTimestamp;
-        } else {
-            initRecord.signals[field] = 0;
-        }
-    }
-    await signalSets.insertRecords(context, signalSet, [initRecord]);
-    return signalSet;
+const PanelColors = { // or rgb(r, g, b) ?
+    failed: '#ff0000',
+    sent: '#000000',
+    opened: '#00ff00',
+    bounced: '#ffff00',
+    unsubscribed: '#ff00ff',
+    complained: '#ff8800',
+    clicked: '#0088ff',
 }
-
-async function removeSignalSet(context, campaignId) {
-    await signalSets.removeByCid(context, getCampaignMessagesSigSetCid(campaignId));
-}
-
-
-async function createJob(context, campaignId, campaignTrackerSigSet, campaignSigSet, creationTimestamp) {
-    const task = await getBuiltinTask(BuiltinTaskNames.CAMPAIGN);
-    const job = {
-        name: jobName(campaignId),
-        description: '',
-        namespace: config.mailtrain.namespace,
-        task: task.id,
-        state: JobState.ENABLED,
-        params: {
-            campaignId,
-            creationTimestamp,
-            campaign: campaignSigSet.cid,
-            campaignTracker: campaignTrackerSigSet.cid,
-            campaignMessagesCid: signalSetCid(campaignId)
-        },
-        signal_sets_triggers: [
-            campaignTrackerSigSet.id,
-            campaignSigSet.id
-        ],
-        trigger: null,  // no automatic trigger
-        min_gap: 60,    // 1 minute
-        delay: 60,      // 1 minute
-    };
-    const jobId = await jobs.create(context, job, true);
-
-    // the job will initialize the campaign messages signal set
-    await jobs.run(context, jobId);
-
-    return jobId;
-}
-
-async function removeJob(context, campaignId) {
-    await removeJobByName(context, jobName(campaignId));
-}
-
 
 async function createPanel(context, campaignId, campaignWorkspaceId) {
     const sigSetCid = signalSetCid(campaignId);
@@ -166,7 +104,7 @@ async function createPanel(context, campaignId, campaignWorkspaceId) {
         if (sigCid != 'timestamp') {
             params.push({
                 label: signalSetSchema[sigCid].name,
-                color: '#ff00ff', // or rgb(255, 0, 255) ? TODO: ensure this is correct
+                color: PanelColors[sigCid],
                 sigSet: sigSetCid,
                 signal: sigCid,
                 tsSigCid: 'timestamp',
@@ -188,12 +126,9 @@ async function removePanel(context, campaignId) {
 }
 
 module.exports = {
-    signalSetName,
+    signalSetSchema,
     signalSetCid,
-    jobName,
     panelName,
-    createJob,
-    removeJob,
     createPanel,
     removePanel,
 };

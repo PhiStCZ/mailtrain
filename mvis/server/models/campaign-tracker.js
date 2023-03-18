@@ -5,21 +5,15 @@ const knex = require('../../ivis-core/server/lib/knex');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const activityLog = require('../lib/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { LogTypeId, EntityActivityType } = require('../../../shared/activity-log');
-const { removeWorkspaceByName } = require('../lib/helpers');
-const campaignMessages = require('./campaign-messages');
-const entityActivity = require('./entity-activity');
 const log = require('../../ivis-core/server/lib/log');
-const workspaces = require('../../ivis-core/server/models/workspaces');
 
-function workspaceName(campaignId) {
-    return `Campaign ${campaignId} workspace`;
-}
-function campaignTrackerName(campaignId) {
-    return `Campaign tracker ${campaignId}`;
-}
+
 function campaignTrackerCid(campaignId) {
     return `campaign_tracker_${campaignId}`;
+}
+
+function campaignTrackerName(campaignId) {
+    return `Campaign tracker ${campaignId}`;
 }
 
 const campaignTrackerSchema = {
@@ -89,7 +83,6 @@ const campaignTrackerSchema = {
     },
 };
 
-
 /** Indicates that a signal set was searched for but wasn't found. */
 const CACHED_NONEXISTENT = -1;
 
@@ -139,65 +132,23 @@ async function removeCampaignTracker(context, campaignId) {
 }
 
 
-/**
- * Create the new campaign's workspace, including related signal sets, jobs
- * and panels
- */
-async function onCreateCampaign(context, campaignId, creationTimestamp) {
-    const campaignTrackerSigSet = await createCampaignTracker(context, campaignId);
-    const campaignSigSet = await entityActivity.getCachedStaticSignalSet(context, LogTypeId.CAMPAIGN);
+async function addCampaignTrackerEvents(context, events) {
+    const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
 
-    // the campaign messages signal set is now created by the job
-    await campaignMessages.createJob(context, campaignId, campaignTrackerSigSet, campaignSigSet, creationTimestamp);
-
-    const workspaceId = await workspaces.create(context, {
-        name: workspaceName(campaignId),
-        description: '',
-        namespace: config.mailtrain.namespace,
-    });
-
-    await campaignMessages.createPanel(context, campaignId, workspaceId);
-}
-
-/**
- * Remove the campaign's linked panels, workspace, jobs and signal sets.
- */
-async function onRemoveCampaign(context, campaignId) {
-    await campaignMessages.removePanel(context, campaignId);
-
-    await removeWorkspaceByName(context, workspaceName(campaignId));
-
-    await campaignMessages.removeJob(context, campaignId);
-
-    await removeCampaignTracker(context, campaignId);
-}
-
-async function init() {
-    activityLog.on(LogTypeId.CAMPAIGN_TRACKER, async (context, events) => {
-        const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
-
-        for (const [campaignId, campaignEvents] of eventsByCampaignId.entries()) {
-            const campaignTracker = await getCachedCampaignTracker(context, campaignId);
-            if (campaignTracker) {
-                await activityLog.transformAndStoreEvents(context, campaignEvents, campaignTracker, campaignTrackerSchema);
-            } else {
-                // this may happen e.g. when a link is clicked from a deleted campaign, so it may not be as much of an error
-                log.error('Activity-log', 'Unrecognised campaign with id ' + campaignId);
-            }
+    for (const [campaignId, campaignEvents] of eventsByCampaignId.entries()) {
+        const campaignTracker = await getCachedCampaignTracker(context, campaignId);
+        if (campaignTracker) {
+            await activityLog.transformAndStoreEvents(context, campaignEvents, campaignTracker, campaignTrackerSchema);
+        } else {
+            log.warn('Activity-log', 'Unrecognised campaign with id ' + campaignId);
         }
-    });
-
-    activityLog.on(LogTypeId.CAMPAIGN, async (context, events) => {
-        for (const event of events) {
-            const campaignId = event.entityId;
-            const activity = event.activityType;
-            if (activity === EntityActivityType.CREATE) {
-                await onCreateCampaign(context, campaignId, event.timestamp);
-            } else if (activity === EntityActivityType.REMOVE) {
-                await onRemoveCampaign(context, campaignId);
-            }
-        }
-    });
+    }
 }
 
-module.exports.init = init;
+module.exports = {
+    campaignTrackerCid,
+    createCampaignTracker,
+    getCachedCampaignTracker,
+    removeCampaignTracker,
+    addCampaignTrackerEvents,
+};
