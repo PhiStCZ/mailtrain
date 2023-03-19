@@ -4,6 +4,21 @@ const knex = require('../../ivis-core/server/lib/knex');
 const jobs = require('../../ivis-core/server/models/jobs');
 const panels = require('../../ivis-core/server/models/panels');
 const workspaces = require('../../ivis-core/server/models/workspaces');
+const signalSets = require('../../ivis-core/server/models/signal-sets');
+const { filterObject } = require('../../ivis-core/server/lib/helpers');
+const { allowedKeysCreate } = require('../../ivis-core/server/lib/signal-set-helpers');
+
+
+async function createSignalSetWithSignalCidMap(context, entity) {
+    const filteredEntity = filterObject(entity, allowedKeysCreate);
+
+    return await knex.transaction(async tx => {
+        filteredEntity.id = await signalSets.createTx(tx, context, filteredEntity);
+        filteredEntity.signalByCidMap = await signalSets.getSignalByCidMapTx(tx, filteredEntity);
+        return filteredEntity;
+    });
+}
+
 
 // NOTE: as there is no cid for workspaces, panels, etc., MVIS' entities with
 //       are identified by their name; this may be changed in the future
@@ -23,6 +38,8 @@ async function removeWorkspaceByName(context, name) {
     await workspaces.remove(context, res.id);
 }
 
+
+module.exports.createSignalSetWithSignalCidMap = createSignalSetWithSignalCidMap;
 module.exports.removeJobByName = removeJobByName;
 module.exports.removeWorkspaceByName = removeWorkspaceByName;
 module.exports.removePanelByName = removePanelByName;

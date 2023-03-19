@@ -1,13 +1,12 @@
 'use strict';
 
 const config = require('../../ivis-core/server/lib/config');
+const knex = require('../../ivis-core/server/lib/knex');
 const panels = require('../../ivis-core/server/models/panels');
-const { SignalType } = require('../../ivis-core/shared/signals');
-const { removePanelByName } = require('../lib/helpers');
+const { SignalType, SignalSource } = require('../../ivis-core/shared/signals');
+const { removePanelByName, createSignalSetWithSignalCidMap } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
-const { formatRecordId } = require('../lib/activity-log');
-const moment = require('moment');
 const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 
 const signalSetSchema = {
@@ -18,7 +17,8 @@ const signalSetSchema = {
         settings: {},
         indexed: true,
         weight_list: 0,
-        weight_edit: 0
+        weight_edit: 0,
+        source: SignalSource.JOB
     },
     failed: {
         type: SignalType.INTEGER,
@@ -26,7 +26,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 1,
-        weight_edit: 1
+        weight_edit: 1,
+        source: SignalSource.JOB
     },
     sent: {
         type: SignalType.INTEGER,
@@ -34,7 +35,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 2,
-        weight_edit: 2
+        weight_edit: 2,
+        source: SignalSource.JOB
     },
     opened: {
         type: SignalType.INTEGER,
@@ -42,7 +44,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 3,
-        weight_edit: 3
+        weight_edit: 3,
+        source: SignalSource.JOB
     },
     bounced: {
         type: SignalType.INTEGER,
@@ -50,7 +53,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 4,
-        weight_edit: 4
+        weight_edit: 4,
+        source: SignalSource.JOB
     },
     unsubscribed: {
         type: SignalType.INTEGER,
@@ -58,7 +62,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 5,
-        weight_edit: 5
+        weight_edit: 5,
+        source: SignalSource.JOB
     },
     complained: {
         type: SignalType.INTEGER,
@@ -66,7 +71,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 6,
-        weight_edit: 6
+        weight_edit: 6,
+        source: SignalSource.JOB
     },
     clicked_any: {
         type: SignalType.INTEGER,
@@ -74,7 +80,8 @@ const signalSetSchema = {
         settings: {},
         indexed: false,
         weight_list: 7,
-        weight_edit: 7
+        weight_edit: 7,
+        source: SignalSource.JOB
     }
 };
 
@@ -87,17 +94,14 @@ function signalSetName(campaignId) {
 }
 
 async function createSignalSet(context, campaignId) {
-    const signalSetWithSignalCidMap = await signalSets.ensure(
-        context,
-        {
-            cid: signalSetCid(campaignId),
-            name: signalSetName(campaignId),
-            description: '',
-            namespace: config.mailtrain.namespace,
-            type: SignalSetType.COMPUTED,
-        },
-        signalSetSchema,
-    );
+    const signalSetWithSignalCidMap = await createSignalSetWithSignalCidMap(context, {
+        cid: signalSetCid(campaignId),
+        name: signalSetName(campaignId),
+        description: '',
+        namespace: config.mailtrain.namespace,
+        type: SignalSetType.COMPUTED,
+        signals: signalSetSchema
+    });
 
     return signalSetWithSignalCidMap;
 }
@@ -107,12 +111,12 @@ async function removeSignalSet(context, campaignId) {
 }
 
 async function getLastRecord(context, campaignId) {
-    const campaignMsgsId = await knex('signal_sets').where('cid', signalSetCid(campaignId)).first();
+    const campaignMsgsId = await knex('signal_sets').where('cid', signalSetCid(campaignId)).select('id').first();
     if (!campaignMsgsId) {
         return null;
     }
 
-    const campaignMsgsSigSet = await signalSets.getById(context, campaignMsgsId, false, true);
+    const campaignMsgsSigSet = await signalSets.getById(context, campaignMsgsId.id, false, true);
 
     const lastId = await signalSets.getLastId(context, campaignMsgsSigSet);
     if (!lastId) {
