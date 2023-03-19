@@ -8,6 +8,7 @@ const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { formatRecordId } = require('../lib/activity-log');
 const moment = require('moment');
+const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 
 const signalSetSchema = {
     // not included: test_sent, triggered
@@ -85,28 +86,40 @@ function signalSetName(campaignId) {
     return `Campaign ${campaignId} messages`;
 }
 
+async function createSignalSet(context, campaignId) {
+    const signalSetWithSignalCidMap = await signalSets.ensure(
+        context,
+        {
+            cid: signalSetCid(campaignId),
+            name: signalSetName(campaignId),
+            description: '',
+            namespace: config.mailtrain.namespace,
+            type: SignalSetType.COMPUTED,
+        },
+        signalSetSchema,
+    );
+
+    return signalSetWithSignalCidMap;
+}
+
+async function removeSignalSet(context, campaignId) {
+    await signalSets.removeByCid(context, signalSetCid(campaignId));
+}
+
 async function getLastRecord(context, campaignId) {
-    const campaignMsgsSigSet = await signalSets.getByCid(context, signalSetCid(campaignId), false, true);
+    const campaignMsgsId = await knex('signal_sets').where('cid', signalSetCid(campaignId)).first();
+    if (!campaignMsgsId) {
+        return null;
+    }
+
+    const campaignMsgsSigSet = await signalSets.getById(context, campaignMsgsId, false, true);
 
     const lastId = await signalSets.getLastId(context, campaignMsgsSigSet);
-    // if (lastId) {
-        return await signalSets.getRecord(context, campaignMsgsSigSet, lastId);
-    // }
+    if (!lastId) {
+        return null;
+    }
 
-    // otherwise return a zeroed out record, or rely on the first return,
-    // depending on if campaign messages can be slow and not create its signal
-    // set soon enough
-
-    // const record = { id: formatRecordId(0), signals: {} };
-    // for (const signalCid in signalSetSchema) {
-    //     if (signalCid == 'timestamp') {
-    //         record.signals[signalCid] = moment.utc().toISOString();
-    //     } else {
-    //         record.signals[signalCid] = 0;
-    //     }
-    // }
-
-    // return record;
+    return await signalSets.getRecord(context, campaignMsgsSigSet, lastId);
 }
 
 function panelName(campaignId) {
@@ -155,6 +168,8 @@ async function removePanel(context, campaignId) {
 module.exports = {
     signalSetSchema,
     signalSetCid,
+    createSignalSet,
+    removeSignalSet,
     getLastRecord,
     panelName,
     createPanel,

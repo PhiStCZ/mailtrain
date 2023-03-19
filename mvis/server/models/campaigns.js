@@ -4,7 +4,6 @@ const config = require('../../ivis-core/server/lib/config');
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, CampaignActivityType } = require('../../../shared/activity-log');
 const { removeWorkspaceByName } = require('../lib/helpers');
-const campaignMessages = require('./campaign-messages');
 const workspaces = require('../../ivis-core/server/models/workspaces');
 const jobs = require('../../ivis-core/server/models/jobs');
 const { removeJobByName } = require('../lib/helpers');
@@ -37,7 +36,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
             campaignId,
             creationTimestamp,
             campaignTracker: campaignTrackerSigSet.cid,
-            campaignMessagesCid: campaignMessagesSignalSetCid(campaignId)
+            campaignMessagesCid: campaignMessages.signalSetCid(campaignId)
         },
         signal_sets_triggers: [
             campaignTrackerSigSet.id

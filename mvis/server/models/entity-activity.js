@@ -121,7 +121,17 @@ const staticSignalSets = {
         // ingest
     },
     [LogTypeId.CHANNEL]: {
-        schema: schemas.genericEntitySchema,
+        schema: {
+            ...schemas.genericEntitySchema,
+            campaignId: {
+                type: SignalType.INTEGER,
+                name: 'Campaign ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+            },
+        },
         name: 'Channel',
         
         // ingest

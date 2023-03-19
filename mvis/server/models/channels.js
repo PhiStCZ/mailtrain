@@ -69,8 +69,8 @@ async function createSignalSet(context, channelId) {
     const signalSetWithSignalCidMap = await signalSets.ensure(
         context,
         {
-            cid: signalSetCid(campaignId),
-            name: signalSetName(campaignId),
+            cid: signalSetCid(channelId),
+            name: signalSetName(channelId),
             description: '',
             namespace: config.mailtrain.namespace,
             type: SignalSetType.COMPUTED,
