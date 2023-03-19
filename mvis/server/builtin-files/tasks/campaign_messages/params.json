@@ -19,9 +19,10 @@
         "includeSignals": true
     },
     {
-        "id": "campaignMessagesCid",
-        "type": "string",
-        "label": "Campaign messages CID",
-        "help": "CID of campaign messages signal set"
+        "id": "campaignMessages",
+        "type": "signalSet",
+        "label": "Campaign Messages",
+        "help": "Campaign messages signal set",
+        "includeSignals": true
     }
 ]

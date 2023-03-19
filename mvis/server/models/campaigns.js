@@ -36,7 +36,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
             campaignId,
             creationTimestamp,
             campaignTracker: campaignTrackerSigSet.cid,
-            campaignMessagesCid: campaignMessages.signalSetCid(campaignId)
+            campaignMessages: campaignMessages.signalSetCid(campaignId)
         },
         signal_sets_triggers: [
             campaignTrackerSigSet.id
@@ -48,7 +48,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
     const jobId = await jobs.create(context, job, true);
 
     // the job will initialize the campaign messages signal set
-    await jobs.run(context, jobId);
+    // await jobs.run(context, jobId);
 
     return jobId;
 }
@@ -63,6 +63,8 @@ async function onCampaignCreate(context, event) {
     const creationTimestamp = event.timestamp;
 
     const campaignTrackerSigSet = await campaignTracker.createCampaignTracker(context, campaignId);
+
+    await campaignMessages.createSignalSet(context, campaignId);
 
     await createJob(context, campaignId, campaignTrackerSigSet, creationTimestamp);
 
@@ -83,6 +85,8 @@ async function onCampaignRemove(context, event) {
     await removeWorkspaceByName(context, workspaceName(campaignId));
 
     await removeJob(context, campaignId);
+
+    await campaignMessages.removeSignalSet(context, campaignId);
 
     await campaignTracker.removeCampaignTracker(context, campaignId);
 }
