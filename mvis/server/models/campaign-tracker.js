@@ -132,9 +132,7 @@ async function removeCampaignTracker(context, campaignId) {
 }
 
 
-async function addCampaignTrackerEvents(context, events) {
-    const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
-
+async function addCampaignTrackerEvents(context, eventsByCampaignId) {
     for (const [campaignId, campaignEvents] of eventsByCampaignId.entries()) {
         const campaignTracker = await getCachedCampaignTracker(context, campaignId);
         if (campaignTracker) {

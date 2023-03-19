@@ -5,6 +5,9 @@ const panels = require('../../ivis-core/server/models/panels');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const { removePanelByName } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
+const signalSets = require('../../ivis-core/server/models/signal-sets');
+const { formatRecordId } = require('../lib/activity-log');
+const moment = require('moment');
 
 const signalSetSchema = {
     // not included: test_sent, triggered
@@ -64,7 +67,7 @@ const signalSetSchema = {
         weight_list: 6,
         weight_edit: 6
     },
-    clicked: {
+    clicked_any: {
         type: SignalType.INTEGER,
         name: 'Clicked',
         settings: {},
@@ -82,6 +85,29 @@ function signalSetName(campaignId) {
     return `Campaign ${campaignId} messages`;
 }
 
+async function getLastRecord(context, campaignId) {
+    const campaignMsgsSigSet = await signalSets.getByCid(context, signalSetCid(campaignId), false, true);
+
+    const lastId = await signalSets.getLastId(context, campaignMsgsSigSet);
+    // if (lastId) {
+        return await signalSets.getRecord(context, campaignMsgsSigSet, lastId);
+    // }
+
+    // otherwise return a zeroed out record, or rely on the first return,
+    // depending on if campaign messages can be slow and not create its signal
+    // set soon enough
+
+    // const record = { id: formatRecordId(0), signals: {} };
+    // for (const signalCid in signalSetSchema) {
+    //     if (signalCid == 'timestamp') {
+    //         record.signals[signalCid] = moment.utc().toISOString();
+    //     } else {
+    //         record.signals[signalCid] = 0;
+    //     }
+    // }
+
+    // return record;
+}
 
 function panelName(campaignId) {
     return `Campaign ${campaignId} messages`;
@@ -94,7 +120,8 @@ const PanelColors = { // or rgb(r, g, b) ?
     bounced: '#ffff00',
     unsubscribed: '#ff00ff',
     complained: '#ff8800',
-    clicked: '#0088ff',
+    clicked_any: '#8800ff',
+    clicked: '#0088ff', // somehow dynamically assigned...?
 }
 
 async function createPanel(context, campaignId, campaignWorkspaceId) {
@@ -128,6 +155,7 @@ async function removePanel(context, campaignId) {
 module.exports = {
     signalSetSchema,
     signalSetCid,
+    getLastRecord,
     panelName,
     createPanel,
     removePanel,

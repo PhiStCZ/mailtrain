@@ -25,7 +25,7 @@ const {convertFileURLs} = require('../lib/campaign-content');
 const messageSender = require('../lib/message-sender');
 const lists = require('./lists');
 
-const {LogTypeId, EntityActivityType, CampaignActivityType, CampaignTrackerActivityType, TemplateActivityType} = require('../../shared/activity-log');
+const {LogTypeId, EntityActivityType, CampaignActivityType, CampaignTrackerActivityType, TemplateActivityType, ChannelActivityType } = require('../../shared/activity-log');
 const activityLog = require('../lib/activity-log');
 
 const allowedKeysCommon = ['name', 'description', 'namespace', 'channel',
@@ -562,7 +562,13 @@ async function _createTx(tx, context, entity, content) {
                 }).where('id', id);
         }
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {
+            channelId: filteredEntity.channel,
+            status: filteredEntity.status
+        });
+        if (entity.channel) {
+            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: id });
+        }
 
         return id;
     });
@@ -632,7 +638,16 @@ async function updateWithConsistencyCheck(context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'campaign', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, entity.id, {status: filteredEntity.status});
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, filteredEntity.id, {
+            channelId: filteredEntity.channel,
+            status: filteredEntity.status
+        });
+        if (existing.channel && existing.channel != filteredEntity.channel) {
+            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: filteredEntity.id });
+        }
+        if (filteredEntity.channel && filteredEntity.channel != existing.channel) {
+            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: filteredEntity.id });
+        }
     });
 }
 
@@ -640,7 +655,7 @@ async function _removeTx(tx, context, id, existing = null, overrideTypeCheck = f
     await shares.enforceEntityPermissionTx(tx, context, 'campaign', id, 'delete');
 
     if (!existing) {
-        existing = await tx('campaigns').where('id', id).select(['id', 'status', 'type']).first();
+        existing = await tx('campaigns').where('id', id).select(['id', 'status', 'type', 'channel']).first();
     }
 
     if (existing.status === CampaignStatus.SENDING) {
@@ -673,6 +688,9 @@ async function _removeTx(tx, context, id, existing = null, overrideTypeCheck = f
 
     await tx('campaigns').where('id', id).del();
 
+    if (existing.channel) {
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: id });
+    }
     await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.REMOVE, id);
 }
 

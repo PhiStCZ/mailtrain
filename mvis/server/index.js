@@ -6,7 +6,8 @@ const log = require('../ivis-core/server/lib/log');
 const path = require('path');
 
 const entityActivity = require('./models/entity-activity');
-const campaignTracker = require('./models/campaign-tracker');
+const campaigns = require('./models/campaigns');
+const channels = require('./models/channels');
 const listTracker = require('./models/list-tracker');
 
 const { addBuiltinTasks } = require('./models/builtin-tasks');
@@ -44,9 +45,11 @@ async function init() {
 
     em.on('services.start', async () => {
         // this is for setting up any global namespaces, users, signal sets, workspaces and panels
+        // also for setting up activity log listener events
 
         await entityActivity.init();
-        await campaignTracker.init();
+        await campaigns.init();
+        await channels.init();
         await listTracker.init();
     });
 

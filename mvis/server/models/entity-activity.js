@@ -68,45 +68,53 @@ const staticSignalSets = {
                 weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
                 weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
             },
+            channelId: {
+                type: SignalType.INTEGER,
+                name: 'Channel ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+            },
             triggerId: {
                 type: SignalType.INTEGER,
                 name: 'Campaign Trigger ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
             },
             listId: {
                 type: SignalType.INTEGER,
                 name: 'List ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
             },
             subscriptionId: {
                 type: SignalType.INTEGER,
                 name: 'Subscription ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
             },
             linkId: {
                 type: SignalType.INTEGER,
                 name: 'Link ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6
             },
             url: {
                 type: SignalType.TEXT,
                 name: 'Link URL',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6
+                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 7,
+                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 7
             },
         },
         name: 'Campaign',

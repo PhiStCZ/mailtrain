@@ -14,6 +14,7 @@ const { JobState } = require('../../ivis-core/shared/jobs');
 
 const campaignTracker = require('./campaign-tracker');
 const campaignMessages = require('./campaign-messages');
+const channels = require('./channels');
 
 function workspaceName(campaignId) {
     return `Campaign ${campaignId} workspace`;
@@ -58,10 +59,13 @@ async function removeJob(context, campaignId) {
 }
 
 
-async function onCampaignCreate(context, campaignId, timestamp) {
+async function onCampaignCreate(context, event) {
+    const campaignId = event.entityId;
+    const creationTimestamp = event.timestamp;
+
     const campaignTrackerSigSet = await campaignTracker.createCampaignTracker(context, campaignId);
 
-    await createJob(context, campaignId, campaignTrackerSigSet, timestamp);
+    await createJob(context, campaignId, campaignTrackerSigSet, creationTimestamp);
 
     const workspaceId = await workspaces.create(context, {
         name: workspaceName(campaignId),
@@ -72,7 +76,9 @@ async function onCampaignCreate(context, campaignId, timestamp) {
     await campaignMessages.createPanel(context, campaignId, workspaceId);
 }
 
-async function onCampaignRemove(context, campaignId, timestamp) {
+async function onCampaignRemove(context, event) {
+    const campaignId = event.entityId;
+
     await campaignMessages.removePanel(context, campaignId);
 
     await removeWorkspaceByName(context, workspaceName(campaignId));
@@ -82,36 +88,39 @@ async function onCampaignRemove(context, campaignId, timestamp) {
     await campaignTracker.removeCampaignTracker(context, campaignId);
 }
 
-async function onCampaignReset(context, campaignId, timestamp) {
-    // restart the job, including its owned signal sets
+async function onCampaignReset(context, event) {
+    const campaignId = event.entityId;
+    const resetTimestamp = event.timestamp;
 
+    // restart the job, including its owned signal sets
     await removeJob(context, campaignId);
     const campaignTrackerSigSet = await campaignTracker.getCachedCampaignTracker(context, campaignId);
-    await createJob(context, campaignId, campaignTrackerSigSet, timestamp);
+    await createJob(context, campaignId, campaignTrackerSigSet, resetTimestamp);
 }
 
 
 async function init() {
     activityLog.on(LogTypeId.CAMPAIGN_TRACKER, async (context, events) => {
-        campaignTracker.addCampaignTrackerEvents(context, events);
+        const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
+        campaignTracker.addCampaignTrackerEvents(context, eventsByCampaignId);
+        for (const campaignId of eventsByCampaignId.keys()) {
+            channels.updateChannelCampaignStats(context, campaignId);
+        }
     });
 
     activityLog.on(LogTypeId.CAMPAIGN, async (context, events) => {
         for (const event of events) {
-            const campaignId = event.entityId;
-            const activity = event.activityType;
-            const timestamp = event.timestamp;
-            switch (activity) {
+            switch (event.activityType) {
                 case EntityActivityType.CREATE:
-                    await onCampaignCreate(context, campaignId, timestamp);
+                    await onCampaignCreate(context, event);
                     break;
 
                 case EntityActivityType.REMOVE:
-                    await onCampaignRemove(context, campaignId, timestamp);
+                    await onCampaignRemove(context, event);
                     break;
 
                 case CampaignActivityType.RESET:
-                    await onCampaignReset(context, campaignId, timestamp);
+                    await onCampaignReset(context, event);
                     break;
 
                 default: break;

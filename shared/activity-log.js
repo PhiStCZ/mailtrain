@@ -51,8 +51,13 @@ const CampaignTrackerActivityType = {
     CLICKED: 7,
     TRIGGERED: 8,
     FAILED: 9,
-    GENERAL_CLICK: 10, // without linkId
+    CLICKED_ANY: 10,
     ADD_LINK: 11,
+};
+
+const ChannelActivityType = {
+    ADD_CAMPAIGN: EntityActivityType.MAX + 1,
+    REMOVE_CAMPAIGN: EntityActivityType.MAX + 1,
 };
 
 const ListActivityType = {
@@ -92,6 +97,7 @@ module.exports.EntityActivityType = EntityActivityType;
 module.exports.BlacklistActivityType = BlacklistActivityType;
 module.exports.CampaignActivityType = CampaignActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
+module.exports.ChannelActivityType = ChannelActivityType;
 module.exports.ListActivityType = ListActivityType;
 module.exports.ReportActivityType = ReportActivityType;
 module.exports.TemplateActivityType = TemplateActivityType;

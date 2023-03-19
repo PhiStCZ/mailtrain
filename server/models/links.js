@@ -96,7 +96,7 @@ async function countLink(remoteIp, userAgent, campaignCid, listCid, subscription
                     await tx('campaigns').increment('clicks').where('id', campaign.id);
 
                     // general click probably doesn't need to be repeatedly logged
-                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.GENERAL_CLICK, campaign.id, list.id, subscription.id, {
+                    await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.CLICKED_ANY, campaign.id, list.id, subscription.id, {
                         ip: remoteIp,
                         country,
                         deviceType: device.type

@@ -58,7 +58,7 @@ def get_signal_set(sigset_cid):
 
 ACTIVITY_TYPE = {
   'sent': 1,
-  # 'test-sent': 2,
+  # 'test_sent': 2,
   'bounced': 3,
   'unsubscribed': 4,
   'complained': 5,
@@ -66,8 +66,8 @@ ACTIVITY_TYPE = {
   # 'clicked': 7,
   # 'triggered': 8,
   'failed': 9,
-  # 'general-click': 10,
-  # 'add-link': 11,
+  'clicked_any': 10,
+  # 'add_link': 11,
 }
 ACTIVITY_CLICKED = 7
 ACTIVITY_ADD_LINK = 11
