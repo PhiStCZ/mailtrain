@@ -4,7 +4,7 @@ const config = require('../../ivis-core/server/lib/config');
 const knex = require('../../ivis-core/server/lib/knex');
 const panels = require('../../ivis-core/server/models/panels');
 const { SignalType, SignalSource } = require('../../ivis-core/shared/signals');
-const { removePanelByName, createSignalSetWithSignalCidMap } = require('../lib/helpers');
+const { removePanelByName, createSignalSetWithSignals } = require('../lib/helpers');
 const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
@@ -94,7 +94,7 @@ function signalSetName(campaignId) {
 }
 
 async function createSignalSet(context, campaignId) {
-    const signalSetWithSignalCidMap = await createSignalSetWithSignalCidMap(context, {
+    const signalSetWithSignalCidMap = await createSignalSetWithSignals(context, {
         cid: signalSetCid(campaignId),
         name: signalSetName(campaignId),
         description: '',

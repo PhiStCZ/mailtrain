@@ -4,20 +4,33 @@ const knex = require('../../ivis-core/server/lib/knex');
 const jobs = require('../../ivis-core/server/models/jobs');
 const panels = require('../../ivis-core/server/models/panels');
 const workspaces = require('../../ivis-core/server/models/workspaces');
+const signals = require('../../ivis-core/server/models/signals');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { filterObject } = require('../../ivis-core/server/lib/helpers');
 const { allowedKeysCreate } = require('../../ivis-core/server/lib/signal-set-helpers');
 
 
-async function createSignalSetWithSignalCidMap(context, entity) {
+async function createSignalSetWithSignals(context, entity) {
     const filteredEntity = filterObject(entity, allowedKeysCreate);
+    const new_signals = entity.signals || {};
 
     return await knex.transaction(async tx => {
         filteredEntity.id = await signalSets.createTx(tx, context, filteredEntity);
+
+        for (const signalCid in new_signals) {
+            const signal = {
+                ...new_signals[signalCid],
+                cid: signalCid
+            };
+            await signals.createTx(tx, context, filteredEntity.id, signal);
+        }
+
         filteredEntity.signalByCidMap = await signalSets.getSignalByCidMapTx(tx, filteredEntity);
         return filteredEntity;
     });
 }
+
+
 
 
 // NOTE: as there is no cid for workspaces, panels, etc., MVIS' entities with
@@ -39,7 +52,7 @@ async function removeWorkspaceByName(context, name) {
 }
 
 
-module.exports.createSignalSetWithSignalCidMap = createSignalSetWithSignalCidMap;
+module.exports.createSignalSetWithSignals = createSignalSetWithSignals;
 module.exports.removeJobByName = removeJobByName;
 module.exports.removeWorkspaceByName = removeWorkspaceByName;
 module.exports.removePanelByName = removePanelByName;
