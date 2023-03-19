@@ -64,7 +64,7 @@ async function onCampaignCreate(context, event) {
 
     const campaignTrackerSigSet = await campaignTracker.createCampaignTracker(context, campaignId);
 
-    await campaignMessages.createSignalSet(context, campaignId);
+    await campaignMessages.createSignalSet(context, campaignId, creationTimestamp);
 
     await createJob(context, campaignId, campaignTrackerSigSet, creationTimestamp);
 

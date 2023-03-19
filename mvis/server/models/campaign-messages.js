@@ -93,8 +93,8 @@ function signalSetName(campaignId) {
     return `Campaign ${campaignId} messages`;
 }
 
-async function createSignalSet(context, campaignId) {
-    const signalSetWithSignalCidMap = await createSignalSetWithSignals(context, {
+async function createSignalSet(context, campaignId, creationTimestamp) {
+    const sigSetWithSigMap = await createSignalSetWithSignals(context, {
         cid: signalSetCid(campaignId),
         name: signalSetName(campaignId),
         description: '',
@@ -103,7 +103,20 @@ async function createSignalSet(context, campaignId) {
         signals: signalSetSchema
     });
 
-    return signalSetWithSignalCidMap;
+    const initRecord = {
+        id: creationTimestamp,
+        signals: {}
+    };
+    for (const signalCid of signalSetSchema) {
+        if (signalCid == 'timestamp') {
+            initRecord.signals[signalCid] = creationTimestamp;
+        } else {
+            initRecord.signals[signalCid] = 0;
+        }
+    }
+    await signalSets.insertRecords(context, sigSetWithSigMap, [initRecord]);
+
+    return sigSetWithSigMap;
 }
 
 async function removeSignalSet(context, campaignId) {

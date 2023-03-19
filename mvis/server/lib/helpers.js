@@ -22,6 +22,9 @@ async function createSignalSetWithSignals(context, entity) {
                 ...new_signals[signalCid],
                 cid: signalCid
             };
+            if (!signal.namespace) {
+                signal.namespace = filteredEntity.namespace;
+            }
             await signals.createTx(tx, context, filteredEntity.id, signal);
         }
 
