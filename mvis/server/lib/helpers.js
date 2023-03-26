@@ -8,11 +8,24 @@ const signals = require('../../ivis-core/server/models/signals');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { filterObject } = require('../../ivis-core/server/lib/helpers');
 const { allowedKeysCreate } = require('../../ivis-core/server/lib/signal-set-helpers');
+const { SignalSource } = require('../../ivis-core/shared/signals');
+const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 
 
-async function createSignalSetWithSignals(context, entity) {
+async function createSignalSetWithSignals(context, entity, isComputed = false) {
     const filteredEntity = filterObject(entity, allowedKeysCreate);
     const new_signals = entity.signals || {};
+
+    if (isComputed) {
+        entity.type = SignalSetType.COMPUTED;
+
+        for (const sigCid in new_signals) {
+            new_signals[sigCid] = {
+                ...new_signals[sigCid],
+                source: SignalSource.JOB
+            }
+        }
+    }
 
     return await knex.transaction(async tx => {
         filteredEntity.id = await signalSets.createTx(tx, context, filteredEntity);

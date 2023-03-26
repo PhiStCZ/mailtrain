@@ -23,11 +23,6 @@ const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 const CACHED_NONEXISTENT = null;
 
 
-function workspaceName(channelId) {
-    return `Channel ${channelId} workspace`;
-}
-
-
 const signalSetSchema = {
     campaignId: {
         type: SignalType.INTEGER,
@@ -110,11 +105,6 @@ async function removeSignalSet(context, channelId) {
 }
 
 
-function panelName(channelId) {
-    return `Channel ${channelId} campaigns`;
-}
-
-
 const channelIdsByCampaign = new Map();
 
 async function findCampaignChannelId(context, campaignId) {
@@ -128,7 +118,6 @@ async function findCampaignChannelId(context, campaignId) {
     const lastChannelCampaignEntry = await signalSets.query(context, [{
         params: {},
         sigSetCid: LogTypeId.CHANNEL,
-        signals: [ 'activityType', 'entityId' ],
         filter: {
             type: 'and',
             children: [
@@ -147,18 +136,22 @@ async function findCampaignChannelId(context, campaignId) {
             ]
         },
         docs: {
+            signals: [ 'activityType', 'entityId' ],
+
             from: 0,
             limit: 1,
             sort: [{ sigCid: 'timestamp', order: 'desc' }]
         }
     }]);
 
-    if (lastChannelCampaignEntry.length == 0 || lastChannelCampaignEntry[0].entityActivity == EntityActivityType.REMOVE) {
+    const lastEntries = lastChannelCampaignEntry[0].docs;
+
+    if (lastEntries.length == 0 || lastEntries[0].entityActivity == EntityActivityType.REMOVE) {
         channelIdsByCampaign.set(campaignId, CACHED_NONEXISTENT);
         return null;
     }
 
-    const channelId = lastChannelCampaignEntry[0].entityId;
+    const channelId = lastEntries[0].entityId;
     channelIdsByCampaign.set(campaignId, CACHED_NONEXISTENT);
     return channelId;
 }
@@ -173,11 +166,20 @@ async function updateChannelCampaignStats(context, campaignId, channelSignalSet 
         channelSignalSet = await getCachedSignalSet(context, channelId);
     }
 
-    const lastRecord = await campaignMessages.getLastRecord(context, campaignId);
+    let lastRecord = await campaignMessages.getLastRecord(context, campaignId);
+    if (!lastRecord) {
+        lastRecord = {
+            sent: 0,
+            opened: 0,
+            // TODO: make more events
+        };
+    }
+
     const updatedRecord = {
         id: campaignId,
         signals: { campaignId }
     };
+
     for (const signalCid in lastRecord.signals) {
         if (signalCid != 'timestamp') {
             updatedRecord.signals[signalCid] = lastRecord.signals[signalCid];
@@ -189,21 +191,11 @@ async function updateChannelCampaignStats(context, campaignId, channelSignalSet 
 
 
 async function onChannelCreate(context, channelId) {
-    createSignalSet(context, channelId);
-
-    // const workspaceId = await workspaces.create(context, {
-    //     name: workspaceName(campaignId),
-    //     description: '',
-    //     namespace: config.mailtrain.namespace,
-    // });
-
-    // TODO: create panel
+    await createSignalSet(context, channelId);
 }
 
 async function onChannelRemove(context, channelId) {
-    removeSignalSet(context, channelId);
-
-    // TODO: remove panel & workspace
+    await removeSignalSet(context, channelId);
 }
 
 

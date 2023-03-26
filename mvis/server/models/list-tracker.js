@@ -9,9 +9,6 @@ const { LogTypeId, EntityActivityType } = require('../../../shared/activity-log'
 const log = require('../../ivis-core/server/lib/log');
 
 
-function listTrackerName(listId) {
-    return `List Tracker ${listId}`;
-}
 function listTrackerCid(listId) {
     return `list_tracker_${listId}`;
 }
@@ -95,7 +92,7 @@ async function createListTracker(context, listId) {
         context,
         {
             cid: listTrackerCid(listId),
-            name: listTrackerName(listId),
+            name: `List ${listId} Tracker`,
             description: '',
             namespace: config.mailtrain.namespace,
         },
@@ -135,7 +132,7 @@ async function removeListTracker(context, listId) {
 
 
 async function onCreateList(context, listId, creationTimestamp) {
-    // later have list-related workspace etc.
+    // TODO: use timestamp...?
     await createListTracker(context, listId);
 }
 

@@ -3,8 +3,6 @@
 const config = require('../../ivis-core/server/lib/config');
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, CampaignActivityType } = require('../../../shared/activity-log');
-const { removeWorkspaceByName } = require('../lib/helpers');
-const workspaces = require('../../ivis-core/server/models/workspaces');
 const jobs = require('../../ivis-core/server/models/jobs');
 const { removeJobByName } = require('../lib/helpers');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
@@ -14,11 +12,6 @@ const { JobState } = require('../../ivis-core/shared/jobs');
 const campaignTracker = require('./campaign-tracker');
 const campaignMessages = require('./campaign-messages');
 const channels = require('./channels');
-
-function workspaceName(campaignId) {
-    return `Campaign ${campaignId} workspace`;
-}
-
 
 function jobName(campaignId) {
     return `Campaign ${campaignId} processing job`;
@@ -67,22 +60,10 @@ async function onCampaignCreate(context, event) {
     await campaignMessages.createSignalSet(context, campaignId, creationTimestamp);
 
     await createJob(context, campaignId, campaignTrackerSigSet, creationTimestamp);
-
-    const workspaceId = await workspaces.create(context, {
-        name: workspaceName(campaignId),
-        description: '',
-        namespace: config.mailtrain.namespace,
-    });
-
-    await campaignMessages.createPanel(context, campaignId, workspaceId);
 }
 
 async function onCampaignRemove(context, event) {
     const campaignId = event.entityId;
-
-    await campaignMessages.removePanel(context, campaignId);
-
-    await removeWorkspaceByName(context, workspaceName(campaignId));
 
     await removeJob(context, campaignId);
 

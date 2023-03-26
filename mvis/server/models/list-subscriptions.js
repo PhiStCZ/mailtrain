@@ -66,11 +66,6 @@ function jobName(listId) {
     return `List ${listId} subscriptions`;
 }
 
-function panelName(listId) {
-    return `List ${listId} subscriptions`;
-}
-
-
 async function createJob(context, listId, listTrackerSigSet, creationTimestamp) {
     const task = await getBuiltinTask(BuiltinTaskNames.LIST);
     const job = {
@@ -88,9 +83,9 @@ async function createJob(context, listId, listTrackerSigSet, creationTimestamp) 
         signal_sets_triggers: [
             listTrackerSigSet.id
         ],
-        trigger: null,  // no automatic trigger
         min_gap: 60,    // 1 minute
-        delay: 60,      // 1 minute
+        trigger: null,
+        delay: null,
     };
     const jobId = await jobs.create(context, job, true);
 
@@ -105,42 +100,10 @@ async function removeJob(context, listId) {
 }
 
 
-async function createPanel(context, listId, workspaceId) {
-    const sigSetCid = signalSetCid(listId);
-    const params = [];
-    for (const sigCid in signalSetSchema) {
-        if (sigCid != 'timestamp') {
-            params.push({
-                label: signalSetSchema[sigCid].name,
-                color: '#ff00ff', // or rgb(255, 0, 255) ? TODO: ensure this is correct
-                sigSet: sigSetCid,
-                signal: sigCid,
-                tsSigCid: 'timestamp',
-            });
-        }
-    }
-
-    await panels.create(context, workspaceId, {
-        name: panelName(listId),
-        description: `Subscription counts for list ${listId}`,
-        builtin_template: BuiltinTemplateIds.LINECHART,
-        namespace: config.mailtrain.namespace,
-        params,
-    });
-}
-
-async function removePanel(context, listId) {
-    await removePanelByName(context, panelName(listId));
-}
-
-
 module.exports = {
     signalSetName,
     signalSetCid,
     jobName,
-    panelName,
     createJob,
     removeJob,
-    createPanel,
-    removePanel,
 };

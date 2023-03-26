@@ -12,10 +12,6 @@ function campaignTrackerCid(campaignId) {
     return `campaign_tracker_${campaignId}`;
 }
 
-function campaignTrackerName(campaignId) {
-    return `Campaign tracker ${campaignId}`;
-}
-
 const campaignTrackerSchema = {
     timestamp: {
         type: SignalType.DATE_TIME,
@@ -93,7 +89,7 @@ async function createCampaignTracker(context, campaignId) {
         context,
         {
             cid: campaignTrackerCid(campaignId),
-            name: campaignTrackerName(campaignId),
+            name: `Campaign ${campaignId} tracker`,
             description: '',
             namespace: config.mailtrain.namespace,
         },
