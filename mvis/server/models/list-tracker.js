@@ -7,7 +7,7 @@ const activityLog = require('../lib/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const { LogTypeId, EntityActivityType } = require('../../../shared/activity-log');
 const log = require('../../ivis-core/server/lib/log');
-
+const listSubscriptions = require('./list-subscriptions');
 
 function listTrackerCid(listId) {
     return `list_tracker_${listId}`;
@@ -132,11 +132,12 @@ async function removeListTracker(context, listId) {
 
 
 async function onCreateList(context, listId, creationTimestamp) {
-    // TODO: use timestamp...?
-    await createListTracker(context, listId);
+    const listTracker = await createListTracker(context, listId);
+    await listSubscriptions.createJob(context, listId, listTracker, creationTimestamp);
 }
 
 async function onRemoveList(context, listId) {
+    await listSubscriptions.removeJob(context, listId);
     await removeListTracker(context, listId);
 }
 
