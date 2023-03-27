@@ -10,6 +10,7 @@ const { filterObject } = require('../../ivis-core/server/lib/helpers');
 const { allowedKeysCreate } = require('../../ivis-core/server/lib/signal-set-helpers');
 const { SignalSource } = require('../../ivis-core/shared/signals');
 const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
+const { throwPermissionDenied } = require('../../ivis-core/server/models/shares');
 
 
 async function createSignalSetWithSignals(context, entity, isComputed = false) {
@@ -17,7 +18,7 @@ async function createSignalSetWithSignals(context, entity, isComputed = false) {
     const new_signals = entity.signals || {};
 
     if (isComputed) {
-        entity.type = SignalSetType.COMPUTED;
+        filteredEntity.type = SignalSetType.COMPUTED;
 
         for (const sigCid in new_signals) {
             new_signals[sigCid] = {
@@ -54,16 +55,25 @@ async function createSignalSetWithSignals(context, entity, isComputed = false) {
 
 async function removeJobByName(context, name) {
     const res = await knex('jobs').where('name', name).select('id').first();
+    if (!res) {
+        throwPermissionDenied();
+    }
     await jobs.remove(context, res.id);
 }
 
 async function removePanelByName(context, name) {
     const res = await knex('panels').where('name', name).select('id').first();
+    if (!res) {
+        throwPermissionDenied();
+    }
     await panels.remove(context, res.id);
 }
 
 async function removeWorkspaceByName(context, name) {
     const res = await knex('workspaces').where('name', name).select('id').first();
+    if (!res) {
+        throwPermissionDenied();
+    }
     await workspaces.remove(context, res.id);
 }
 

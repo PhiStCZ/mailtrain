@@ -43,9 +43,11 @@ const signalSetSchema = {
 };
 
 for (const signalCid in campaignMessages.signalSetSchema) {
-    signalSetSchema[signalCid] = { ...campaignMessages.signalSetSchema[signalCid] };
-    signalSetSchema[signalCid].weight_list += 1; // 2
-    signalSetSchema[signalCid].weight_edit += 1; //
+    if (signalCid != 'timestamp') {
+        signalSetSchema[signalCid] = { ...campaignMessages.signalSetSchema[signalCid] };
+        signalSetSchema[signalCid].weight_list += 1; // 2
+        signalSetSchema[signalCid].weight_edit += 1; //
+    }
 }
 
 function signalSetCid(channelId) {
@@ -166,13 +168,10 @@ async function updateChannelCampaignStats(context, campaignId, channelSignalSet 
         channelSignalSet = await getCachedSignalSet(context, channelId);
     }
 
-    let lastRecord = await campaignMessages.getLastRecord(context, campaignId);
-    if (!lastRecord) {
-        lastRecord = {
-            sent: 0,
-            opened: 0,
-            // TODO: make more events
-        };
+    const lastRecords = await campaignMessages.getLastRecord(context, campaignId);
+    let lastRecordSignals = {};
+    if (lastRecords.docs.length > 0) {
+        lastRecordSignals = lastRecords.docs[0].signals;
     }
 
     const updatedRecord = {
@@ -180,9 +179,9 @@ async function updateChannelCampaignStats(context, campaignId, channelSignalSet 
         signals: { campaignId }
     };
 
-    for (const signalCid in lastRecord.signals) {
+    for (const signalCid in campaignMessages.signalSetSchema) {
         if (signalCid != 'timestamp') {
-            updatedRecord.signals[signalCid] = lastRecord.signals[signalCid];
+            updatedRecord.signals[signalCid] = lastRecordSignals[signalCid] || 0;
         }
     }
 

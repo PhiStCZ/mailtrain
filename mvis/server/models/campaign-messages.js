@@ -87,19 +87,6 @@ async function createSignalSet(context, campaignId, creationTimestamp) {
         signals: signalSetSchema
     }, true);
 
-    const initRecord = {
-        id: creationTimestamp,
-        signals: {}
-    };
-    for (const signalCid in signalSetSchema) {
-        if (signalCid == 'timestamp') {
-            initRecord.signals[signalCid] = creationTimestamp;
-        } else {
-            initRecord.signals[signalCid] = 0;
-        }
-    }
-    await signalSets.insertRecords(context, sigSetWithSigMap, [initRecord]);
-
     return sigSetWithSigMap;
 }
 
@@ -113,7 +100,7 @@ async function getLastRecord(context, campaignId) {
         return null;
     }
 
-    const lastEntry = await signalSets.query(context, [{
+    const lastCampaignMessagesEntries = await signalSets.query(context, [{
         params: {},
         sigSetCid: signalSetCid(campaignId),
         docs: {
@@ -123,6 +110,8 @@ async function getLastRecord(context, campaignId) {
             sort: [{ sigCid: 'timestamp', order: 'desc' }]
         }
     }]);
+
+    const lastEntry = lastCampaignMessagesEntries[0].docs;
 
     if (lastEntry.length == 0) {
         return null;

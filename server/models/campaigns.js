@@ -638,15 +638,17 @@ async function updateWithConsistencyCheck(context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'campaign', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, filteredEntity.id, {
+        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, entity.id, {
             channelId: filteredEntity.channel,
             status: filteredEntity.status
         });
-        if (existing.channel && existing.channel != filteredEntity.channel) {
-            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: filteredEntity.id });
-        }
-        if (filteredEntity.channel && filteredEntity.channel != existing.channel) {
-            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: filteredEntity.id });
+        if ('channel' in filteredEntity && filteredEntity.channel != existing.channel) {
+            if (existing.channel) {
+                await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: entity.id });
+            }
+            if (filteredEntity.channel) {
+                await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: entity.id });
+            }
         }
     });
 }

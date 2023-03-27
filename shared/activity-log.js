@@ -57,7 +57,7 @@ const CampaignTrackerActivityType = {
 
 const ChannelActivityType = {
     ADD_CAMPAIGN: EntityActivityType.MAX + 1,
-    REMOVE_CAMPAIGN: EntityActivityType.MAX + 1,
+    REMOVE_CAMPAIGN: EntityActivityType.MAX + 2,
 };
 
 const ListActivityType = {

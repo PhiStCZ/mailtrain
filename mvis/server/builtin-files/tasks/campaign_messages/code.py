@@ -129,7 +129,6 @@ def get_count_signal_spec(cid, name, description, weight):
   }
 
 def create_campaign_messages_with_first_entry():
-  '''
   signals = [{
     'cid': TIMESTAMP_CID,
     'name': 'Timestamp',
@@ -155,7 +154,6 @@ def create_campaign_messages_with_first_entry():
     f'message activity for campaign {campaign_id}',
     None,
     signals)
-  '''
 
   insert_zeros_record(creation_timestamp)
 
@@ -247,7 +245,7 @@ def get_campaign_tracker_query():
 '''
 if owned['signalSets'].get(campaign_msgs_cid) is None:
   create_campaign_messages_with_first_entry()
-  state['first_init'] = True
+  state['was_init'] = True
   ivis.store_state(state)
   log('Signal set initialisation complete.')
   exit(0)
@@ -256,6 +254,8 @@ if owned['signalSets'].get(campaign_msgs_cid) is None:
 if state.get('was_init') == None:
   state['was_init'] = True
   update_links()
+  insert_zeros_record(creation_timestamp)
+  log('Inserted first record into signal set.')
 
 # now the campaign messages should be created and present
 campaign_msgs = get_signal_set(campaign_msgs_cid)

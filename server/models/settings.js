@@ -53,7 +53,7 @@ async function set(context, data) {
             }
         }
 
-        activityLog.logSettingsActivity(context);
+        await activityLog.logSettingsActivity(context);
     }
 
     // FIXME - recreate mailers, notify senders to recreate the mailers
