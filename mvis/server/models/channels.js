@@ -168,11 +168,7 @@ async function updateChannelCampaignStats(context, campaignId, channelSignalSet 
         channelSignalSet = await getCachedSignalSet(context, channelId);
     }
 
-    const lastRecords = await campaignMessages.getLastRecord(context, campaignId);
-    let lastRecordSignals = {};
-    if (lastRecords.docs.length > 0) {
-        lastRecordSignals = lastRecords.docs[0].signals;
-    }
+    const lastRecordSignals = await campaignMessages.getLastRecord(context, campaignId) || {};
 
     const updatedRecord = {
         id: campaignId,
