@@ -128,7 +128,6 @@ mvis:
   sandboxUrlBase: http://localhost:3011
   apiUrlBase: http://localhost:3012
 
-  # TODO: implement the systems around this config (+ mb introduce multiple log levels for sensitive data)
   logRepeatedEvents: false
   logSensitiveUserData: false
 
