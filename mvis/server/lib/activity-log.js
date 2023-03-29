@@ -121,7 +121,7 @@ async function processEvents(context, events) {
                     await action(context, typedEvents);
                 }
             } else {
-                log.error('Activity-log', `Unregistered event type id '${typeId}'`);
+                log.warn('Activity-log', `Unregistered event type id '${typeId}'`);
             }
         }
     }
