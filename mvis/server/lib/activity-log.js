@@ -92,22 +92,41 @@ async function on(eventTypeId, action) {
     }
 }
 
+let eventQueue = [];
+let processingEvents = false;
+
 /**
- * Process incoming events from Mailtrain.
+ * Process incoming events from Mailtrain. Because of some possible event order
+ * dependencies, but mainly because of possible conflicting ids, it needs to
+ * be synchronized.
  */
 async function processEvents(context, events) {
-    const eventsByTypeId = groupEventsByField(events, 'typeId', true);
+    eventQueue.push(...events);
+    if (processingEvents) {
+        return;
+    }
 
-    for (const [typeId, typedEvents] of eventsByTypeId.entries()) {
-        const listeners = listenersMap.get(typeId);
-        if (listeners) {
-            for (const action of listeners) {
-                await action(context, typedEvents);
+    processingEvents = true;
+
+    while (eventQueue.length > 0) {
+        const currentEvents = eventQueue;
+        eventQueue = [];
+
+        const eventsByTypeId = groupEventsByField(currentEvents, 'typeId', true);
+
+        for (const [typeId, typedEvents] of eventsByTypeId.entries()) {
+            const listeners = listenersMap.get(typeId);
+            if (listeners) {
+                for (const action of listeners) {
+                    await action(context, typedEvents);
+                }
+            } else {
+                log.error('Activity-log', `Unregistered event type id '${typeId}'`);
             }
-        } else {
-            log.error('Activity-log', `Unregistered event type id '${typeId}'`);
         }
     }
+
+    processingEvents = false;
 }
 
 module.exports.formatRecordId = formatRecordId;
