@@ -1,7 +1,7 @@
 'use strict';
 
 import React, {Component} from "react";
-import { withPanelConfig, TimeContext, TimeRangeSelector, LineChart, Legend } from "ivis";
+import { withPanelConfig, TimeContext, TimeRangeSelector, LineChart, Legend } from "../../../ivis-core/client/src/ivis/ivis";
 
 const sensorsStructure = [
     {
