@@ -9,6 +9,7 @@ const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 const { JobState } = require('../../ivis-core/shared/jobs');
 
+const campaignActivity = require('./campaign-activity');
 const campaignTracker = require('./campaign-tracker');
 const campaignMessages = require('./campaign-messages');
 const channels = require('./channels');
@@ -55,6 +56,8 @@ async function onCampaignCreate(context, event) {
     const campaignId = event.entityId;
     const creationTimestamp = event.timestamp;
 
+    await campaignActivity.createSignalSet(context, campaignId);
+
     const campaignTrackerSigSet = await campaignTracker.createCampaignTracker(context, campaignId);
 
     await campaignMessages.createSignalSet(context, campaignId, creationTimestamp);
@@ -70,6 +73,8 @@ async function onCampaignRemove(context, event) {
     await campaignMessages.removeSignalSet(context, campaignId);
 
     await campaignTracker.removeCampaignTracker(context, campaignId);
+
+    await campaignActivity.removeSignalSet(context, campaignId);
 }
 
 async function onCampaignReset(context, event) {
@@ -84,6 +89,30 @@ async function onCampaignReset(context, event) {
 
 
 async function init() {
+    activityLog.before(LogTypeId.CAMPAIGN, async (context, events) => {
+        for (const event of events) {
+            switch (event.activityType) {
+                case EntityActivityType.CREATE:
+                    await onCampaignCreate(context, event);
+                    break;
+
+                case CampaignActivityType.RESET:
+                    await onCampaignReset(context, event);
+                    break;
+
+                default: break;
+            }
+        }
+    });
+
+    activityLog.on(LogTypeId.CAMPAIGN, async (context, events) => {
+        const eventsByCampaignId = activityLog.groupEventsByField(events, 'entityId');
+
+        for (const [campaignId, campaigns] of eventsByCampaignId.entries()) {
+            activityLog.transformAndStoreEvents(context, campaigns, campaignActivity.signalSetCid(campaignId), campaignActivity.signalSetSchema);
+        }
+    });
+
     activityLog.on(LogTypeId.CAMPAIGN_TRACKER, async (context, events) => {
         const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
         campaignTracker.addCampaignTrackerEvents(context, eventsByCampaignId);
@@ -92,19 +121,11 @@ async function init() {
         }
     });
 
-    activityLog.on(LogTypeId.CAMPAIGN, async (context, events) => {
+    activityLog.after(LogTypeId.CAMPAIGN, async(context, events) => {
         for (const event of events) {
             switch (event.activityType) {
-                case EntityActivityType.CREATE:
-                    await onCampaignCreate(context, event);
-                    break;
-
                 case EntityActivityType.REMOVE:
                     await onCampaignRemove(context, event);
-                    break;
-
-                case CampaignActivityType.RESET:
-                    await onCampaignReset(context, event);
                     break;
 
                 default: break;

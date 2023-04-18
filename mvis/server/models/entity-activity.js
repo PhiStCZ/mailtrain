@@ -65,56 +65,56 @@ const staticSignalSets = {
                 name: 'Campaign Status',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1
             },
             channelId: {
                 type: SignalType.INTEGER,
                 name: 'Channel ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2
             },
             triggerId: {
                 type: SignalType.INTEGER,
                 name: 'Campaign Trigger ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 3,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 3
             },
             listId: {
                 type: SignalType.INTEGER,
                 name: 'List ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 4,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 4
             },
             subscriptionId: {
                 type: SignalType.INTEGER,
                 name: 'Subscription ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5
             },
             linkId: {
                 type: SignalType.INTEGER,
                 name: 'Link ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 6
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 6,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 6
             },
             url: {
                 type: SignalType.TEXT,
                 name: 'Link URL',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 7,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 7
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 7,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 7
             },
         },
         name: 'Campaign',
@@ -122,22 +122,20 @@ const staticSignalSets = {
     },
     [LogTypeId.CHANNEL]: {
         schema: {
-            ...schemas.genericEntitySchema,
+            ...schemas.staticEntityActivitySchema,
             campaignId: {
                 type: SignalType.INTEGER,
                 name: 'Campaign ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1
             },
         },
         name: 'Channel',
-        
-        // ingest
     },
     [LogTypeId.FORM]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'Form',
         // ingest
     },
@@ -149,72 +147,66 @@ const staticSignalSets = {
                 name: 'Field ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1
             },
             importId: {
                 type: SignalType.INTEGER,
                 name: 'Import ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2
             },
             importStatus: {
                 type: SignalType.INTEGER,
                 name: 'Import Status',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 3
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 3,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 3
             },
             segmentId: {
                 type: SignalType.INTEGER,
                 name: 'Segment ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 4
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 4,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 4
             },
             subscriptionId: {
                 type: SignalType.INTEGER,
                 name: 'Subscription ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 5
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5
             }
         },
         name: 'List',
         // ingest
     },
     [LogTypeId.NAMESPACE]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'Namespace',
-        
-        // ingest
     },
     [LogTypeId.REPORT_TEMPLATE]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'Report Template',
-        
-        // ingest
     },
     [LogTypeId.REPORT]: {
         schema: {
-            ...schemas.genericEntitySchema,
+            ...schemas.staticEntityActivitySchema,
             status: {
                 type: SignalType.INTEGER,
                 name: 'Report Status',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1
             }
         },
         name: 'Report',
-        
-        // ingest
     },
     [LogTypeId.SETTINGS]: {
         schema: {
@@ -236,14 +228,10 @@ const staticSignalSets = {
             }
         },
         name: 'Settings',
-        
-        // ingest
     },
     [LogTypeId.SEND_CONFIGURATION]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'Send Configuration',
-        
-        // ingest
     },
     [LogTypeId.SHARE]: {
         schema: {
@@ -297,48 +285,40 @@ const staticSignalSets = {
             },
         },
         name: 'Share',
-        
-        // ingest
     },
     [LogTypeId.TEMPLATE]: {
         schema: {
-            ...schemas.genericEntitySchema,
+            ...schemas.staticEntityActivitySchema,
             listId: {
                 type: SignalType.INTEGER,
                 name: 'List ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 1
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 1
             },
             subscriptionId: {
                 type: SignalType.INTEGER,
                 name: 'Subscription ID',
                 settings: {},
                 indexed: true,
-                weight_list: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2,
-                weight_edit: schemas.GENERIC_ENTITY_SCHEMA_MAX + 2
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 2
             }
         },
         name: 'Template',
-        
-        // ingest
     },
     [LogTypeId.MOSAICO_TEMPLATE]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'Mosaico Template',
-        
-        // ingest
     },
     [LogTypeId.USER]: {
-        schema: schemas.genericEntitySchema,
+        schema: schemas.staticEntityActivitySchema,
         name: 'User',
-        
-        // ingest
     },
 };
 
-async function getCachedStaticSignalSet(context, eventTypeId) {
+async function ensureStaticSignalSet(context, eventTypeId) {
     const cached = staticSignalSets[eventTypeId].cached
     if (cached) {
         return cached;
@@ -365,7 +345,7 @@ async function getCachedStaticSignalSet(context, eventTypeId) {
 
 async function init() {
     for (const typeId in staticSignalSets) {
-        await getCachedStaticSignalSet(contextHelpers.getAdminContext(), typeId);
+        await ensureStaticSignalSet(contextHelpers.getAdminContext(), typeId);
 
         activityLog.on(typeId, async (context, records) => {
             const sigSetEntry = staticSignalSets[typeId];
@@ -374,5 +354,4 @@ async function init() {
     }
 }
 
-module.exports.getCachedStaticSignalSet = getCachedStaticSignalSet;
 module.exports.init = init;

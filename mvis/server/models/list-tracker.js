@@ -7,7 +7,9 @@ const activityLog = require('../lib/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const { LogTypeId, EntityActivityType } = require('../../../shared/activity-log');
 const log = require('../../ivis-core/server/lib/log');
+
 const listSubscriptions = require('./list-subscriptions');
+const listActivity = require('./list-activity');
 
 function listTrackerCid(listId) {
     return `list_tracker_${listId}`;
@@ -132,6 +134,7 @@ async function removeListTracker(context, listId) {
 
 
 async function onCreateList(context, listId, creationTimestamp) {
+    await listActivity.createSignalSet(context, listId);
     const listTracker = await createListTracker(context, listId);
     await listSubscriptions.createJob(context, listId, listTracker, creationTimestamp);
 }
@@ -139,6 +142,7 @@ async function onCreateList(context, listId, creationTimestamp) {
 async function onRemoveList(context, listId) {
     await listSubscriptions.removeJob(context, listId);
     await removeListTracker(context, listId);
+    await listActivity.removeSignalSet(context, listId);
 }
 
 async function init() {
@@ -155,13 +159,27 @@ async function init() {
         }
     });
 
-    activityLog.on(LogTypeId.LIST, async (context, events) => {
+    activityLog.before(LogTypeId.LIST, async (context, events) => {
         for (const event of events) {
             const listId = event.entityId;
-            const activity = event.activityType;
-            if (activity === EntityActivityType.CREATE) {
+            if (event.activityType === EntityActivityType.CREATE) {
                 await onCreateList(context, listId, event.timestamp);
-            } else if (activity === EntityActivityType.REMOVE) {
+            }
+        }
+    });
+
+    activityLog.on(LogTypeId.LIST, async (context, events) => {
+        const eventsByListId = activityLog.groupEventsByField(events, 'entityId');
+
+        for (const [listId, lists] of eventsByListId.entries()) {
+            activityLog.transformAndStoreEvents(context, lists, listActivity.signalSetCid(listId), listActivity.signalSetSchema);
+        }
+    });
+
+    activityLog.after(LogTypeId.LIST, async (context, events) => {
+        for (const event of events) {
+            const listId = event.entityId;
+            if (event.activityType === EntityActivityType.REMOVE) {
                 await onRemoveList(context, listId);
             }
         }

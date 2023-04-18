@@ -2,6 +2,7 @@
 
 const em = require('../ivis-core/server/lib/extension-manager');
 const path = require('path');
+const { BuiltinTemplateIds } = require('../shared/builtin-templates');
 
 em.set('config.extraDirs', [ path.join(__dirname, 'config') ]);
 em.set('builder.exec', path.join(__dirname, 'builder.js'));
@@ -13,7 +14,7 @@ em.set('models.namespaces.extraKeys', ['mt_campaign']);
 em.set('models.signalSets.extraKeys', ['mt_dataset_type']);
 
 em.on('builtinTemplates.add', builtinTemplates => {
-    builtinTemplates['linechart'] = {
+    builtinTemplates[BuiltinTemplateIds.LINECHART] = {
         name: 'Line Chart',
         params: [
             {
@@ -60,7 +61,7 @@ em.on('builtinTemplates.add', builtinTemplates => {
         ]
     };
 
-    builtinTemplates['event_linechart'] = {
+    builtinTemplates[BuiltinTemplateIds.EVENT_LINECHART] = {
         name: 'Event Line Chart',
         params: [
             {

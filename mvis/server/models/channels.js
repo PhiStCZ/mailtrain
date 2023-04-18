@@ -212,7 +212,7 @@ async function onCampaignRemove(context, channelId, campaignId) {
 
 
 async function init() {
-    activityLog.on(LogTypeId.CHANNEL, async (context, events) => {
+    activityLog.before(LogTypeId.CHANNEL, async(context, events) => {
         for (const event of events) {
             const channelId = event.entityId;
             switch (event.activityType) {
@@ -221,9 +221,15 @@ async function init() {
                     await onChannelCreate(context, channelId);
                     break;
 
-                case EntityActivityType.REMOVE:
-                    await onChannelRemove(context, channelId);
-                    break;
+                default: break;
+            }
+        }
+    });
+    
+    activityLog.on(LogTypeId.CHANNEL, async (context, events) => {
+        for (const event of events) {
+            const channelId = event.entityId;
+            switch (event.activityType) {
 
                 case ChannelActivityType.ADD_CAMPAIGN:
                     await onCampaignAdd(context, channelId, event.campaignId);
@@ -231,6 +237,20 @@ async function init() {
 
                 case ChannelActivityType.REMOVE_CAMPAIGN:
                     await onCampaignRemove(context, channelId, event.campaignId);
+                    break;
+
+                default: break;
+            }
+        }
+    });
+
+    activityLog.after(LogTypeId.CHANNEL, async(context, events) => {
+        for (const event of events) {
+            const channelId = event.entityId;
+            switch (event.activityType) {
+
+                case EntityActivityType.REMOVE:
+                    await onChannelRemove(context, channelId);
                     break;
 
                 default: break;

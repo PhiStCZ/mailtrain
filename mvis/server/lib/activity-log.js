@@ -6,7 +6,9 @@ const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { getLastId } = require('../../ivis-core/server/models/signal-storage');
 const { SignalType } = require('../../ivis-core/shared/signals');
 
-const listenersMap = new Map();
+const beforeListeners = new Map();
+const onListeners = new Map();
+const afterListeners = new Map();
 
 function formatRecordId(recordId) {
     // supports 10^10 entries (enough for all 32-bit int values)
@@ -83,12 +85,46 @@ async function transformAndStoreEvents(context, events, signalSet, signalSetSche
  * Register a new listener which will be called if events with the
  * given eventTypeId are encountered.
  */
-async function on(eventTypeId, action) {
-    const listener = listenersMap.get(eventTypeId);
+async function _on(eventTypeId, action, listeners) {
+    const listener = listeners.get(eventTypeId);
     if (listener) {
         listener.push(action);
     } else {
-        listenersMap.set(eventTypeId, [action]);
+        listeners.set(eventTypeId, [action]);
+    }
+}
+
+/**
+ * Register a new listener called before storing records
+ */
+async function before(eventTypeId, action) {
+    await _on(eventTypeId, action, beforeListeners);
+}
+/**
+ * Register a new listener, meant for storing records
+ */
+async function on(eventTypeId, action) {
+    await _on(eventTypeId, action, onListeners);
+}
+/**
+ * Register a new listener called after storing records
+ */
+async function after(eventTypeId, action) {
+    await _on(eventTypeId, action, afterListeners);
+}
+
+
+async function callListeners(context, eventsByTypeId, listeners) {
+    for (const [typeId, typedEvents] of eventsByTypeId.entries()) {
+        const typeListeners = listeners.get(typeId);
+        if (typeListeners) {
+            for (const action of typeListeners) {
+                await action(context, typedEvents);
+            }
+        }
+        // else {
+        //     log.warn('Activity-log', `Unregistered event type id '${typeId}'`);
+        // }
     }
 }
 
@@ -114,16 +150,9 @@ async function processEvents(context, events) {
 
         const eventsByTypeId = groupEventsByField(currentEvents, 'typeId', true);
 
-        for (const [typeId, typedEvents] of eventsByTypeId.entries()) {
-            const listeners = listenersMap.get(typeId);
-            if (listeners) {
-                for (const action of listeners) {
-                    await action(context, typedEvents);
-                }
-            } else {
-                log.warn('Activity-log', `Unregistered event type id '${typeId}'`);
-            }
-        }
+        callListeners(context, eventsByTypeId, beforeListeners);
+        callListeners(context, eventsByTypeId, onListeners);
+        callListeners(context, eventsByTypeId, afterListeners);
     }
 
     processingEvents = false;
@@ -132,5 +161,7 @@ async function processEvents(context, events) {
 module.exports.formatRecordId = formatRecordId;
 module.exports.groupEventsByField = groupEventsByField;
 module.exports.transformAndStoreEvents = transformAndStoreEvents;
+module.exports.before = before;
 module.exports.on = on;
+module.exports.after = after;
 module.exports.processEvents = processEvents;
