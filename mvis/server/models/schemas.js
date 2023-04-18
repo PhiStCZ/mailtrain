@@ -2,15 +2,18 @@
 
 const { SignalType } = require('../../ivis-core/shared/signals');
 
-const genericEntitySchema = {
-    timestamp: {
-        type: SignalType.DATE_TIME,
-        name: 'Timestamp',
-        settings: {},
-        indexed: true,
-        weight_list: 0,
-        weight_edit: 0
-    },
+const timestampSignal = {
+    type: SignalType.DATE_TIME,
+    name: 'Timestamp',
+    settings: {},
+    indexed: true,
+    weight_list: 0,
+    weight_edit: 0
+};
+
+
+const entityActivitySchema = {
+    timestampSignal,
     issuedBy: {
         type: SignalType.INTEGER,
         name: 'Issued by',
@@ -27,6 +30,13 @@ const genericEntitySchema = {
         weight_list: 2,
         weight_edit: 2
     },
+};
+
+const ENTITY_ACTIVITY_SCHEMA_MAX = 2;
+
+
+const staticEntityActivitySchema = {
+    ...entityActivitySchema,
     entityId: {
         type: SignalType.INTEGER,
         name: 'Entity ID',
@@ -37,7 +47,9 @@ const genericEntitySchema = {
     }
 };
 
-const GENERIC_ENTITY_SCHEMA_MAX = 3;
+const STATIC_ENTITY_ACTIVITY_SCHEMA_MAX = ENTITY_ACTIVITY_SCHEMA_MAX + 1;
 
-module.exports.genericEntitySchema = genericEntitySchema;
-module.exports.GENERIC_ENTITY_SCHEMA_MAX = GENERIC_ENTITY_SCHEMA_MAX;
+module.exports.entityActivitySchema = entityActivitySchema;
+module.exports.ENTITY_ACTIVITY_SCHEMA_MAX = ENTITY_ACTIVITY_SCHEMA_MAX;
+module.exports.staticEntityActivitySchema = staticEntityActivitySchema;
+module.exports.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX = STATIC_ENTITY_ACTIVITY_SCHEMA_MAX;

@@ -4,21 +4,11 @@ const config = require('../../ivis-core/server/lib/config');
 const knex = require('../../ivis-core/server/lib/knex');
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, ChannelActivityType } = require('../../../shared/activity-log');
-const { removeWorkspaceByName } = require('../lib/helpers');
-const workspaces = require('../../ivis-core/server/models/workspaces');
-const jobs = require('../../ivis-core/server/models/jobs');
-const { removeJobByName, removePanelByName } = require('../lib/helpers');
-const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
-const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
-const { JobState } = require('../../ivis-core/shared/jobs');
-
-const panels = require('../../ivis-core/server/models/panels');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
+const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 
 const campaignMessages = require('./campaign-messages');
-const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 
 const CACHED_NONEXISTENT = null;
 

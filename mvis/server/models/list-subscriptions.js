@@ -2,10 +2,8 @@
 
 const config = require('../../ivis-core/server/lib/config');
 const jobs = require('../../ivis-core/server/models/jobs');
-const panels = require('../../ivis-core/server/models/panels');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { removePanelByName, removeJobByName } = require('../lib/helpers');
-const { BuiltinTemplateIds } = require('../../shared/builtin-templates');
+const { removeJobByName } = require('../lib/helpers');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 const { JobState } = require('../../ivis-core/shared/jobs');
