@@ -2,15 +2,12 @@
 
 const knex = require('../../ivis-core/server/lib/knex');
 const jobs = require('../../ivis-core/server/models/jobs');
-const panels = require('../../ivis-core/server/models/panels');
-const workspaces = require('../../ivis-core/server/models/workspaces');
 const signals = require('../../ivis-core/server/models/signals');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { filterObject } = require('../../ivis-core/server/lib/helpers');
 const { allowedKeysCreate } = require('../../ivis-core/server/lib/signal-set-helpers');
 const { SignalSource } = require('../../ivis-core/shared/signals');
 const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
-const { throwPermissionDenied } = require('../../ivis-core/server/models/shares');
 
 
 async function createSignalSetWithSignals(context, entity, isComputed = false) {
@@ -47,38 +44,50 @@ async function createSignalSetWithSignals(context, entity, isComputed = false) {
     });
 }
 
+async function getSignalSetWithSigMapIfExists(context, cid) {
+    return await knex.transaction(async tx => {
+        const sigSet = await tx('signal_sets').where('cid', cid).first();
+        if (!sigSet) {
+            return null;
+        }
+
+        sigSet.signalByCidMap = await signalSets.getSignalByCidMapTx(tx, sigSet);
+        return sigSet;
+    });
+}
+
+async function removeSignalSetIfExists(context, cid) {
+    const sigSet = await knex('signal_sets').where('cid', cid).select('id').first();
+    if (!sigSet) {
+        return null;
+    }
+    return await signalSets.removeByCid(context, cid);
+}
 
 
-
-// NOTE: as there is no cid for workspaces, panels, etc., MVIS' entities with
+// NOTE: as there is no cid for jobs, panels, etc., MVIS' entities with
 //       are identified by their name; this may be changed in the future
+
+async function createJobByName(context, job, isSystemJobAllowed = false) {
+    const res = await knex('jobs').where('name', job.name).select('id').first();
+    if (res) {
+        return res.id;
+    }
+    return await jobs.create(context, job, isSystemJobAllowed);
+}
 
 async function removeJobByName(context, name) {
     const res = await knex('jobs').where('name', name).select('id').first();
     if (!res) {
-        throwPermissionDenied();
+        return false;
     }
     await jobs.remove(context, res.id);
-}
-
-async function removePanelByName(context, name) {
-    const res = await knex('panels').where('name', name).select('id').first();
-    if (!res) {
-        throwPermissionDenied();
-    }
-    await panels.remove(context, res.id);
-}
-
-async function removeWorkspaceByName(context, name) {
-    const res = await knex('workspaces').where('name', name).select('id').first();
-    if (!res) {
-        throwPermissionDenied();
-    }
-    await workspaces.remove(context, res.id);
+    return true;
 }
 
 
 module.exports.createSignalSetWithSignals = createSignalSetWithSignals;
+module.exports.getSignalSetWithSigMapIfExists = getSignalSetWithSigMapIfExists;
+module.exports.removeSignalSetIfExists = removeSignalSetIfExists;
+module.exports.createJobByName = createJobByName;
 module.exports.removeJobByName = removeJobByName;
-module.exports.removeWorkspaceByName = removeWorkspaceByName;
-module.exports.removePanelByName = removePanelByName;
