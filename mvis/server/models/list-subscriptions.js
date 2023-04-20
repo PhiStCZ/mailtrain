@@ -1,12 +1,6 @@
 'use strict';
 
-const config = require('../../ivis-core/server/lib/config');
-const jobs = require('../../ivis-core/server/models/jobs');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { removeJobByName } = require('../lib/helpers');
-const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
-const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
-const { JobState } = require('../../ivis-core/shared/jobs');
 
 
 const signalSetSchema = {
@@ -56,52 +50,8 @@ function signalSetCid(listId) {
     return `list_subscriptions_${listId}`;
 }
 
-function signalSetName(listId) {
-    return `List ${listId} subscriptions`;
-}
-
-function jobName(listId) {
-    return `List ${listId} subscriptions`;
-}
-
-async function createJob(context, listId, listTrackerSigSet, creationTimestamp) {
-    const task = await getBuiltinTask(BuiltinTaskNames.LIST);
-    const job = {
-        name: jobName(listId),
-        description: '',
-        namespace: config.mailtrain.namespace,
-        task: task.id,
-        state: JobState.ENABLED,
-        params: {
-            listId,
-            creationTimestamp,
-            listTracker: listTrackerSigSet.cid,
-            listSubscriptionsCid: signalSetCid(listId)
-        },
-        signal_sets_triggers: [
-            listTrackerSigSet.id
-        ],
-        min_gap: 60,    // 1 minute
-        trigger: null,
-        delay: null,
-    };
-    const jobId = await jobs.create(context, job, true);
-
-    // the job will initialize the list subscriptions signal set
-    await jobs.run(context, jobId);
-
-    return jobId;
-}
-
-async function removeJob(context, listId) {
-    await removeJobByName(context, jobName(listId));
-}
-
 
 module.exports = {
-    signalSetName,
+    signalSetSchema,
     signalSetCid,
-    jobName,
-    createJob,
-    removeJob,
 };

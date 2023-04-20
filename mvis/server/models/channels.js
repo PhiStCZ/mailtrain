@@ -5,10 +5,10 @@ const knex = require('../../ivis-core/server/lib/knex');
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, ChannelActivityType } = require('../../../shared/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
-const { SignalSetType } = require('../../ivis-core/shared/signal-sets');
 const signalSets = require('../../ivis-core/server/models/signal-sets');
 
 const campaignMessages = require('./campaign-messages');
+const { removeSignalSetIfExists } = require('../lib/helpers');
 
 const CACHED_NONEXISTENT = null;
 
@@ -22,21 +22,21 @@ const signalSetSchema = {
         weight_list: 0,
         weight_edit: 0
     },
-    // creationTimestamp: {
-    //     type: SignalType.DATE_TIME,
-    //     name: 'Timestamp',
-    //     settings: {},
-    //     indexed: true,
-    //     weight_list: 1,
-    //     weight_edit: 1
-    // },
+    creationTimestamp: {
+        type: SignalType.DATE_TIME,
+        name: 'Timestamp',
+        settings: {},
+        indexed: true,
+        weight_list: 1,
+        weight_edit: 1
+    },
 };
 
 for (const signalCid in campaignMessages.signalSetSchema) {
     if (signalCid != 'timestamp') {
         signalSetSchema[signalCid] = { ...campaignMessages.signalSetSchema[signalCid] };
-        signalSetSchema[signalCid].weight_list += 1; // 2
-        signalSetSchema[signalCid].weight_edit += 1; //
+        signalSetSchema[signalCid].weight_list += 2;
+        signalSetSchema[signalCid].weight_edit += 2;
     }
 }
 
@@ -44,33 +44,30 @@ function signalSetCid(channelId) {
     return `channel_campaigns_${channelId}`;
 }
 
-function signalSetName(channelId) {
-    return `Channel ${channelId} campaigns`;
+function signalSetCidToChannelId(cid) {
+    return parseInt(cid.substring('channel_campaigns_'.length));
 }
 
-const channelCampaignsById = new Map();
+const channelCampaignsSigSetsByChannel = new Map();
 
 async function createSignalSet(context, channelId) {
-    // so far it needs to be of type COMPUTED (or created by a task) to
-    // register record inserts from tasks (not sure why tho)
     const signalSetWithSignalCidMap = await signalSets.ensure(
         context,
         {
             cid: signalSetCid(channelId),
-            name: signalSetName(channelId),
+            name: `Channel ${channelId} campaigns`,
             description: '',
             namespace: config.mailtrain.namespace,
-            type: SignalSetType.COMPUTED,
         },
         signalSetSchema,
     );
 
-    channelCampaignsById.set(channelId, signalSetWithSignalCidMap);
+    channelCampaignsSigSetsByChannel.set(channelId, signalSetWithSignalCidMap);
     return signalSetWithSignalCidMap;
 }
 
 async function getCachedSignalSet(context, channelId) {
-    const cached = channelCampaignsById.get(channelId);
+    const cached = channelCampaignsSigSetsByChannel.get(channelId);
     if (cached === CACHED_NONEXISTENT) {
         return null;
     } else if (cached) {
@@ -80,20 +77,20 @@ async function getCachedSignalSet(context, channelId) {
     return await knex.transaction(async tx => {
         const signalSet = await tx('signal_sets').where('cid', signalSetCid(channelId)).first();
         if (!signalSet) {
-            channelCampaignsById.set(channelId, CACHED_NONEXISTENT);
+            channelCampaignsSigSetsByChannel.set(channelId, CACHED_NONEXISTENT);
             return null;
         }
         const signalByCidMap = await signalSets.getSignalByCidMapTx(tx, signalSet);
         signalSet.signalByCidMap = signalByCidMap;
 
-        channelCampaignsById.set(channelId, signalSet);
+        channelCampaignsSigSetsByChannel.set(channelId, signalSet);
         return signalSet;
     });
 }
 
 async function removeSignalSet(context, channelId) {
-    channelCampaignsById.set(channelId, CACHED_NONEXISTENT);
-    await signalSets.removeByCid(context, signalSetCid(channelId));
+    channelCampaignsSigSetsByChannel.set(channelId, CACHED_NONEXISTENT);
+    await removeSignalSetIfExists(context, signalSetCid(channelId));
 }
 
 
@@ -108,7 +105,6 @@ async function findCampaignChannelId(context, campaignId) {
     }
 
     const lastChannelCampaignEntry = await signalSets.query(context, [{
-        params: {},
         sigSetCid: LogTypeId.CHANNEL,
         filter: {
             type: 'and',
@@ -184,22 +180,34 @@ async function onChannelRemove(context, channelId) {
 }
 
 
-async function onCampaignAdd(context, channelId, campaignId) {
+async function onCampaignAdd(context, channelId, campaignId, creationTimestamp = undefined, channelSigSet = undefined) {
     channelIdsByCampaign.set(campaignId, channelId);
 
-    const channelSigSet = await getCachedSignalSet(context, channelId);
-    const emptyRecord = { id: campaignId, signals: {} };
+    if (!channelSigSet) {
+        channelSigSet = await getCachedSignalSet(context, channelId);
+    }
+    const emptyRecord = { id: campaignId, signals: { creationTimestamp } };
     await signalSets.insertRecords(context, channelSigSet, [emptyRecord]);
     await updateChannelCampaignStats(context, campaignId, channelSigSet);
 }
 
-async function onCampaignRemove(context, channelId, campaignId) {
-    channelIdsByCampaign.set(campaignId, CACHED_NONEXISTENT);
-
-    const channelSigSet = await getCachedSignalSet(context, channelId);
+async function onCampaignRemove(context, channelId, campaignId, channelSigSet = undefined) {
+    const currentCampaignChannel = channelIdsByCampaign.get(campaignId);
+    // synchronization may have at some point assigned one campaign to 2
+    // channels, this check should take care of consistency in that case
+    if (!currentCampaignChannel || currentCampaignChannel == channelId) {
+        channelIdsByCampaign.set(campaignId, CACHED_NONEXISTENT);
+    }
+    if (!channelSigSet) {
+        channelSigSet = await getCachedSignalSet(context, channelId);
+    }
     await signalSets.removeRecord(context, channelSigSet, campaignId);
 }
 
+function purgeCache() {
+    channelIdsByCampaign.clear();
+    channelCampaignsSigSetsByChannel.clear();
+}
 
 async function init() {
     activityLog.before(LogTypeId.CHANNEL, async(context, events) => {
@@ -222,7 +230,7 @@ async function init() {
             switch (event.activityType) {
 
                 case ChannelActivityType.ADD_CAMPAIGN:
-                    await onCampaignAdd(context, channelId, event.campaignId);
+                    await onCampaignAdd(context, channelId, event.campaignId, event.timestamp);
                     break;
 
                 case ChannelActivityType.REMOVE_CAMPAIGN:
@@ -249,8 +257,64 @@ async function init() {
     });
 }
 
+async function synchronize(context, channelsData) {
+    purgeCache();
+
+    const toDelete = new Set();
+    const sigSets = await knex('signal_sets').whereLike('cid', signalSetCid('%')).select('cid');
+    for (const sigSet of sigSets) {
+        toDelete.add(signalSetCidToChannelId(sigSet.cid));
+    }
+
+
+    for (const channel of channelsData) {
+        toDelete.delete(channel.id);
+        const channelSigSet = await createSignalSet(context, channel.id);
+
+        const channelCampaignsSet = new Set(channel.campaignIds);
+
+        const querySize = 10000;
+        const query = {
+            sigSetCid: signalSetCid(channel.id),
+            docs: {
+                signals: [ 'campaignId' ],
+                from: 0,
+                limit: querySize,
+                sort: [{ sigCid: 'campaignId', order: 'asc' }]
+            }
+        };
+        let result = await signalSets.query(context, [query]);
+        let storedCampaignIds = result[0].docs;
+        do {
+            for (const campaign of storedCampaignIds) {
+                if (channelCampaignsSet.has(campaign.id)) {
+                    // just update the campaign stats
+                    await updateChannelCampaignStats(context, campaign.id, channelSigSet);
+                    channelCampaignsSet.delete(campaign.id);
+                    query.docs.from--; // compensation for removed element
+                } else {
+                    await onCampaignRemove(context, channel.id, campaign.id, channelSigSet);
+                }
+            }
+
+            query.docs.from += querySize;
+            result = await signalSets.query(context, [query]);
+            storedCampaignIds = result[0].docs;
+        } while (storedCampaignIds.length == querySize);
+
+        // add remaining not present campaigns
+        for (const campaignId of channelCampaignsSet.values()) {
+            await onCampaignAdd(context, channel.id, campaignId, undefined, channelSigSet);
+        }
+    }
+    for (const channelId of toDelete.values()) {
+        await onChannelRemove(context, channelId);
+    }
+}
+
 module.exports = {
     signalSetCid,
     updateChannelCampaignStats,
     init,
+    synchronize,
 }

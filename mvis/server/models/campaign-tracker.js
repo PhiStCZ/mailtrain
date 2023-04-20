@@ -6,10 +6,15 @@ const signalSets = require('../../ivis-core/server/models/signal-sets');
 const activityLog = require('../lib/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const log = require('../../ivis-core/server/lib/log');
+const { removeSignalSetIfExists } = require('../lib/helpers');
 
 
 function campaignTrackerCid(campaignId) {
     return `campaign_tracker_${campaignId}`;
+}
+
+function signalSetCidToCampaignId(cid) {
+    return parseInt(cid.substring('campaign_tracker_'.length));
 }
 
 const campaignTrackerSchema = {
@@ -123,26 +128,32 @@ async function getCachedCampaignTracker(context, campaignId) {
 }
 
 async function removeCampaignTracker(context, campaignId) {
-    await signalSets.removeByCid(context, campaignTrackerCid(campaignId));
+    await removeSignalSetIfExists(context, campaignTrackerCid(campaignId));
     campaignTrackersByCampaignId.set(campaignId, CACHED_NONEXISTENT);
 }
 
 
 async function addCampaignTrackerEvents(context, eventsByCampaignId) {
-    for (const [campaignId, campaignEvents] of eventsByCampaignId.entries()) {
-        const campaignTracker = await getCachedCampaignTracker(context, campaignId);
-        if (campaignTracker) {
-            await activityLog.transformAndStoreEvents(context, campaignEvents, campaignTracker, campaignTrackerSchema);
+    for (const [id, events] of eventsByCampaignId.entries()) {
+        const trackerSigSet = await getCachedCampaignTracker(context, id);
+        if (trackerSigSet) {
+            await activityLog.transformAndStoreEvents(context, events, trackerSigSet, campaignTrackerSchema);
         } else {
-            log.warn('Activity-log', 'Unrecognised campaign with id ' + campaignId);
+            log.warn('Activity-log', 'Unrecognised campaign with id ' + id);
         }
     }
 }
 
+function purgeCache() {
+    campaignTrackersByCampaignId.clear();
+}
+
 module.exports = {
     campaignTrackerCid,
+    signalSetCidToCampaignId,
     createCampaignTracker,
     getCachedCampaignTracker,
     removeCampaignTracker,
     addCampaignTrackerEvents,
+    purgeCache
 };

@@ -5,7 +5,7 @@ const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const schemas = require('./schemas');
 const knex = require('../../ivis-core/server/lib/knex');
-const { createSignalSetWithSignals } = require('../lib/helpers');
+const { createSignalSetWithSignals, getSignalSetWithSigMapIfExists, removeSignalSetIfExists } = require('../lib/helpers');
 
 const signalSetSchema = {
     ...schemas.entityActivitySchema,
@@ -55,7 +55,16 @@ function signalSetCid(listId) {
     return `list_activity_${listId}`;
 }
 
+function signalSetCidToListId(cid) {
+    return parseInt(cid.substring('list_activity_'.length));
+}
+
 async function createSignalSet(context, listId) {
+    const existing = await getSignalSetWithSigMapIfExists(context, signalSetCid(listId));
+    if (existing) {
+        return existing;
+    }
+
     const sigSetWithSigMap = await createSignalSetWithSignals(context, {
         cid: signalSetCid(listId),
         name: `List ${listId} activity`,
@@ -81,14 +90,14 @@ async function getSignalSet(context, listId) {
 }
 
 async function removeSignalSet(context, listId) {
-    await signalSets.removeByCid(context, signalSetCid(listId));
+    await removeSignalSetIfExists(context, signalSetCid(listId));
 }
 
 module.exports = {
     signalSetSchema,
     signalSetCid,
+    signalSetCidToListId,
     createSignalSet,
     getSignalSet,
     removeSignalSet,
 }
-

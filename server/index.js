@@ -19,6 +19,7 @@ const reportProcessor = require('./lib/report-processor');
 const executor = require('./lib/executor');
 const privilegeHelpers = require('./lib/privilege-helpers');
 const knex = require('./lib/knex');
+const activityLog = require('./lib/activity-log');
 const mvis = require('./lib/mvis');
 const bluebird = require('bluebird');
 const shares = require('./models/shares');
@@ -115,6 +116,8 @@ async function init() {
     await feedcheck.spawn();
     await senders.spawn();
     await mvis.spawn();
+
+    await activityLog.synchronize();
 
     triggers.start();
     gdprCleanup.start();

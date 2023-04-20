@@ -44,14 +44,14 @@ function groupEventsByField(events, fieldName, deleteField = true) {
  * Transform events according to the given signal set, and store them in it.
  * @param context
  * @param events events of the same type, without their typeId field (as transformed by processEvents)
- * @param signalSet
+ * @param signalSetWithSignalMap
  * @param signalSetSchema
  * @returns transformed records
  */
-async function transformAndStoreEvents(context, events, signalSet, signalSetSchema) {
+async function transformAndStoreEvents(context, events, signalSetWithSignalMap, signalSetSchema) {
     const records = [];
     let nextId = 1;
-    const previousId = await getLastId(signalSet);
+    const previousId = await getLastId(signalSetWithSignalMap);
     if (previousId) {
         nextId = parseInt(previousId) + 1;
     }
@@ -77,7 +77,7 @@ async function transformAndStoreEvents(context, events, signalSet, signalSetSche
         records.push(record);
     }
 
-    await signalSets.insertRecords(context, signalSet, records);
+    await signalSets.insertRecords(context, signalSetWithSignalMap, records);
     return records;
 }
 

@@ -1,9 +1,11 @@
 'use strict';
 
+const log = require('./log');
 const moment = require('moment');
 const config = require('config');
 const axios = require('axios').default;
 const { LogTypeId, ListActivityType } = require('../../shared/activity-log');
+const knex = require('./knex');
 const { hashEmail } = require('./helpers');
 
 let activityQueue = [];
@@ -12,7 +14,8 @@ let activityQueue2 = [];
 const apiToken = require('./mvis').apiToken;
 const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
 const apiUrlBase = config.get('mvis.apiUrlBase');
-const apiurl = `${apiUrlBase}/api/events`;
+const eventsUrl = `${apiUrlBase}/api/events`;
+const syncUrl = `${apiUrlBase}/api/synchronize`;
 
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
@@ -32,8 +35,8 @@ async function processQueue() {
     // is written to before returning from the axios.post
     [activityQueue2, activityQueue] = [activityQueue, activityQueue2];
 
-    if (apiurl) {
-        await axios.post(apiurl, { data: activityQueue2 }, {
+    if (eventsUrl) {
+        await axios.post(eventsUrl, { data: activityQueue2 }, {
             headers: { 'global-access-token': apiToken }
         });
     }
@@ -145,7 +148,6 @@ async function logCampaignTrackerActivity(activityType, campaignId, listId, subs
     await _logActivity(LogTypeId.CAMPAIGN_TRACKER, data);
 }
 
-// TODO: perhaps change previousSubscriptionStatus to an absolute sub count, maybe even split the tables into more...
 /**
  * Log list tracker activity. If email is entered, email hash is automatically deduced.
  * @param activityType
@@ -184,6 +186,43 @@ function periodicLog() {
 
 periodicLog();
 
+
+/**
+ * Synchronizes mvis' data with current mailtrain data.
+ */
+async function synchronize() {
+    const list = await knex('lists').select('id', 'subscribers');
+    const campaign = await knex('campaigns').select('id', 'channel');
+    const channel = await knex('channels').select('id', 'subscribers');
+
+    const channelsById = new Map();
+    for (const ch of channels) {
+        channelsById.set(ch.id, ch);
+    }
+
+    for (const c of campaign) {
+        if (!c.channel) {
+            continue;
+        }
+        const campaignChannel = channelsById.get(c.channel);
+        if (!campaignChannel.campaignIds) {
+            campaignChannel.campaignIds = [];
+        }
+        campaignChannel.campaignIds.push(c.id);
+    }
+
+    log.info('Activity-log', 'Synchronizing data with IVIS');
+
+    await axios.post(syncUrl, {
+        list,
+        campaign,
+        channel,
+    }, {
+        headers: { 'global-access-token': apiToken }
+    });
+}
+
+
 module.exports.logBlacklistActivity = logBlacklistActivity;
 module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
@@ -191,3 +230,4 @@ module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
 module.exports.logListTrackerActivity = logListTrackerActivity;
 module.exports.logShareActivity = logShareActivity;
 module.exports.logSettingsActivity = logSettingsActivity;
+module.exports.synchronize = synchronize;

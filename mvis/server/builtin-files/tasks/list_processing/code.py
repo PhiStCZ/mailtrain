@@ -65,13 +65,14 @@ SUBSCRIPTION_STATUS = {
   # 'complained': 4,
 }
 TIMESTAMP_CID = 'timestamp'
+SYNCHRONIZE_ACTIVITY = 18
 
 # bucket size interval
 INTERVAL = '60s'
 INTERVAL_MILLIS = 60_000
 
 list_id = params['listId']
-creation_timestamp = params['creationTimestamp']
+creation_timestamp = params['creationTimestamp'] # may be '' for unknown or otherwise undefined
 list_tracker_cid = params['listTracker']
 list_subs_cid = params['listSubscriptionsCid']
 
@@ -81,6 +82,8 @@ list_tracker = get_signal_set(list_tracker_cid)
 list_tracker_ts = list_tracker.get_signal(TIMESTAMP_CID)
 list_tracker_status = list_tracker.get_signal('subscriptionStatus')
 list_tracker_prev_status = list_tracker.get_signal('previousSubscriptionStatus')
+list_tracker_activity = list_tracker.get_signal('activityType')
+list_tracker_sub_count = list_tracker.get_signal('sync_subscriber_count')
 
 target_namespace = list_tracker.namespace
 
@@ -129,7 +132,8 @@ def create_list_subs_with_first_entry():
     None,
     signals)
 
-  insert_zeros_record(creation_timestamp)
+  if (creation_timestamp != ''):
+    insert_zeros_record(creation_timestamp)
 
 
 if owned['signalSets'].get(list_subs_cid) is None:
@@ -159,6 +163,15 @@ def get_count_aggs():
         'term': {
           list_tracker_prev_status.field: {
             'value': SUBSCRIPTION_STATUS[status]
+          }
+        }
+      }
+    }
+    count_aggs['sync'] = {
+      'filter': {
+        'term': {
+          list_tracker_activity.field: {
+            'value': SYNCHRONIZE_ACTIVITY
           }
         }
       }
@@ -195,6 +208,37 @@ def get_list_subs_query():
     }
   }
 
+def get_last_sync_query(bucket_end_ts):
+  return {
+    'size': 1,
+    'query': {
+      'bool': {
+        'filter': [
+          { 'range': { list_tracker_ts.field: {
+            'lt': bucket_end_ts
+          }}},
+          { 'term': { list_tracker_activity.field: {
+            'value': SYNCHRONIZE_ACTIVITY
+          }}}
+        ]
+      }
+    }
+  }
+
+def get_single_bucket_query(from_ts, to_ts):
+  return {
+    'size': 0,
+    'query': {
+      'bool': {
+        'filter': {
+          'range': {
+            list_tracker_ts.field: { 'gt': from_ts, 'lt': to_ts }
+          }
+        }
+      }
+    },
+    'aggs': get_count_aggs()
+  }
 
 if last_output_ts is not None:
   # Last calculated aggregation has to be redone, because new data points may have been added to it
@@ -212,12 +256,26 @@ cached_last_values = {
 
 for hit in list_tracker_response['aggregations']['values_by_time_interval']['buckets']:
   last_output_ts = hit['key_as_string']
+  bucket_end_ts = get_bucket_end_ts(last_output_ts)
 
   doc = {
-    list_subs_ts.field: get_bucket_end_ts(last_output_ts)
+    list_subs_ts.field: bucket_end_ts
   }
 
   updated = False
+
+  if hit['sync']['doc_count'] > 0:
+    log('synchronizing near ' + last_output_ts)
+    updated = True
+    res = list_tracker.es_search(get_last_sync_query(bucket_end_ts))
+    sync_hit = res['hits']['hits'][0]
+    ts = sync_hit['_source'][list_tracker_ts.field]
+    sub_count = sync_hit['_source'][list_tracker_sub_count.field]
+    res = list_tracker.es_search(get_single_bucket_query(ts, bucket_end_ts))
+    # sync cached subs, overwrite the hit variable and continue processing
+    cached_last_values['subscribed'] = sub_count
+    hit = res['aggregations']
+
   for status in SUBSCRIPTION_STATUS:
     last_value = cached_last_values[status]
 

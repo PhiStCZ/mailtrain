@@ -8,7 +8,7 @@ const path = require('path');
 const entityActivity = require('./models/entity-activity');
 const campaigns = require('./models/campaigns');
 const channels = require('./models/channels');
-const listTracker = require('./models/list-tracker');
+const lists = require('./models/lists');
 
 const { addBuiltinTasks } = require('./models/builtin-tasks');
 const { addBuiltinTemplates } = require('./models/builtin-templates');
@@ -48,9 +48,9 @@ async function init() {
         // also for setting up activity log listener events
 
         await entityActivity.init();
+        await lists.init();
         await campaigns.init();
         await channels.init();
-        await listTracker.init();
     });
 
     log.heading = '(mvis)';

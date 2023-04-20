@@ -23,12 +23,12 @@ const EntityActivityType = {
     CREATE: 1,
     UPDATE: 2,
     REMOVE: 3,
-    MAX: 3
+    MAX: 3,
 };
 
 const BlacklistActivityType = {
     ADD: 1,
-    REMOVE: 2
+    REMOVE: 2,
 };
 
 const CampaignActivityType = {
@@ -74,22 +74,23 @@ const ListActivityType = {
     CREATE_IMPORT: EntityActivityType.MAX + 11,
     UPDATE_IMPORT: EntityActivityType.MAX + 12,
     REMOVE_IMPORT: EntityActivityType.MAX + 13,
-    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14
+    IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14,
+    SYNCHRONIZE: EntityActivityType.MAX + 15,
 };
 
 const ReportActivityType = {
     STATUS_CHANGE: EntityActivityType.MAX + 1,
     START: EntityActivityType.MAX + 2,
-    STOP: EntityActivityType.MAX + 3
+    STOP: EntityActivityType.MAX + 3,
 };
 
 const TemplateActivityType = {
-    TEST_SEND: EntityActivityType.MAX + 1
+    TEST_SEND: EntityActivityType.MAX + 1,
 };
 
 const UserActivityType = {
     RESET_ACCESS_TOKEN: EntityActivityType.MAX + 1,
-    RESET_PASSWORD: EntityActivityType.MAX + 2
+    RESET_PASSWORD: EntityActivityType.MAX + 2,
 };
 
 module.exports.LogTypeId = LogTypeId;

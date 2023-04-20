@@ -1,10 +1,10 @@
 'use strict';
 
+const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, CampaignActivityType } = require('../../../shared/activity-log');
-const jobs = require('../../ivis-core/server/models/jobs');
-const { removeJobByName } = require('../lib/helpers');
+const { removeJobByName, createJobByName } = require('../lib/helpers');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
 const { JobState } = require('../../ivis-core/shared/jobs');
@@ -16,6 +16,10 @@ const channels = require('./channels');
 
 function jobName(campaignId) {
     return `Campaign ${campaignId} processing job`;
+}
+
+function jobNameToCampaignId(jobName) {
+    return parseInt(jobName.split(' ')[1]);
 }
 
 async function createJob(context, campaignId, campaignTrackerSigSet, creationTimestamp) {
@@ -39,7 +43,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
         min_gap: 60,    // 1 minute
         delay: 60,      // 1 minute
     };
-    const jobId = await jobs.create(context, job, true);
+    const jobId = await createJobByName(context, job, true);
 
     // the job will initialize the campaign messages signal set
     // await jobs.run(context, jobId);
@@ -109,7 +113,7 @@ async function init() {
         const eventsByCampaignId = activityLog.groupEventsByField(events, 'entityId');
 
         for (const [campaignId, campaigns] of eventsByCampaignId.entries()) {
-            activityLog.transformAndStoreEvents(context, campaigns, campaignActivity.signalSetCid(campaignId), campaignActivity.signalSetSchema);
+            await activityLog.transformAndStoreEvents(context, campaigns, campaignActivity.signalSetCid(campaignId), campaignActivity.signalSetSchema);
         }
     });
 
@@ -134,4 +138,38 @@ async function init() {
     });
 }
 
+async function synchronize(context, campaignData) {
+    const toDelete = new Set();
+    const jobs = await knex('jobs').whereLike('name', jobName('%')).select('name');
+    for (const job of jobs) {
+        toDelete.add(jobNameToCampaignId(job.name));
+    }
+
+    let sigSets;
+    sigSets = await knex('signal_sets').whereLike('cid', campaignActivity.signalSetCid('%')).select('cid');
+    for (const sigSet of sigSets) {
+        toDelete.add(campaignActivity.signalSetCidToCampaignId(sigSet.cid));
+    }
+    sigSets = await knex('signal_sets').whereLike('cid', campaignTracker.campaignTrackerCid('%')).select('cid');
+    for (const sigSet of sigSets) {
+        toDelete.add(campaignTracker.signalSetCidToCampaignId(sigSet.cid));
+    }
+    sigSets = await knex('signal_sets').whereLike('cid', campaignMessages.signalSetCid('%')).select('cid');
+    for (const sigSet of sigSets) {
+        toDelete.add(campaignMessages.signalSetCidToCampaignId(sigSet.cid));
+    }
+
+    const timestamp = moment.utc().toISOString();
+
+    for (const campaign of campaignData) {
+        toDelete.delete(campaign.id);
+        await onCampaignCreate(context, { entityId: campaign.id, timestamp });
+        // campaign data aren't synced, there isn't much we can do anyway
+    }
+    for (const campaignId of toDelete.values()) {
+        await onCampaignRemove(context, { entityId: campaignId });
+    }
+}
+
 module.exports.init = init;
+module.exports.synchronize = synchronize;
