@@ -1,5 +1,6 @@
 'use strict';
 
+const log = require('../../ivis-core/server/lib/log');
 const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const activityLog = require('../lib/activity-log');
@@ -162,11 +163,13 @@ async function synchronize(context, campaignData) {
     const timestamp = moment.utc().toISOString();
 
     for (const campaign of campaignData) {
+        log.verbose('Synchronization', `synchronizing campaign ${campaign.id} data`);
         toDelete.delete(campaign.id);
         await onCampaignCreate(context, { entityId: campaign.id, timestamp });
         // campaign data aren't synced, there isn't much we can do anyway
     }
     for (const campaignId of toDelete.values()) {
+        log.verbose('Synchronization', `removing campaign ${campaignId} data`);
         await onCampaignRemove(context, { entityId: campaignId });
     }
 }

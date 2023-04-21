@@ -3,6 +3,7 @@
 const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, ListActivityType } = require('../../../shared/activity-log');
 
+const log = require('../../ivis-core/server/lib/log');
 const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const jobs = require('../../ivis-core/server/models/jobs');
@@ -122,6 +123,7 @@ async function synchronize(context, listsData) {
 
 
     for (const list of listsData) {
+        log.verbose('Synchronization', `synchronizing list ${list.id} data`);
         toDelete.delete(list.id);
         await onCreateList(context, list.id);
         const listEvents = new Map();
@@ -133,6 +135,7 @@ async function synchronize(context, listsData) {
         await listTracker.addListTrackerEvents(context, listEvents);
     }
     for (const listId of toDelete.values()) {
+        log.verbose('Synchronization', `removing list ${listId} data`);
         await onRemoveList(context, listId);
     }
 }

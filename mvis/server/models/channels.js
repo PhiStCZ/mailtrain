@@ -1,5 +1,6 @@
 'use strict';
 
+const log = require('../../ivis-core/server/lib/log');
 const config = require('../../ivis-core/server/lib/config');
 const knex = require('../../ivis-core/server/lib/knex');
 const activityLog = require('../lib/activity-log');
@@ -268,6 +269,7 @@ async function synchronize(context, channelsData) {
 
 
     for (const channel of channelsData) {
+        log.verbose('Synchronization', `synchronizing channel ${channel.id} data`);
         toDelete.delete(channel.id);
         const channelSigSet = await createSignalSet(context, channel.id);
 
@@ -293,6 +295,7 @@ async function synchronize(context, channelsData) {
                     channelCampaignsSet.delete(campaign.id);
                     query.docs.from--; // compensation for removed element
                 } else {
+                    log.verbose('Synchronization', `removing campaign ${campaign.id} to channel ${channel.id}`);
                     await onCampaignRemove(context, channel.id, campaign.id, channelSigSet);
                 }
             }
@@ -304,10 +307,12 @@ async function synchronize(context, channelsData) {
 
         // add remaining not present campaigns
         for (const campaignId of channelCampaignsSet.values()) {
+            log.verbose('Synchronization', `adding campaign ${campaignId} to channel ${channel.id}`);
             await onCampaignAdd(context, channel.id, campaignId, undefined, channelSigSet);
         }
     }
     for (const channelId of toDelete.values()) {
+        log.verbose('Synchronization', `removing channel ${channelId} data`);
         await onChannelRemove(context, channelId);
     }
 }
