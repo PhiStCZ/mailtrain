@@ -59,7 +59,7 @@ const staticSignalSets = {
     },
     [LogTypeId.CAMPAIGN]: {
         schema: {
-            ...schemas.genericEntitySchema,
+            ...schemas.staticEntityActivitySchema,
             status: {
                 type: SignalType.INTEGER,
                 name: 'Campaign Status',
@@ -118,7 +118,6 @@ const staticSignalSets = {
             },
         },
         name: 'Campaign',
-        // ingest
     },
     [LogTypeId.CHANNEL]: {
         schema: {
@@ -141,7 +140,7 @@ const staticSignalSets = {
     },
     [LogTypeId.LIST]: {
         schema: {
-            ...schemas.genericEntitySchema,
+            ...schemas.staticEntityActivitySchema,
             fieldId: {
                 type: SignalType.INTEGER,
                 name: 'Field ID',
@@ -181,10 +180,17 @@ const staticSignalSets = {
                 indexed: true,
                 weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5,
                 weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 5
+            },
+            campaignId: {
+                type: SignalType.INTEGER,
+                name: 'Campaign ID',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 6,
+                weight_edit: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 6
             }
         },
         name: 'List',
-        // ingest
     },
     [LogTypeId.NAMESPACE]: {
         schema: schemas.staticEntityActivitySchema,

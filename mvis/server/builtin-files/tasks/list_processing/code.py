@@ -65,7 +65,7 @@ SUBSCRIPTION_STATUS = {
   # 'complained': 4,
 }
 TIMESTAMP_CID = 'timestamp'
-SYNCHRONIZE_ACTIVITY = 18
+SYNCHRONIZE_ACTIVITY = 19
 
 # bucket size interval
 INTERVAL = '60s'

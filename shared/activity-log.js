@@ -75,7 +75,8 @@ const ListActivityType = {
     UPDATE_IMPORT: EntityActivityType.MAX + 12,
     REMOVE_IMPORT: EntityActivityType.MAX + 13,
     IMPORT_STATUS_CHANGE: EntityActivityType.MAX + 14,
-    SYNCHRONIZE: EntityActivityType.MAX + 15,
+    SEND_CAMPAIGN: EntityActivityType.MAX + 15,
+    SYNCHRONIZE: EntityActivityType.MAX + 16,
 };
 
 const ReportActivityType = {

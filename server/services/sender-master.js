@@ -8,7 +8,7 @@ const knex = require('../lib/knex');
 const {CampaignStatus, CampaignType, CampaignMessageStatus} = require('../../shared/campaigns');
 const campaigns = require('../models/campaigns');
 const builtinZoneMta = require('../lib/builtin-zone-mta');
-const {CampaignActivityType, LogTypeId} = require('../../shared/activity-log');
+const {CampaignActivityType, LogTypeId, ListActivityType} = require('../../shared/activity-log');
 const mvisApiToken = require('../lib/mvis').apiToken;
 const activityLog = require('../lib/activity-log');
 const {MessageType} = require('../lib/message-sender');
@@ -457,8 +457,13 @@ async function scheduleCampaigns() {
 
                 if (scheduledCampaign) {
                     await tx('campaigns').where('id', scheduledCampaign.id).update({status: CampaignStatus.SENDING});
-                    await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, scheduledCampaign.id, {status: CampaignStatus.SENDING});
                     campaignId = scheduledCampaign.id;
+
+                    await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.SENDING});
+                    const campaignListIds = await tx('campaign_lists').where('campaign', campaignId).select('id');
+                    for (const list of campaignListIds) {
+                        await activityLog.logEntityActivity(LogTypeId.LIST, ListActivityType.SEND_CAMPAIGN, list.id, { campaignId });
+                    }
                 }
             });
 
