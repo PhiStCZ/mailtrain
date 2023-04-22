@@ -262,7 +262,7 @@ async function synchronize(context, channelsData) {
     purgeCache();
 
     const toDelete = new Set();
-    const sigSets = await knex('signal_sets').whereLike('cid', signalSetCid('%')).select('cid');
+    const sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${signalSetCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(signalSetCidToChannelId(sigSet.cid));
     }

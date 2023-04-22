@@ -117,14 +117,13 @@ async function init() {
     await senders.spawn();
     await mvis.spawn();
 
-    await activityLog.synchronize();
-
     triggers.start();
     gdprCleanup.start();
 
     await postfixBounceServer.start();
 
     await reportProcessor.init();
+    await activityLog.synchronize();
 
     log.info('Service', 'All services started');
     appBuilder.setReady();

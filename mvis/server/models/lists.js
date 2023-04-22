@@ -4,6 +4,7 @@ const activityLog = require('../lib/activity-log');
 const { LogTypeId, EntityActivityType, ListActivityType } = require('../../../shared/activity-log');
 
 const log = require('../../ivis-core/server/lib/log');
+const knex = require('../../ivis-core/server/lib/knex');
 const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const jobs = require('../../ivis-core/server/models/jobs');
@@ -107,16 +108,16 @@ async function synchronize(context, listsData) {
     listTracker.purgeCache();
 
     const toDelete = new Set();
-    const jobs = await knex('jobs').whereLike('name', jobName('%')).select('name');
+    const jobs = await knex('jobs').whereRaw(`name LIKE '${jobName('%')}'`).select('name');
     for (const job of jobs) {
         toDelete.add(jobNameToListId(job.name));
     }
     let sigSets;
-    sigSets = await knex('signal_sets').whereLike('cid', listActivity.signalSetCid('%')).select('cid');
+    sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${listActivity.signalSetCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(listActivity.signalSetCidToListId(sigSet.cid));
     }
-    sigSets = await knex('signal_sets').whereLike('cid', listTracker.listTrackerCid('%')).select('cid');
+    sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${listTracker.listTrackerCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(listTracker.signalSetCidToListId(sigSet.cid));
     }

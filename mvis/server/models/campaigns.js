@@ -1,6 +1,7 @@
 'use strict';
 
 const log = require('../../ivis-core/server/lib/log');
+const knex = require('../../ivis-core/server/lib/knex');
 const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const activityLog = require('../lib/activity-log');
@@ -141,21 +142,21 @@ async function init() {
 
 async function synchronize(context, campaignData) {
     const toDelete = new Set();
-    const jobs = await knex('jobs').whereLike('name', jobName('%')).select('name');
+    const jobs = await knex('jobs').whereRaw(`name LIKE '${jobName('%')}'`).select('name');
     for (const job of jobs) {
         toDelete.add(jobNameToCampaignId(job.name));
     }
 
     let sigSets;
-    sigSets = await knex('signal_sets').whereLike('cid', campaignActivity.signalSetCid('%')).select('cid');
+    sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${campaignActivity.signalSetCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(campaignActivity.signalSetCidToCampaignId(sigSet.cid));
     }
-    sigSets = await knex('signal_sets').whereLike('cid', campaignTracker.campaignTrackerCid('%')).select('cid');
+    sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${campaignTracker.campaignTrackerCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(campaignTracker.signalSetCidToCampaignId(sigSet.cid));
     }
-    sigSets = await knex('signal_sets').whereLike('cid', campaignMessages.signalSetCid('%')).select('cid');
+    sigSets = await knex('signal_sets').whereLike(`cid LIKE '${campaignMessages.signalSetCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(campaignMessages.signalSetCidToCampaignId(sigSet.cid));
     }
