@@ -7,7 +7,7 @@ const axios = require('axios').default;
 const { LogTypeId, ListActivityType } = require('../../shared/activity-log');
 const knex = require('./knex');
 const { hashEmail } = require('./helpers');
-const { delay } = require('bluebird');
+const { mvisReady } = require('./mvis');
 
 let activityQueue = [];
 let activityQueue2 = [];
@@ -212,29 +212,19 @@ async function synchronize() {
         campaignChannel.campaignIds.push(c.id);
     }
 
+    await mvisReady();
     log.info('Activity-log', 'Synchronizing data with IVIS');
-
-    let triesRemaining = 60;
-    while (true) {
-        try {
-            await axios.post(syncUrl, {
-                list,
-                campaign,
-                channel,
-            }, {
-                headers: { 'global-access-token': apiToken }
-            });
-            break;
-        } catch (err) {
-            if (triesRemaining > 0 && err.code == 'ECONNREFUSED') {
-                triesRemaining--;
-                await delay(3000);
-            } else {
-                log.error('Activity-log', 'Could not synchronize data with IVIS');
-                log.verbose(err);
-                break;
-            }
-        }
+    try {
+        await axios.post(syncUrl, {
+            list,
+            campaign,
+            channel,
+        }, {
+            headers: { 'global-access-token': apiToken }
+        });
+    } catch (err) {
+        log.error('Activity-log', 'Could not synchronize data with IVIS');
+        log.verbose(err);
     }
 }
 

@@ -29,6 +29,12 @@ async function init() {
 
         const eventsApi = require('./routes/api/events');
         app.use('/api', eventsApi);
+
+        if (process.send) {
+            process.send({
+                type: 'mvis-ready'
+            });
+        }
     });
 
     em.on('app.validateGlobalAccess', data => {
