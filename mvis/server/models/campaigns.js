@@ -114,8 +114,9 @@ async function init() {
     activityLog.on(LogTypeId.CAMPAIGN, async (context, events) => {
         const eventsByCampaignId = activityLog.groupEventsByField(events, 'entityId');
 
-        for (const [campaignId, campaigns] of eventsByCampaignId.entries()) {
-            await activityLog.transformAndStoreEvents(context, campaigns, campaignActivity.signalSetCid(campaignId), campaignActivity.signalSetSchema);
+        for (const [campaignId, events] of eventsByCampaignId.entries()) {
+            const signalSet = await campaignActivity.getSignalSet(context, campaignId);
+            await activityLog.transformAndStoreEvents(context, events, signalSet, campaignActivity.signalSetSchema);
         }
     });
 
@@ -156,7 +157,7 @@ async function synchronize(context, campaignData) {
     for (const sigSet of sigSets) {
         toDelete.add(campaignTracker.signalSetCidToCampaignId(sigSet.cid));
     }
-    sigSets = await knex('signal_sets').whereLike(`cid LIKE '${campaignMessages.signalSetCid('%')}'`).select('cid');
+    sigSets = await knex('signal_sets').whereRaw(`cid LIKE '${campaignMessages.signalSetCid('%')}'`).select('cid');
     for (const sigSet of sigSets) {
         toDelete.add(campaignMessages.signalSetCidToCampaignId(sigSet.cid));
     }

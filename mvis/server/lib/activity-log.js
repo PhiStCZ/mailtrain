@@ -150,9 +150,9 @@ async function processEvents(context, events) {
 
         const eventsByTypeId = groupEventsByField(currentEvents, 'typeId', true);
 
-        callListeners(context, eventsByTypeId, beforeListeners);
-        callListeners(context, eventsByTypeId, onListeners);
-        callListeners(context, eventsByTypeId, afterListeners);
+        await callListeners(context, eventsByTypeId, beforeListeners);
+        await callListeners(context, eventsByTypeId, onListeners);
+        await callListeners(context, eventsByTypeId, afterListeners);
     }
 
     processingEvents = false;

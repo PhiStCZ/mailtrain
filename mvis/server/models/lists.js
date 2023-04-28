@@ -22,7 +22,7 @@ function jobName(listId) {
 }
 
 function jobNameToListId(jobName) {
-    return parseInt(''.split(' ')[1]);
+    return parseInt(jobName.split(' ')[1]);
 }
 
 async function createJob(context, listId, listTrackerSigSet, creationTimestamp = null) {
@@ -128,11 +128,11 @@ async function synchronize(context, listsData) {
         toDelete.delete(list.id);
         await onCreateList(context, list.id);
         const listEvents = new Map();
-        listEvents.set(list.id, {
+        listEvents.set(list.id, [{
             timestamp: moment.utc().toISOString(),
             activityType: ListActivityType.SYNCHRONIZE,
             subscribers: list.subscribers
-        });
+        }]);
         await listTracker.addListTrackerEvents(context, listEvents);
     }
     for (const listId of toDelete.values()) {

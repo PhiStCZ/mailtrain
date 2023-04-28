@@ -127,7 +127,6 @@ async function findCampaignChannelId(context, campaignId) {
         docs: {
             signals: [ 'activityType', 'entityId' ],
 
-            from: 0,
             limit: 1,
             sort: [{ sigCid: 'timestamp', order: 'desc' }]
         }
@@ -275,34 +274,38 @@ async function synchronize(context, channelsData) {
 
         const channelCampaignsSet = new Set(channel.campaignIds);
 
-        const querySize = 10000;
+        const querySize = 5000;
         const query = {
             sigSetCid: signalSetCid(channel.id),
+            filter: {
+                type: 'range',
+                sigCid: 'campaignId',
+                gt: 0
+            },
             docs: {
                 signals: [ 'campaignId' ],
-                from: 0,
                 limit: querySize,
                 sort: [{ sigCid: 'campaignId', order: 'asc' }]
             }
         };
-        let result = await signalSets.query(context, [query]);
-        let storedCampaignIds = result[0].docs;
-        do {
-            for (const campaign of storedCampaignIds) {
-                if (channelCampaignsSet.has(campaign.id)) {
-                    // just update the campaign stats
-                    await updateChannelCampaignStats(context, campaign.id, channelSigSet);
-                    channelCampaignsSet.delete(campaign.id);
-                    query.docs.from--; // compensation for removed element
-                } else {
-                    log.verbose('Synchronization', `removing campaign ${campaign.id} to channel ${channel.id}`);
-                    await onCampaignRemove(context, channel.id, campaign.id, channelSigSet);
-                }
-            }
 
-            query.docs.from += querySize;
+        let result, storedCampaignIds;
+        do {
             result = await signalSets.query(context, [query]);
             storedCampaignIds = result[0].docs;
+
+            for (const campaign of storedCampaignIds) {
+                const campaignId = campaign.campaignId;
+                if (channelCampaignsSet.has(campaignId)) {
+                    await updateChannelCampaignStats(context, campaignId, channelSigSet);
+                    channelCampaignsSet.delete(campaignId);
+                } else {
+                    log.verbose('Synchronization', `removing campaign ${campaignId} to channel ${channel.id}`);
+                    await onCampaignRemove(context, channel.id, campaignId, channelSigSet);
+                }
+                query.filter.gt = campaignId;
+            }
+
         } while (storedCampaignIds.length == querySize);
 
         // add remaining not present campaigns

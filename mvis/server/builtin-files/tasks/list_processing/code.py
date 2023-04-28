@@ -83,7 +83,7 @@ list_tracker_ts = list_tracker.get_signal(TIMESTAMP_CID)
 list_tracker_status = list_tracker.get_signal('subscriptionStatus')
 list_tracker_prev_status = list_tracker.get_signal('previousSubscriptionStatus')
 list_tracker_activity = list_tracker.get_signal('activityType')
-list_tracker_sub_count = list_tracker.get_signal('sync_subscriber_count')
+list_tracker_sub_count = list_tracker.get_signal('subscribers')
 
 target_namespace = list_tracker.namespace
 

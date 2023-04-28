@@ -7,7 +7,7 @@ const activityLog = require('../lib/activity-log');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const log = require('../../ivis-core/server/lib/log');
 
-const { removeSignalSetIfExists } = require('../lib/helpers');
+const { getSignalSetWithSigMapIfExists, removeSignalSetIfExists } = require('../lib/helpers');
 
 function listTrackerCid(listId) {
     return `list_tracker_${listId}`;
@@ -150,7 +150,7 @@ async function removeListTracker(context, listId) {
 
 async function addListTrackerEvents(context, eventsByListId) {
     for (const [id, events] of eventsByListId.entries()) {
-        const trackerSigSet = await getCachedCampaignTracker(context, id);
+        const trackerSigSet = await getCachedListTracker(context, id);
         if (trackerSigSet) {
             await activityLog.transformAndStoreEvents(context, events, trackerSigSet, listTrackerSchema);
         } else {
