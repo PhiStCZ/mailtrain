@@ -5,7 +5,7 @@ const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { SignalType } = require('../../ivis-core/shared/signals');
 const schemas = require('./schemas');
 const knex = require('../../ivis-core/server/lib/knex');
-const { createSignalSetWithSignals, getSignalSetWithSigMapIfExists, removeSignalSetIfExists } = require('../lib/helpers');
+const { getSignalSetWithSigMapIfExists, removeSignalSetIfExists } = require('../lib/helpers');
 
 const signalSetSchema = {
     ...schemas.entityActivitySchema,
@@ -81,28 +81,18 @@ async function createSignalSet(context, campaignId) {
         return existing;
     }
 
-    const sigSetWithSigMap = await createSignalSetWithSignals(context, {
+    const sigSetWithSigMap = await signalSets.ensure(context, {
         cid: signalSetCid(campaignId),
         name: `Campaign ${campaignId} activity`,
         description: '',
         namespace: config.mailtrain.namespace,
-        signals: signalSetSchema
-    }, false);
+    }, signalSetSchema);
 
     return sigSetWithSigMap;
 }
 
 async function getSignalSet(context, campaignId) {
-    return await knex.transaction(async tx => {
-        const signalSet = await tx('signal_sets').where('cid', signalSetCid(campaignId)).first();
-        if (!signalSet) {
-            return null;
-        }
-        const signalByCidMap = await signalSets.getSignalByCidMapTx(tx, signalSet);
-        signalSet.signalByCidMap = signalByCidMap;
-
-        return signalSet;
-    });
+    return await getSignalSetWithSigMapIfExists(context, signalSetCid(campaignId));
 }
 
 async function removeSignalSet(context, campaignId) {

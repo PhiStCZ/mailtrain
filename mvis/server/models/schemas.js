@@ -13,7 +13,7 @@ const timestampSignal = {
 
 
 const entityActivitySchema = {
-    timestampSignal,
+    timestamp: timestampSignal,
     issuedBy: {
         type: SignalType.INTEGER,
         name: 'Issued by',
