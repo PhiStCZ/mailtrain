@@ -32,14 +32,19 @@ function spawn(callback) {
     });
 
     mvisReadyState = new Promise((resolve, reject) => {
+        let ready = false;
+        setTimeout(() => {
+            if (!ready) {
+                reject('Mvis start message not received');
+            }
+        }, 5 * 60 * 1000);
         mvisProcess.on('message', msg => {
-            setTimeout(() => reject('Mvis start message not received'), 300000); // reject after 5 minutes
             if (msg && msg.type === 'mvis-ready') {
+                ready = true;
                 resolve();
             }
         });
     });
-
 };
 
 /** Returns from the function when Mvis is ready. */

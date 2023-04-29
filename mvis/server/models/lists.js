@@ -89,8 +89,9 @@ async function init() {
     activityLog.on(LogTypeId.LIST, async (context, events) => {
         const eventsByListId = activityLog.groupEventsByField(events, 'entityId');
 
-        for (const [listId, lists] of eventsByListId.entries()) {
-            await activityLog.transformAndStoreEvents(context, lists, listActivity.signalSetCid(listId), listActivity.signalSetSchema);
+        for (const [listId, events] of eventsByListId.entries()) {
+            const signalSet = listActivity.getSignalSet(context, listId);
+            await activityLog.transformAndStoreEvents(context, events, signalSet, listActivity.signalSetSchema);
         }
     });
 

@@ -11,7 +11,6 @@ const channels = require('./models/channels');
 const lists = require('./models/lists');
 
 const { addBuiltinTasks } = require('./models/builtin-tasks');
-const { addBuiltinTemplates } = require('./models/builtin-templates');
 
 const apiToken = process.env.API_TOKEN;
 
@@ -43,10 +42,6 @@ async function init() {
 
     em.on('builtinTasks.add', async builtinTasks => {
         await addBuiltinTasks(builtinTasks);
-    });
-
-    em.on('builtinTemplates.add', async builtinTemplates => {
-        await addBuiltinTemplates(builtinTemplates);
     });
 
     em.on('services.start', async () => {
