@@ -21,6 +21,7 @@ import {
 } from "../../lib/modals";
 import listStyles from "../styles.scss";
 import {withComponentMixins} from "../../lib/decorator-helpers";
+import {fetchTokenAndEmbedBuiltinTemplate} from '../../lib/embed';
 
 @withComponentMixins([
     withTranslation,
@@ -49,6 +50,8 @@ export default class List extends Component {
                 }
             }
         });
+
+        this.listSubsEmbedId = _.uniqueId('listSubs');
     }
 
     static propTypes = {
@@ -61,6 +64,8 @@ export default class List extends Component {
         this.populateFormValues({
             segment: this.props.segmentId || ''
         });
+
+        fetchTokenAndEmbedBuiltinTemplate(this.listSubsEmbedId, 'list-subscriptions/' + this.props.list.id);
     }
 
     componentDidUpdate() {
@@ -175,6 +180,8 @@ export default class List extends Component {
                 {list.description &&
                     <div className="well well-sm">{list.description}</div>
                 }
+
+                <div id={this.listSubsEmbedId}></div>
 
                 <div className="card bg-light">
                     <div className="card-body p-2">

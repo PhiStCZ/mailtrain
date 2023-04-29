@@ -57,6 +57,7 @@ const blacklistRest = require('./routes/rest/blacklist');
 const editorsRest = require('./routes/rest/editors');
 const filesRest = require('./routes/rest/files');
 const settingsRest = require('./routes/rest/settings');
+const embedRest = require('./routes/rest/embed');
 
 const index = require('./routes/index');
 
@@ -318,6 +319,7 @@ async function createApp(appType) {
         app.use('/rest', editorsRest);
         app.use('/rest', filesRest);
         app.use('/rest', settingsRest);
+        app.use('/rest', embedRest);
 
         if (config.reports && config.reports.enabled === true) {
             app.use('/rest', reportTemplatesRest);

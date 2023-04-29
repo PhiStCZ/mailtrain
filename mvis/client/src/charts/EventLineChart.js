@@ -62,7 +62,7 @@ class TooltipContentWithEvents extends Component {
 
     static defaultProps = {
         getSignalValues: defaultGetSignalValues,
-        activityEventColor: '#ff3333',
+        activityEventColor: '#884444',
         activityEventToString: evt => `activity ${evt.data.activityType.value}`,
     }
 

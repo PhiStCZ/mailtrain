@@ -1,27 +1,50 @@
 'use strict';
 
 const passport = require('../../../ivis-core/server/lib/passport');
-const shares = require('../../../ivis-core/server/models/shares');
 const users = require('../../../ivis-core/server/models/users');
 const {castToInteger} = require('../../../ivis-core/server/lib/helpers');
-const knex = require('../../../ivis-core/server/lib/knex');
 const urls = require('../../../ivis-core/server/lib/urls');
-const contextHelpers = require('../../../ivis-core/server/lib/context-helpers');
+const { ensureMailtrainUser } = require('../../models/users');
+const { BuiltinTemplateIds } = require('../../../shared/builtin-templates');
+
+const listActivity = require('../../models/list-activity');
+const listSubscriptions = require('../../models/list-subscriptions');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
-router.getAsync('/mt-embedded-panel/:mtUserId/:panelId', passport.loggedIn, async (req, res) => {
-    const panelId = castToInteger(req.params.panelId);
-    const mtUserId = castToInteger(req.params.mtUserId);
-    const userName = `mt-user-${mtUserId}`;
-    const user = await users.getByUsername(req.context, userName);
 
-    const restrictedAccessToken = await users.getRestrictedAccessToken(req.context, 'panel', {panelId, renewableBySandbox: true}, user.id);
+router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async (req, res) => {
+    const renewableBySandbox = true;
+    const builtinTemplateId = BuiltinTemplateIds.EVENT_LINECHART;
+    const listId = castToInteger(req.params.listId);
+    const userId = 1; // TODO: replace for ensureMailtrainUser(context);
+
+    const params = {
+        sensors: [
+            {
+                label: 'Subscribers',
+                color: '#44dd44',
+                sigSet: listSubscriptions.signalSetCid(listId),
+                signal: 'subscribed',
+                tsSigCid: 'timestamp',
+                enabled: true,
+            },
+        ],
+        activitySet: listActivity.signalSetCid(listId),
+        activityTs: 'timestamp',
+        activityType: 'activityType',
+        activityIssuedBy: 'issuedBy',
+    };
+
+    const token = await users.getRestrictedAccessToken(req.context, 'builtin_template', { renewableBySandbox, builtinTemplateId, params }, userId);
 
     return res.json({
-        token: restrictedAccessToken,
-        ivisSandboxUrlBase: urls.getSandboxUrlBase()
+        token,
+        ivisSandboxUrlBase: urls.getSandboxUrlBase(),
+        path: 'mt-list-subscriptions',
+        params,
     });
 });
+
 
 module.exports = router;
