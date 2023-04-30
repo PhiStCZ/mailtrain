@@ -26,6 +26,7 @@ roles:
       admin: true
       description: "Limited permissions that allow only read-only access"
       permissions:
+      rootNamespaceRole: mailtrainUser
 
   namespace:
     mailtrainUser:
@@ -40,32 +41,32 @@ roles:
         signal: ["view", "query"]
         signalSet: ["view", "query"]
 
-#  template:
-#    mailtrainUser:
-#      name: "Mailtrain User"
-#      description: "Limited permissions that allow only read-only access"
-#      permissions: ["view", "viewFiles", "execute"]
-#
-#  workspace:
-#    mailtrainUser:
-#      name: "Mailtrain User"
-#      description: "Limited permissions that allow only read-only access"
-#      permissions: ["view"]
-#
-#  panel:
-#    mailtrainUser:
-#      name: "Mailtrain User"
-#      description: "Limited permissions that allow only read-only access"
-#      permissions: ["view"]
-#
-#  signal:
-#    mailtrainUser:
-#      name: "Mailtrain User"
-#      description: "Limited permissions that allow only read-only access"
-#      permissions: ["view", "query"]
-#
-#  signalSet:
-#    mailtrainUser:
-#      name: "Mailtrain User"
-#      description: "Limited permissions that allow only read-only access"
-#      permissions: ["view", "query"]
+  template:
+    mailtrainUser:
+      name: "Mailtrain User"
+      description: "Limited permissions that allow only read-only access"
+      permissions: ["view", "viewFiles", "execute"]
+
+  workspace:
+    mailtrainUser:
+      name: "Mailtrain User"
+      description: "Limited permissions that allow only read-only access"
+      permissions: ["view"]
+
+  panel:
+    mailtrainUser:
+      name: "Mailtrain User"
+      description: "Limited permissions that allow only read-only access"
+      permissions: ["view"]
+
+  signal:
+    mailtrainUser:
+      name: "Mailtrain User"
+      description: "Limited permissions that allow only read-only access"
+      permissions: ["view", "query"]
+
+  signalSet:
+    mailtrainUser:
+      name: "Mailtrain User"
+      description: "Limited permissions that allow only read-only access"
+      permissions: ["view", "query"]

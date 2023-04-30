@@ -10,7 +10,8 @@ async function ensureMailtrainUser(context) {
     let id;
 
     try {
-        id = await users.getByUsername(context, MAILTRAIN_USERNAME);
+        const user = await users.getByUsername(context, MAILTRAIN_USERNAME);
+        id = user.id;
     } catch (e) {
         if (!e instanceof interoperableErrors.PermissionDeniedError) {
             throw e;
@@ -19,7 +20,7 @@ async function ensureMailtrainUser(context) {
         id = await users.create(context, {
             username: MAILTRAIN_USERNAME,
             name: 'Mailtrain User',
-            email: 'admin@example.org',
+            email: 'mailtrain@example.org',
             password: crypto.randomBytes(20).toString('hex').toLowerCase(),
             role: 'mailtrainUser',
             namespace: 1,

@@ -17,7 +17,7 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
     const renewableBySandbox = true;
     const builtinTemplateId = BuiltinTemplateIds.EVENT_LINECHART;
     const listId = castToInteger(req.params.listId);
-    const userId = 1; // TODO: replace for ensureMailtrainUser(context);
+    const userId = await ensureMailtrainUser(context);
 
     const params = {
         sensors: [
