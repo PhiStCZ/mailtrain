@@ -7,18 +7,32 @@ const urls = require('../../../ivis-core/server/lib/urls');
 const { ensureMailtrainUser } = require('../../models/users');
 const { BuiltinTemplateIds } = require('../../../shared/builtin-templates');
 
+const channels = require('../../models/channels');
 const listActivity = require('../../models/list-activity');
 const listSubscriptions = require('../../models/list-subscriptions');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
+async function getDataForEmbed(context, builtinTemplateId, params, path) {
+    const userId = await ensureMailtrainUser(context);
+    const token = await users.getRestrictedAccessToken(
+        context,
+        'builtin_template',
+        { renewableBySandbox: true, builtinTemplateId, params },
+        userId
+    );
+
+    return {
+        token,
+        ivisSandboxUrlBase: urls.getSandboxUrlBase(),
+        path,
+        params,
+    };
+}
+
 
 router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async (req, res) => {
-    const renewableBySandbox = true;
-    const builtinTemplateId = BuiltinTemplateIds.EVENT_LINECHART;
     const listId = castToInteger(req.params.listId);
-    const userId = await ensureMailtrainUser(context);
-
     const params = {
         sensors: [
             {
@@ -36,14 +50,53 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
         activityIssuedBy: 'issuedBy',
     };
 
-    const token = await users.getRestrictedAccessToken(req.context, 'builtin_template', { renewableBySandbox, builtinTemplateId, params }, userId);
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-list-subscriptions')
+    );
+});
 
-    return res.json({
-        token,
-        ivisSandboxUrlBase: urls.getSandboxUrlBase(),
-        path: 'mt-list-subscriptions',
-        params,
-    });
+
+router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, async (req, res) => {
+    const channelId = castToInteger(req.params.channelId);
+    const params = {
+        groupsLimit: 5,
+        sigSet: channels.signalSetCid(channelId),
+        tsSig: 'timestamp',
+        extraSignals: [ { sig: 'campaignId' } ],
+        bars: [
+            {
+                label: 'Messages',
+                tooltipAccumulateValues: true,
+                segments: [
+                    { label: 'Opened', signal: 'opened', color: '#44dd44' },
+                    { label: 'Sent (but unopened)', signal: 'sent', color: '#22aa22' },
+                    { label: 'Failed', signal: 'failed', color: '#114411' },
+                ],
+            },
+            {
+                label: 'Links',
+                tooltipAccumulateValues: true,
+                segments: [
+                    { label: 'Clicked any', signal: 'clicked_any', color: '#55bbff' },
+                    // later it may be possible to get the link ids here
+                    // and move the clicked to Messages column (as its a subset of opened)
+                ],
+            },
+            {
+                label: 'Actions',
+                tooltipAccumulateValues: true,
+                segments: [
+                    { label: 'Unsubscribed', signal: 'unsubscribed', color: '#666666' },
+                    { label: 'Bounced', signal: 'bounced', color: '#eebb88' },
+                    { label: 'Complained', signal: 'complained', color: '#dd4444' },
+                ],
+            },
+        ],
+    };
+
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-campaigns')
+    );
 });
 
 

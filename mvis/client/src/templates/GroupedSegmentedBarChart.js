@@ -5,7 +5,9 @@ import { GroupedSegmentedBarChart } from "../charts/GroupedSegmentedBarChart";
 import { DocsDataProvider } from "../charts/Providers";
 import { withTranslation } from "../../../ivis-core/client/src/lib/i18n";
 import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
+import { withPanelConfig } from "../../../ivis-core/client/src/ivis/PanelConfig";
 
+@withPanelConfig
 export default class GroupedSegmentedBarChartTemplate extends Component {
     docToLabel = (doc) => `campaign ${doc.id}`;
 
@@ -40,6 +42,10 @@ export default class GroupedSegmentedBarChartTemplate extends Component {
                         }))
                     }))
                 });
+            }
+
+            if (this.props.customProcessData) {
+                barGroups = this.props.customProcessData(docs, barGroups);
             }
             return barGroups;
         }

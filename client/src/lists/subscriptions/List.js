@@ -22,6 +22,7 @@ import {
 import listStyles from "../styles.scss";
 import {withComponentMixins} from "../../lib/decorator-helpers";
 import {fetchTokenAndEmbedBuiltinTemplate} from '../../lib/embed';
+import embedStyles from '../../lib/embed.scss';
 
 @withComponentMixins([
     withTranslation,
@@ -51,7 +52,7 @@ export default class List extends Component {
             }
         });
 
-        this.listSubsEmbedId = _.uniqueId('listSubs');
+        this.subsEmbedId = _.uniqueId('subsEmbed');
     }
 
     static propTypes = {
@@ -65,7 +66,7 @@ export default class List extends Component {
             segment: this.props.segmentId || ''
         });
 
-        fetchTokenAndEmbedBuiltinTemplate(this.listSubsEmbedId, 'list-subscriptions/' + this.props.list.id);
+        fetchTokenAndEmbedBuiltinTemplate(this.subsEmbedId, 'list-subscriptions/' + this.props.list.id);
     }
 
     componentDidUpdate() {
@@ -181,7 +182,7 @@ export default class List extends Component {
                     <div className="well well-sm">{list.description}</div>
                 }
 
-                <div id={this.listSubsEmbedId}></div>
+                <div id={this.subsEmbedId} className={embedStyles.embedWindow}></div>
 
                 <div className="card bg-light">
                     <div className="card-body p-2">

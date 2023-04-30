@@ -20,7 +20,6 @@ export class EventLineChartTemplate extends Component {
 
     static propTypes = {
         eventToString: PropTypes.func,
-        params: PropTypes.object,
     }
 
     render() {

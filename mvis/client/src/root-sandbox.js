@@ -32,6 +32,13 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-channel-campaigns': {
             render: props => <GroupedSegmentedBarChartTemplate
+                customProcessData={(docs, barGroups) => {
+                    for (const group of barGroups) {
+                        if (group.label != 'Messages') continue;
+                        // subtract opened from sent to get delivered
+                        group.segments[1].value -= group.segments[0].value;
+                    }
+                }}
                 {...props}
             />
         },

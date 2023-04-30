@@ -173,11 +173,13 @@ export class EventLineChart extends Component {
         margin: PropTypes.object,
         tooltipExtraProps: PropTypes.object,
         tooltipEventToString: PropTypes.func,
+        eventColor: PropTypes.string,
     }
 
     static defaultProps = {
         margin: { left: 60, right: 5, top: 5, bottom: 20 },
         height: 500,
+        eventColor: '#884444'
     }
 
     getExtraQueries(base, abs) {
@@ -244,7 +246,7 @@ export class EventLineChart extends Component {
 
         // may turn configurable in the future
         const eventLinesVisible = true;
-        const lineColor = this.props.activityEventColor;
+        const lineColor = this.props.eventColor;
         const lineWidth = 3;
 
         this.linePathSelection
@@ -310,7 +312,7 @@ export class EventLineChart extends Component {
 
                 tooltipContentRender={(props) => <TooltipContentWithEvents
                     eventToString={this.props.tooltipEventToString}
-                    eventColor={this.props.activityEventColor}
+                    eventColor={this.props.eventColor}
                     {...props}
                 />}
                 tooltipExtraProps={this.props.tooltipExtraProps}
