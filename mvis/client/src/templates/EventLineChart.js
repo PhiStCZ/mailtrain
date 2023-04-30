@@ -2,7 +2,7 @@
 
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { withPanelConfig, TimeContext, TimeRangeSelector, Legend } from "../../../ivis-core/client/src/ivis/ivis";
+import { TimeContext, TimeRangeSelector, Legend, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
 import { EventLineChart } from "../charts/EventLineChart";
 
 // for now the template code is identical to linechart template code
@@ -18,8 +18,9 @@ const sensorsStructure = [
 @withPanelConfig
 export class EventLineChartTemplate extends Component {
 
-    static PropTypes = {
-        activityEventToString: PropTypes.func
+    static propTypes = {
+        eventToString: PropTypes.func,
+        params: PropTypes.object,
     }
 
     render() {
@@ -58,7 +59,7 @@ export class EventLineChartTemplate extends Component {
                         activityTs: config.activityTs,
                         activityType: config.activityType,
                         activityIssuedBy: config.activityIssuedBy,
-                        tooltipActivityEventToString: this.props.activityEventToString,
+                        tooltipEventToString: this.props.eventToString,
                     }}
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
@@ -71,7 +72,7 @@ export class EventLineChartTemplate extends Component {
     }
 }
 
-export const listActivityEventToString = evt => {
+export const listEventToString = evt => {
     switch (evt.data.activityType.value) {
         case 1: return `List created`;
         case 2: return `List updated`;
@@ -99,7 +100,7 @@ export const listActivityEventToString = evt => {
     }
 };
 
-export const campaignActivityEventToString = evt => {
+export const campaignEventToString = evt => {
     switch (evt.data.activityType.value) {
         case 1: return `Campaign created`;
         case 2: return `Campaign updated`;

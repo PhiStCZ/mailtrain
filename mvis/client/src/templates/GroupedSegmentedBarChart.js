@@ -2,14 +2,10 @@
 
 import React, { Component } from "react";
 import { GroupedSegmentedBarChart } from "../charts/GroupedSegmentedBarChart";
-import { withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
-import { withTranslation } from "../../../ivis-core/client/src/lib/i18n";
 import { DocsDataProvider } from "../charts/Providers";
+import { withTranslation } from "../../../ivis-core/client/src/lib/i18n";
+import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 
-@withComponentMixins([
-    // withTranslation,
-    withPanelConfig,
-])
 export default class GroupedSegmentedBarChartTemplate extends Component {
     docToLabel = (doc) => `campaign ${doc.id}`;
 

@@ -4,13 +4,16 @@ import { Component } from "react";
 import {
     withAsyncErrorHandler,
     withErrorHandling
-} from "../lib/error-handling";
+} from "../../../ivis-core/client/src/lib/error-handling";
 import PropTypes
     from "prop-types";
 
 import { DataAccessSession } from "../../../ivis-core/client/src/ivis/DataAccess";
+import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 
-@withErrorHandling
+@withComponentMixins([
+    withErrorHandling
+])
 export class DocsDataProvider extends Component {
     constructor(props) {
         super(props);

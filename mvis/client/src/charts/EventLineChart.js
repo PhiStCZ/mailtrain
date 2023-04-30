@@ -11,7 +11,7 @@ import { Icon } from "../../../ivis-core/client/src/lib/bootstrap-components";
 import * as dateMath from "../../../ivis-core/client/src/lib/datemath";
 
 import { IntervalAbsolute, LineChart, isSignalVisible } from "../../../ivis-core/client/src/ivis/ivis";
-import { tooltipStyles } from "../../../ivis-core/client/src/ivis/Tooltip.scss";
+import tooltipStyles from "../../../ivis-core/client/src/ivis/Tooltip.scss";
 
 const ACTIVITY_EVENT_SEL_CID = '_activity_events';
 
@@ -56,14 +56,12 @@ class TooltipContentWithEvents extends Component {
         selection: PropTypes.object,
         eventColor: PropTypes.string.isRequired,
         getSignalValues: PropTypes.func,
-        activityEventColor: PropTypes.string,
-        activityEventToString: PropTypes.func,
+        eventToString: PropTypes.func,
     }
 
     static defaultProps = {
         getSignalValues: defaultGetSignalValues,
-        activityEventColor: '#884444',
-        activityEventToString: evt => `activity ${evt.data.activityType.value}`,
+        eventToString: evt => `activity ${evt.data.activityType.value}`,
     }
 
     renderLineSignalRows() {
@@ -127,7 +125,7 @@ class TooltipContentWithEvents extends Component {
         const result = eventSel.data.map((evt, idx) => (
             <div key={`event ${idx}`}>
                 <span className={tooltipStyles.signalColor} style={{color: this.props.eventColor}}><Icon icon="minus"/></span>
-                <span className={tooltipStyles.signalVal}>{this.props.activityEventToString(evt)}</span>
+                <span className={tooltipStyles.signalVal}>{this.props.eventToString(evt)}</span>
             </div>
         ));
 
@@ -174,7 +172,7 @@ export class EventLineChart extends Component {
         height: PropTypes.number,
         margin: PropTypes.object,
         tooltipExtraProps: PropTypes.object,
-        tooltipActivityEventToString: PropTypes.func,
+        tooltipEventToString: PropTypes.func,
     }
 
     static defaultProps = {
@@ -209,26 +207,28 @@ export class EventLineChart extends Component {
         // TODO: update the linechartSignalSetsData to display a line to the
         // "present time" or +infinity, and not the end of signal set data
 
-        const mergedActivityEvents = [];
-        const mergeDistance = (abs.to - abs.from) * 0.025;
-        for (const event of activityEvents) {
-            if (mergedActivityEvents.length != 0 && event.ts - mergedActivityEvents.at(-1).ts <= mergeDistance) {
-                mergedActivityEvents.events.push(event);
-            } else {
-                mergedActivityEvents.push({ ts: event.ts, events: [event] });
-            }
-        }
-
         const stateUpdate = {
-            mergedActivityEvents
+            activityEvents,
         };
 
         return stateUpdate;
     }
 
     createChart(base, signalSetsData, baseState, abs, xScale, yScales, points) {
+
+        const mergedActivityEvents = [];
+        const mergeDistance = (abs.to - abs.from) * 0.025;
+        for (const event of baseState.activityEvents) {
+            if (mergedActivityEvents.length != 0 && event.ts - mergedActivityEvents.at(-1).ts <= mergeDistance) {
+                mergedActivityEvents.events.push(event);
+            } else {
+                mergedActivityEvents.push({ ts: event.ts, events: [event] });
+            }
+        }
+        this.setState({ mergedActivityEvents });
+
         const activityLinePoints = [];
-        for (const event of baseState.mergedActivityEvents) {
+        for (const event of mergedActivityEvents) {
             activityLinePoints.push({ ...event, top: true });
             activityLinePoints.push({ ...event, top: false });
             activityLinePoints.push(null); // this separates the lines
@@ -269,7 +269,7 @@ export class EventLineChart extends Component {
     }
 
     onSelect(base, selection, signalSetsData, baseState, abs, xScale, yScales, points, lineVisibility) {
-        const activityEvents = baseState.mergedActivityEvents;
+        const activityEvents = this.state.mergedActivityEvents;
         let activitySelection = null;
 
         if (!activityEvents || activityEvents.length == 0) {
@@ -291,10 +291,13 @@ export class EventLineChart extends Component {
         }
 
         selection[ACTIVITY_EVENT_SEL_CID] = activitySelection;
+        return selection;
     }
 
     onDeselect(base, selection, signalSetsData, baseState, abs, xScale, yScales, points, lineVisibility) {
-        delete selection[ACTIVITY_EVENT_SEL_CID];
+        if (selection) {
+            delete selection[ACTIVITY_EVENT_SEL_CID];
+        }
     }
 
     render() {
@@ -306,7 +309,7 @@ export class EventLineChart extends Component {
                 margin={this.props.margin}
 
                 tooltipContentRender={(props) => <TooltipContentWithEvents
-                    activityEventToString={this.props.tooltipActivityEventToString}
+                    eventToString={this.props.tooltipEventToString}
                     eventColor={this.props.activityEventColor}
                     {...props}
                 />}

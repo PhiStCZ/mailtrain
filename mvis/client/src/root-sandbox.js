@@ -1,16 +1,18 @@
 'use strict';
 
+import React from 'react';
 import em from '../../ivis-core/client/src/lib/extension-manager';
 import { UntrustedContentRoot } from '../../ivis-core/client/src/lib/untrusted';
 import './styles.scss';
-import { EventLineChartTemplate, campaignActivityEventToString, listActivityEventToString } from './templates/EventLineChart';
-import { NPieCharts } from './templates/NPieCharts';
+import { EventLineChartTemplate, campaignEventToString, listEventToString } from './templates/EventLineChart';
+import NPieCharts from './templates/NPieCharts';
+import GroupedSegmentedBarChartTemplate from './templates/GroupedSegmentedBarChart';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
         'mt-list-subscriptions': {
             render: props => <EventLineChartTemplate
-                activityEventToString={listActivityEventToString}
+                eventToString={listEventToString}
                 {...props}
             />
         },
@@ -23,23 +25,25 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-campaign-messages': {
             render: props => <EventLineChartTemplate
-                activityEventToString={campaignActivityEventToString}
+                eventToString={campaignEventToString}
                 {...props}
             />
         },
 
         'mt-channel-campaigns': {
-            render: props => <EventLineChartTemplate
-                activityEventToString={campaignActivityEventToString}
+            render: props => <GroupedSegmentedBarChartTemplate
                 {...props}
             />
         },
     }
 
-    for (const route of panelRoutes) {
+    for (const route in panelRoutes) {
         structure.children[route] = {
             panelRender: _ => <UntrustedContentRoot
-                render={panelRoutes[route].render}
+                render={props => {
+                    props.setPanelMenu = () => {}; // handle nonexistent setPanelMenu
+                    panelRoutes[route].render(props);
+                }}
             />
         };
     }

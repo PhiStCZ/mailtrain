@@ -2,15 +2,11 @@
 
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { withPanelConfig, TimeContext, TimeRangeSelector, Legend, StaticPieChart } from "../../../ivis-core/client/src/ivis/ivis";
-import { EventLineChart } from "../charts/EventLineChart";
+import { StaticPieChart } from "../../../ivis-core/client/src/ivis/ivis";
+import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 import { DocsDataProvider } from "../charts/Providers";
 
-@withComponentMixins([
-    // withTranslation,
-    withPanelConfig,
-])
-export class NPieCharts extends Component {
+export default class NPieCharts extends Component {
     constructor(props) {
         super(props);
     }
