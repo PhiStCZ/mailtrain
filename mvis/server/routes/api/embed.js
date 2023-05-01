@@ -58,37 +58,38 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
 
 router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, async (req, res) => {
     const channelId = castToInteger(req.params.channelId);
+    const sigSet = channels.signalSetCid(channelId);
     const params = {
         groupsLimit: 5,
-        sigSet: channels.signalSetCid(channelId),
-        tsSig: 'timestamp',
-        extraSignals: [ { sig: 'campaignId' } ],
+        sigSet,
+        tsSig: 'creationTimestamp',
+        extraSignals: [ { sigSet, sig: 'campaignId' } ],
         bars: [
             {
                 label: 'Messages',
-                tooltipAccumulateValues: true,
+                accumulateValues: true,
                 segments: [
-                    { label: 'Opened', signal: 'opened', color: '#44dd44' },
-                    { label: 'Sent (but unopened)', signal: 'sent', color: '#22aa22' },
-                    { label: 'Failed', signal: 'failed', color: '#114411' },
+                    { label: 'Opened', sigSet, signal: 'opened', color: '#44dd44' },
+                    { label: 'Sent (but unopened)', sigSet, signal: 'sent', color: '#22aa22' },
+                    { label: 'Failed', sigSet, signal: 'failed', color: '#114411' },
                 ],
             },
             {
                 label: 'Links',
-                tooltipAccumulateValues: true,
+                accumulateValues: true,
                 segments: [
-                    { label: 'Clicked any', signal: 'clicked_any', color: '#55bbff' },
+                    { label: 'Clicked any', sigSet, signal: 'clicked_any', color: '#55bbff' },
                     // later it may be possible to get the link ids here
                     // and move the clicked to Messages column (as its a subset of opened)
                 ],
             },
             {
                 label: 'Actions',
-                tooltipAccumulateValues: true,
+                accumulateValues: true,
                 segments: [
-                    { label: 'Unsubscribed', signal: 'unsubscribed', color: '#666666' },
-                    { label: 'Bounced', signal: 'bounced', color: '#eebb88' },
-                    { label: 'Complained', signal: 'complained', color: '#dd4444' },
+                    { label: 'Unsubscribed', sigSet, signal: 'unsubscribed', color: '#666666' },
+                    { label: 'Bounced', sigSet, signal: 'bounced', color: '#eebb88' },
+                    { label: 'Complained', sigSet, signal: 'complained', color: '#dd4444' },
                 ],
             },
         ],

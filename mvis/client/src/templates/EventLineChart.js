@@ -50,7 +50,7 @@ export class EventLineChartTemplate extends Component {
         return ( // TODO: possibly add a way to switch visibility of event lines in legend
             <TimeContext>
                 <TimeRangeSelector/>
-                <Legend label="Sensors" configPath={['sensors']} withSelector structure={sensorsStructure} />
+                <Legend label="Stats" configPath={['sensors']} withSelector structure={sensorsStructure} />
                 <EventLineChart
                     config={{
                         signalSets,
@@ -58,8 +58,8 @@ export class EventLineChartTemplate extends Component {
                         activityTs: config.activityTs,
                         activityType: config.activityType,
                         activityIssuedBy: config.activityIssuedBy,
-                        tooltipEventToString: this.props.eventToString,
                     }}
+                    tooltipEventToString={this.props.eventToString}
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
                     tooltipExtraProps={{

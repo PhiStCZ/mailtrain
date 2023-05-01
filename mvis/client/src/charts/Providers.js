@@ -11,9 +11,6 @@ import PropTypes
 import { DataAccessSession } from "../../../ivis-core/client/src/ivis/DataAccess";
 import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 
-@withComponentMixins([
-    withErrorHandling
-])
 export class DocsDataProvider extends Component {
     constructor(props) {
         super(props);
@@ -28,7 +25,7 @@ export class DocsDataProvider extends Component {
         sigSetCid: PropTypes.string.isRequired,
         sigCids: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
         filter: PropTypes.object,
-        sort: PropTypes.object,
+        sort: PropTypes.array,
         limit: PropTypes.number,
 
         renderFun: PropTypes.func.isRequired,
@@ -44,7 +41,7 @@ export class DocsDataProvider extends Component {
         try {
             const signalSetsData = await this.dataAccessSession.getLatestDocs(
                 this.props.sigSetCid,
-                this.props.signals,
+                this.props.sigCids,
                 this.props.filter,
                 this.props.sort,
                 this.props.limit

@@ -115,8 +115,8 @@ em.on('builtinTemplates.add', builtinTemplates => {
                         "type": "string"
                     },
                     {
-                        "id": "tooltipAccumulateValues",
-                        "label": "Whether tooltip should show accumulated values",
+                        "id": "accumulateValues",
+                        "label": "Whether bar values should be accumulated",
                         "type": "boolean"
                     },
                     {
@@ -136,6 +136,14 @@ em.on('builtinTemplates.add', builtinTemplates => {
                                 "type": "color"
                             },
                             {
+                                // since ivis cannot handle deeper references,
+                                // i have to put this here, and it has to be
+                                // the same as the root sigSet
+                                "id": "sigSet",
+                                "label": "Signal Set CID",
+                                "type": "signalSet"
+                            },
+                            {
                                 "id": "signal",
                                 "label": "Signal",
                                 "type": "signal",
@@ -151,6 +159,14 @@ em.on('builtinTemplates.add', builtinTemplates => {
                 "type": "fieldset",
                 "cardinality": "n",
                 "children": [
+                    {
+                        // since ivis cannot handle deeper references,
+                        // i have to put this here, and it has to be
+                        // the same as the root sigSet
+                        "id": "sigSet",
+                        "label": "Signal Set CID",
+                        "type": "signalSet"
+                    },
                     {
                         "id": "sig",
                         "label": "Signal",

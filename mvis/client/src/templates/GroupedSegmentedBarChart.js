@@ -9,7 +9,7 @@ import { withPanelConfig } from "../../../ivis-core/client/src/ivis/PanelConfig"
 
 @withPanelConfig
 export default class GroupedSegmentedBarChartTemplate extends Component {
-    docToLabel = (doc) => `campaign ${doc.id}`;
+    docToLabel = doc => `doc ${doc.campaignId}`;
 
     render() {
         const config = this.getPanelConfig();
@@ -26,26 +26,24 @@ export default class GroupedSegmentedBarChartTemplate extends Component {
             }
         }
 
-        const processData = (docs) => {
-            const barGroups = [];
-            for (const doc of docs) {
-                barGroups.push({
-                    label: doc[groupBySignal],
-                    bars: bars.map(b => ({
-                        label: this.docToLabel(doc),
-                        tooltipAccumulateValues: b.tooltipAccumulateValues,
-                        tooltipDisplayTotal: true,
-                        segments: b.segments.map(s => ({
-                            label: s.label,
-                            color: s.color,
-                            value: doc[s.signal]
-                        }))
+        const processData = docs => {
+            const toLabel = this.props.docToLabel || this.docToLabel;
+            const barGroups = docs.map(doc => ({
+                label: toLabel(doc),
+                bars: bars.map(b => ({
+                    label: b.label,
+                    tooltipAccumulateValues: b.tooltipAccumulateValues,
+                    tooltipDisplayTotal: true,
+                    segments: b.segments.map(s => ({
+                        label: s.label,
+                        color: s.color,
+                        value: doc[s.signal]
                     }))
-                });
-            }
+                }))
+            }));
 
             if (this.props.customProcessData) {
-                barGroups = this.props.customProcessData(docs, barGroups);
+                return this.props.customProcessData(docs, barGroups);
             }
             return barGroups;
         }
@@ -62,6 +60,7 @@ export default class GroupedSegmentedBarChartTemplate extends Component {
 
                 renderFun={(docs) => <GroupedSegmentedBarChart
                     config={{barGroups: processData(docs)}}
+                    height={400}
                 />}
                 loadingRenderFun={null}
             />

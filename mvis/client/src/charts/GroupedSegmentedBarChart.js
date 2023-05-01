@@ -7,12 +7,12 @@ import * as d3Selection from "d3-selection";
 import * as d3Array from "d3-array";
 import {event as d3Event, select} from "d3-selection";
 import PropTypes from "prop-types";
-import {withErrorHandling} from "../../../ivis-core/client/lib/error-handling";
-import {withComponentMixins} from "../../../ivis-core/client/lib/decorator-helpers";
-import {withTranslation} from "../../../ivis-core/client/lib/i18n";
-import {PropType_d3Color, PropType_d3Color_Required, PropType_NumberInRange} from "../../../ivis-core/client/lib/CustomPropTypes";
+import {withErrorHandling} from "../../../ivis-core/client/src/lib/error-handling";
+import {withComponentMixins} from "../../../ivis-core/client/src/lib/decorator-helpers";
+import {withTranslation} from "../../../ivis-core/client/src/lib/i18n";
+import {PropType_d3Color_Required} from "../../../ivis-core/client/src/lib/CustomPropTypes";
 import {Tooltip} from "../../../ivis-core/client/src/ivis/Tooltip";
-import {areZoomTransformsEqual, extentWithMargin, transitionInterpolate, wheelDelta} from "../../../ivis-core/client/src/ivis/common";
+import {extentWithMargin} from "../../../ivis-core/client/src/ivis/common";
 import styles from "../../../ivis-core/client/src/ivis/CorrelationCharts.scss";
 
 class TooltipContent extends Component {
@@ -29,14 +29,19 @@ class TooltipContent extends Component {
         // TODO: possibly limit the max amount of displayed segments
         const segment = this.props.selection;
         if (segment) {
-            return (
-                <div>
-                    <div>{segment.group.label}-{segment.bar.label}{segment.bar.tooltipDisplayTotal && (': ' + segment.bar.segments.at(-1).topValue)}</div>
-                    {segment.bar.segments.map((s) => (
-                        <div key={s.label}>{s === segment ? '-' : '*'} {s.label}: {s.value}</div>
-                    ))}
-                </div>
-            );
+            const content = [
+                <div>{segment.group.label} - {segment.bar.label}{segment.bar.tooltipDisplayTotal && (': ' + segment.bar.segments.at(-1).topValue)}</div>
+            ];
+
+            // segments are stored bottom-up, but tooltip displays top-to-bottom
+            for (const i = segment.bar.segments.length - 1; i > 0; i--) {
+                const s = segment.bar.segments[i];
+                content.push(
+                    <div key={s.label}>{s === segment ? '*' : '-'} {s.label}: {s.value}</div>
+                );
+            }
+
+            return <div>{content}</div>;
 
         } else {
             return null;
@@ -60,7 +65,7 @@ export class GroupedSegmentedBarChart extends Component {
         this.plotRectId = _.uniqueId('plotRect');
         this.bottomAxisId = _.uniqueId('bottomAxis');
 
-        preprocessBarData(this.config.barGroups);
+        this.preprocessBarData(props.config.barGroups);
     }
 
     static propTypes = {
@@ -113,11 +118,15 @@ export class GroupedSegmentedBarChart extends Component {
 
     drawAllBarSegments(segmentsData, barsSelection, xScale, yScale) {
         const self = this;
-        const bars = segmentsData
+        const bars = barsSelection
             .selectAll('rect')
-            .data(data, d => d.key);
-        const ySize = yScale.range()[0];
+            .data(segmentsData, d => d.key);
         const groupWidth = xScale.bandwidth();
+
+        const segmentX = seg => xScale(seg.label) + (groupWidth / seg.group.bars.length) * seg.group.bars.indexOf(seg.bar);
+        const segmentWidth = seg => groupWidth / seg.group.bars.length;
+        const segmentY = seg => yScale(seg.topValue);
+        const segmentHeight = seg => yScale(seg.bottomValue) - yScale(seg.topValue);
 
         const selectSegment = function (seg = null) {
             if (seg !== self.state.selection) {
@@ -128,13 +137,13 @@ export class GroupedSegmentedBarChart extends Component {
                 if (seg !== null) {
                     self.highlightSelection
                         .append('rect')
-                        .attr('x', xScale(seg.label))
-                        .attr('y', yScale(seg.value))
-                        .attr("width", groupWidth)
-                        .attr("height", ySize - yScale(seg.value))
-                        .attr("fill", "none")
-                        .attr("stroke", "black")
-                        .attr("stroke-width", "2px");
+                        .attr('x', segmentX(seg))
+                        .attr('width', segmentWidth(seg))
+                        .attr('y', segmentY(seg))
+                        .attr('height', segmentHeight(seg))
+                        .attr('fill', 'none')
+                        .attr('stroke', 'black')
+                        .attr('stroke-width', '2px');
                 }
             }
 
@@ -160,20 +169,14 @@ export class GroupedSegmentedBarChart extends Component {
 
         bars.enter()
             .append('rect')
-            // .attr('y', ySize)   // ?
-            // .attr('height', 0)  // ?
-            .attr('y', d => yScale(d.topValue)) // moved from after .on(...)
-            .attr('height', d => yScale(d.bottomValue) - yScale(d.topValue))
-
-            .merge(bars)
-            .attr('x', d => xScale(d.label) + (groupWidth / d.group.bars.length) * d.group.bars.indexOf(d.bar))
-            .attr('width', d => groupWidth / d.group.bars.length)
+            .attr('x', segmentX)
+            .attr('width', segmentWidth)
+            .attr('y', segmentY)
+            .attr('height', segmentHeight)
             .attr('fill', (d, i) => d.color)
             .on('mouseover', selectSegment)
             .on('mousemove', selectSegment)
             .on('mouseout', deselectSegment)
-            // .attr('y', d => yScale(d.topValue))
-            // .attr('height', d => yScale(d.bottomValue) - yScale(d.topValue))
             .exit()
             .remove();
     }
@@ -208,7 +211,7 @@ export class GroupedSegmentedBarChart extends Component {
         }
         this.renderedWidth = width;
 
-        if (this.props.config.bars.length === 0) {
+        if (this.props.config.barGroups.length === 0) {
             this.statusMsgSelection.text(this.props.t('No data.'));
             this.barsSelection.selectAll('rect').remove();
             this.xAxisSelection.selectAll('.tick').remove();
@@ -219,10 +222,11 @@ export class GroupedSegmentedBarChart extends Component {
         }
 
         const xSize = width - this.props.margin.left - this.props.margin.right;
-        const xExtent = this.props.config.bars.map(b => b.label);
+        const xExtent = this.props.config.barGroups.map(b => b.label);
         const xScale = d3Scale.scaleBand()
             .domain(xExtent)
-            .range([0, xSize]);
+            .range([0, xSize])
+            .padding(0.3);
         const xAxis = d3Axis.axisBottom(xScale)
             //.tickFormat(this.props.getLabel)
             .tickSizeOuter(0);
@@ -250,7 +254,6 @@ export class GroupedSegmentedBarChart extends Component {
         this.yAxisSelection
             .call(yAxis);
 
-        // this.drawVerticalBars(...);
         this.drawAllBarSegments(this.allSegments, this.barsSelection, xScale, yScale);
     }
 

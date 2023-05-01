@@ -32,12 +32,16 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-channel-campaigns': {
             render: props => <GroupedSegmentedBarChartTemplate
+                docToLabel={doc => `campaign ${doc.campaignId}`}
                 customProcessData={(docs, barGroups) => {
                     for (const group of barGroups) {
-                        if (group.label != 'Messages') continue;
-                        // subtract opened from sent to get delivered
-                        group.segments[1].value -= group.segments[0].value;
+                        for (const bar of group.bars) {
+                            if (bar.label != 'Messages') continue;
+                            // subtract opened from sent to get delivered
+                            bar.segments[1].value -= bar.segments[0].value;
+                        }
                     }
+                    return barGroups;
                 }}
                 {...props}
             />
@@ -49,7 +53,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
             panelRender: _ => <UntrustedContentRoot
                 render={props => {
                     props.setPanelMenu = () => {}; // handle nonexistent setPanelMenu
-                    panelRoutes[route].render(props);
+                    return panelRoutes[route].render(props);
                 }}
             />
         };

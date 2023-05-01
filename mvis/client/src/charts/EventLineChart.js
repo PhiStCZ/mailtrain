@@ -125,7 +125,7 @@ class TooltipContentWithEvents extends Component {
         const result = eventSel.data.map((evt, idx) => (
             <div key={`event ${idx}`}>
                 <span className={tooltipStyles.signalColor} style={{color: this.props.eventColor}}><Icon icon="minus"/></span>
-                <span className={tooltipStyles.signalVal}>{this.props.eventToString(evt)}</span>
+                <span className={tooltipStyles.signalVal}>{this.props.eventToString(evt)} ({dateMath.format(evt.ts)})</span>
             </div>
         ));
 
@@ -222,7 +222,7 @@ export class EventLineChart extends Component {
         const mergeDistance = (abs.to - abs.from) * 0.025;
         for (const event of baseState.activityEvents) {
             if (mergedActivityEvents.length != 0 && event.ts - mergedActivityEvents.at(-1).ts <= mergeDistance) {
-                mergedActivityEvents.events.push(event);
+                mergedActivityEvents.at(-1).events.push(event);
             } else {
                 mergedActivityEvents.push({ ts: event.ts, events: [event] });
             }

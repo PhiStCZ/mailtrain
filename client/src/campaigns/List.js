@@ -13,6 +13,8 @@ import {tableAddDeleteButton, tableRestActionDialogInit, tableRestActionDialogRe
 import {withComponentMixins} from "../lib/decorator-helpers";
 import styles from "./styles.scss";
 import PropTypes from 'prop-types';
+import {fetchTokenAndEmbedBuiltinTemplate} from '../lib/embed';
+import embedStyles from '../lib/embed.scss';
 
 @withComponentMixins([
     withTranslation,
@@ -32,11 +34,21 @@ export default class List extends Component {
 
         this.state = {};
         tableRestActionDialogInit(this);
+
+        if (props.channel) {
+            this.campaignsEmbedId = _.uniqueId('campaignsEmbed');
+        }
     }
 
     static propTypes = {
         permissions: PropTypes.object,
         channel: PropTypes.object
+    }
+
+    componentDidMount() {
+        if (this.props.channel) {
+            fetchTokenAndEmbedBuiltinTemplate(this.campaignsEmbedId, 'channel-campaigns/' + this.props.channel.id);
+        }
     }
 
     render() {
@@ -188,6 +200,10 @@ export default class List extends Component {
                 </Toolbar>
 
                 <Title>{t('campaigns')}</Title>
+
+                {channel &&
+                    <div id={this.campaignsEmbedId} className={embedStyles.embedWindow}></div>
+                }
 
                 {channel ?
                     <Table ref={node => this.table = node} withHeader dataUrl={`rest/campaigns-by-channel-table/${channel.id}`} columns={columns} order={[5, 'desc']} />
