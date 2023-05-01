@@ -16,23 +16,20 @@ export default class NPieCharts extends Component {
     }
 
     static defaultProps = {
-        height: 500
+        height: 400
     }
 
     processDataForPie(pieConfig, doc) {
         return pieConfig.segments.map(s => ({
             label: s.label,
             color: s.color,
-            value: doc[s.signal]
+            value: doc ? doc[s.signal] : 0
         })); // possibly filter segments with 0 value
     }
 
     renderPieCharts(piesConfig, docs) {
         const widthPercent = Math.floor(100 / piesConfig.length) + '%';
 
-        if (docs.length < 1) {
-            return null; // TODO: add no data placeholder instead of null
-        }
         const doc = docs[0];
         return (
             <div>
@@ -71,7 +68,7 @@ export default class NPieCharts extends Component {
                 }]}
                 limit={1}
 
-                renderFun={(docs) => this.renderPieCharts(docs)}
+                renderFun={docs => this.renderPieCharts(docs)}
                 loadingRenderFun={null}
             />
         );

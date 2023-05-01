@@ -82,6 +82,14 @@ function signalSetCidToCampaignId(cid) {
     return parseInt(cid.substring('campaign_messages_'.length));
 }
 
+function linkSigId(linkId) {
+    return `link_${linkId}`;
+}
+
+function linkSigCidToLinkId(cid) {
+    return parseInt(cid.substring('link_'.length));
+}
+
 async function createSignalSet(context, campaignId, creationTimestamp) {
     const existing = await getSignalSetWithSigMapIfExists(context, signalSetCid(campaignId));
     if (existing) {
@@ -128,58 +136,23 @@ async function getLastRecord(context, campaignId) {
     return lastEntry[0];
 }
 
-/*
+async function getRegisteredLinkIds(context, campaignId) {
+    const linkSignals = await knex('signals')
+        .where('set', signalSetCid(campaignId))
+        .whereRaw(`cid LIKE '${campaignActivity.signalSetCid('%')}'`)
+        .select('cid');
 
-function panelName(campaignId) {
-    return `Campaign ${campaignId} messages`;
+    return linkSignals.map(s => linkSigCidToLinkId(s.cid))
 }
-
-const PanelColors = { // or rgb(r, g, b) ?
-    failed: '#ff0000',
-    sent: '#000000',
-    opened: '#00ff00',
-    bounced: '#ffff00',
-    unsubscribed: '#ff00ff',
-    complained: '#ff8800',
-    clicked_any: '#8800ff',
-    clicked: '#0088ff', // somehow dynamically assigned...?
-}
-
-async function createPanel(context, campaignId, campaignWorkspaceId) {
-    const sigSetCid = signalSetCid(campaignId);
-    const params = [];
-    for (const sigCid in signalSetSchema) {
-        if (sigCid != 'timestamp') {
-            params.push({
-                label: signalSetSchema[sigCid].name,
-                color: PanelColors[sigCid],
-                sigSet: sigSetCid,
-                signal: sigCid,
-                tsSigCid: 'timestamp',
-            });
-        }
-    }
-
-    await panels.create(context, campaignWorkspaceId, {
-        name: panelName(campaignId),
-        description: `Message activity for campaign ${campaignId}`,
-        builtin_template: BuiltinTemplateIds.LINECHART,
-        namespace: config.mailtrain.namespace,
-        params,
-    });
-}
-
-async function removePanel(context, campaignId) {
-    await removePanelByName(context, panelName(campaignId));
-}
-
-*/
 
 module.exports = {
     signalSetSchema,
     signalSetCid,
     signalSetCidToCampaignId,
+    linkSigId,
+    linkSigCidToLinkId,
     createSignalSet,
     removeSignalSet,
     getLastRecord,
+    getRegisteredLinkIds,
 };

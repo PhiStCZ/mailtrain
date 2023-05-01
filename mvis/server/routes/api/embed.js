@@ -7,9 +7,13 @@ const urls = require('../../../ivis-core/server/lib/urls');
 const { ensureMailtrainUser } = require('../../models/users');
 const { BuiltinTemplateIds } = require('../../../shared/builtin-templates');
 
-const channels = require('../../models/channels');
 const listActivity = require('../../models/list-activity');
 const listSubscriptions = require('../../models/list-subscriptions');
+
+const campaignActivity = require('../../models/campaign-activity');
+const campaignMessages = require('../../models/campaign-messages');
+
+const channels = require('../../models/channels');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
@@ -86,6 +90,49 @@ router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, asy
             {
                 label: 'Actions',
                 accumulateValues: true,
+                segments: [
+                    { label: 'Unsubscribed', sigSet, signal: 'unsubscribed', color: '#666666' },
+                    { label: 'Bounced', sigSet, signal: 'bounced', color: '#eebb88' },
+                    { label: 'Complained', sigSet, signal: 'complained', color: '#dd4444' },
+                ],
+            },
+        ],
+    };
+
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-campaigns')
+    );
+});
+
+router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, async (req, res) => {
+    const campaignId = castToInteger(req.params.campaignId);
+    const sigSet = campaignMessages.signalSetCid(campaignId);
+    const extraLinks = await campaignMessages.getRegisteredLinkIds(req.context, campaignId);
+
+    const params = {
+        sigSet,
+        tsSig: 'timestamp',
+        extraSignals: [],
+        pies: [
+            {
+                label: 'Messages',
+                segments: [
+                    { label: 'Opened', sigSet, signal: 'opened', color: '#44dd44' },
+                    { label: 'Sent (but unopened)', sigSet, signal: 'sent', color: '#22aa22' },
+                    { label: 'Failed', sigSet, signal: 'failed', color: '#114411' },
+                ],
+            },
+            {
+                label: 'Links',
+                segments: extraLinks.map((linkId, idx) => ({
+                    label: `Link ${linkId}`,
+                    sigSet,
+                    signal: campaignMessages.linkSigId(linkId),
+                    color: idx % 2 ? '#55bbff' : '#5599ff'
+                })),
+            },
+            {
+                label: 'Actions',
                 segments: [
                     { label: 'Unsubscribed', sigSet, signal: 'unsubscribed', color: '#666666' },
                     { label: 'Bounced', sigSet, signal: 'bounced', color: '#eebb88' },

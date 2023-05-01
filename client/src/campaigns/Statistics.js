@@ -14,6 +14,8 @@ import {Icon} from "../lib/bootstrap-components";
 import styles from "./styles.scss";
 import {Link} from "react-router-dom";
 import {withComponentMixins} from "../lib/decorator-helpers";
+import {fetchTokenAndEmbedBuiltinTemplate} from '../lib/embed';
+import embedStyles from '../lib/embed.scss';
 
 @withComponentMixins([
     withTranslation,
@@ -33,6 +35,8 @@ export default class Statistics extends Component {
 
         this.refreshTimeoutHandler = ::this.periodicRefreshTask;
         this.refreshTimeoutId = 0;
+
+        this.overviewEmbedId = _.uniqueId('overviewEmbed');
     }
 
     static propTypes = {
@@ -62,6 +66,8 @@ export default class Statistics extends Component {
     componentDidMount() {
         // noinspection JSIgnoredPromiseFromCall
         this.periodicRefreshTask();
+
+        fetchTokenAndEmbedBuiltinTemplate(this.overviewEmbedId, 'campaign-overview/' + this.props.entity.id);
     }
 
     componentWillUnmount() {
@@ -119,6 +125,8 @@ export default class Statistics extends Component {
                 {renderMetricsWithProgress('unsubscribed', t('unsubscribed'), 'warning')}
                 {!entity.open_tracking_disabled && renderMetricsWithProgress('opened', t('opened'), 'success')}
                 {!entity.click_tracking_disabled && renderMetricsWithProgress('clicks', t('clicked'), 'success')}
+
+                <div id={this.overviewEmbedId} className={embedStyles.embedWindow}></div>
 
                 <hr/>
 

@@ -33,7 +33,7 @@ class TooltipContent extends Component {
         const segment = this.props.selection;
         if (segment) {
             const content = [
-                <div className={tooltipStyles.signalLabel}>
+                <div key={'heading'} className={tooltipStyles.signalLabel}>
                     {segment.group.label} - {segment.bar.label}{segment.bar.tooltipDisplayTotal && (': total ' + segment.bar.segments.at(-1).topValue)}
                 </div>
             ];
