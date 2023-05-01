@@ -123,15 +123,6 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
                 ],
             },
             {
-                label: 'Links',
-                segments: extraLinks.map((linkId, idx) => ({
-                    label: `Link ${linkId}`,
-                    sigSet,
-                    signal: campaignMessages.linkSigId(linkId),
-                    color: idx % 2 ? '#55bbff' : '#5599ff'
-                })),
-            },
-            {
                 label: 'Actions',
                 segments: [
                     { label: 'Unsubscribed', sigSet, signal: 'unsubscribed', color: '#666666' },
@@ -142,8 +133,24 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
         ],
     };
 
+    if (extraLinks.length > 0) {
+        // insert it between the other two pies
+        // TODO: later add more link colors and maybe sort by size into
+        // a limited amount of links (max 5) and rest is 'other'
+        params.pies.push(params.pies[1]);
+        params.pies[1] = {
+            label: 'Links',
+            segments: extraLinks.map((linkId, idx) => ({
+                label: `Link ${linkId}`,
+                sigSet,
+                signal: campaignMessages.linkSigCid(linkId),
+                color: idx % 2 ? '#55bbff' : '#5599ff'
+            })),
+        };
+    }
+
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-campaigns')
+        await getDataForEmbed(req.context, BuiltinTemplateIds.N_PIECHARTS, params, 'mt-campaign-overview')
     );
 });
 

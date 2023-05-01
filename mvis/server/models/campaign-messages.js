@@ -82,7 +82,7 @@ function signalSetCidToCampaignId(cid) {
     return parseInt(cid.substring('campaign_messages_'.length));
 }
 
-function linkSigId(linkId) {
+function linkSigCid(linkId) {
     return `link_${linkId}`;
 }
 
@@ -138,18 +138,19 @@ async function getLastRecord(context, campaignId) {
 
 async function getRegisteredLinkIds(context, campaignId) {
     const linkSignals = await knex('signals')
-        .where('set', signalSetCid(campaignId))
-        .whereRaw(`cid LIKE '${campaignActivity.signalSetCid('%')}'`)
+        .whereRaw(`signals.cid LIKE '${linkSigCid('%')}'`)
+        .innerJoin('signal_sets', 'signal_sets.id', 'signals.set')
+        .where('signal_sets.cid', signalSetCid(campaignId))
         .select('cid');
 
-    return linkSignals.map(s => linkSigCidToLinkId(s.cid))
+    return linkSignals.map(s => linkSigCidToLinkId(s.cid));
 }
 
 module.exports = {
     signalSetSchema,
     signalSetCid,
     signalSetCidToCampaignId,
-    linkSigId,
+    linkSigCid,
     linkSigCidToLinkId,
     createSignalSet,
     removeSignalSet,
