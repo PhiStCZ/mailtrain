@@ -141,7 +141,7 @@ async function getRegisteredLinkIds(context, campaignId) {
         .whereRaw(`signals.cid LIKE '${linkSigCid('%')}'`)
         .innerJoin('signal_sets', 'signal_sets.id', 'signals.set')
         .where('signal_sets.cid', signalSetCid(campaignId))
-        .select('cid');
+        .select('signals.cid');
 
     return linkSignals.map(s => linkSigCidToLinkId(s.cid));
 }

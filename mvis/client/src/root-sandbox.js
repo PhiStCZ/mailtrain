@@ -19,6 +19,12 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-campaign-overview': {
             render: props => <NPieCharts
+                customProcessData={(docs, pies) => {
+                    if (!docs || docs.length < 1) return docs;
+                    // subtract opened from sent to get delivered
+                    docs[0].sent -= docs[0].opened
+                    return docs;
+                }}
                 {...props}
             />
         },

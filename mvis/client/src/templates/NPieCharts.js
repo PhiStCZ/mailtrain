@@ -14,10 +14,11 @@ export default class NPieCharts extends Component {
 
     static propTypes = {
         height: PropTypes.number,
+        customProcessData: PropTypes.func,
     }
 
     static defaultProps = {
-        height: 350
+        height: 300
     }
 
     processDataForPie(pieConfig, doc) {
@@ -50,7 +51,8 @@ export default class NPieCharts extends Component {
                             height={this.props.height}
                             legendPosition={LegendPosition.BOTTOM}
                             drawPercentageLabels={false}
-                            centerMessage={'Total: ' + getTotalValue(pie, doc)}
+                            drawValueLabels={true}
+                            centerMessage={'Total: ' + this.getTotalValue(pie, doc)}
                         />
                     </span>
                 )}
@@ -81,7 +83,12 @@ export default class NPieCharts extends Component {
                 }]}
                 limit={1}
 
-                renderFun={docs => this.renderPieCharts(pies, docs)}
+                renderFun={docs => {
+                    if (this.props.customProcessData) {
+                        docs = this.props.customProcessData(docs, pies);
+                    }
+                    this.renderPieCharts(pies, docs)
+                }}
                 loadingRenderFun={null}
             />
         );
