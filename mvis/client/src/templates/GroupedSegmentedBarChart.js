@@ -32,7 +32,7 @@ export default class GroupedSegmentedBarChartTemplate extends Component {
                 label: toLabel(doc),
                 bars: bars.map(b => ({
                     label: b.label,
-                    tooltipAccumulateValues: b.tooltipAccumulateValues,
+                    accumulateValues: b.accumulateValues,
                     tooltipDisplayTotal: true,
                     segments: b.segments.map(s => ({
                         label: s.label,

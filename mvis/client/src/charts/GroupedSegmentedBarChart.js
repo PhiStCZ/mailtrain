@@ -15,6 +15,9 @@ import {Tooltip} from "../../../ivis-core/client/src/ivis/Tooltip";
 import {extentWithMargin} from "../../../ivis-core/client/src/ivis/common";
 import styles from "../../../ivis-core/client/src/ivis/CorrelationCharts.scss";
 
+import { Icon } from "../../../ivis-core/client/src/lib/bootstrap-components";
+import tooltipStyles from "../../../ivis-core/client/src/ivis/Tooltip.scss";
+
 class TooltipContent extends Component {
     constructor(props) {
         super(props);
@@ -30,14 +33,19 @@ class TooltipContent extends Component {
         const segment = this.props.selection;
         if (segment) {
             const content = [
-                <div>{segment.group.label} - {segment.bar.label}{segment.bar.tooltipDisplayTotal && (': ' + segment.bar.segments.at(-1).topValue)}</div>
+                <div className={tooltipStyles.signalLabel}>
+                    {segment.group.label} - {segment.bar.label}{segment.bar.tooltipDisplayTotal && (': total ' + segment.bar.segments.at(-1).topValue)}
+                </div>
             ];
 
             // segments are stored bottom-up, but tooltip displays top-to-bottom
-            for (const i = segment.bar.segments.length - 1; i > 0; i--) {
+            for (let i = segment.bar.segments.length - 1; i >= 0; i--) {
                 const s = segment.bar.segments[i];
                 content.push(
-                    <div key={s.label}>{s === segment ? '*' : '-'} {s.label}: {s.value}</div>
+                    <div key={s.label}>
+                        <span className={tooltipStyles.signalColor} style={{color: s.color}}><Icon icon="minus"/></span>
+                        <span style={s === segment ? { fontWeight: 'bold'} : {}}>{s.label}: {s.value}</span>
+                    </div>
                 );
             }
 
@@ -123,7 +131,7 @@ export class GroupedSegmentedBarChart extends Component {
             .data(segmentsData, d => d.key);
         const groupWidth = xScale.bandwidth();
 
-        const segmentX = seg => xScale(seg.label) + (groupWidth / seg.group.bars.length) * seg.group.bars.indexOf(seg.bar);
+        const segmentX = seg => xScale(seg.group.label) + (groupWidth / seg.group.bars.length) * seg.group.bars.indexOf(seg.bar);
         const segmentWidth = seg => groupWidth / seg.group.bars.length;
         const segmentY = seg => yScale(seg.topValue);
         const segmentHeight = seg => yScale(seg.bottomValue) - yScale(seg.topValue);

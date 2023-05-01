@@ -90,12 +90,16 @@ export const listEventToString = evt => {
         case 12: return `Segment updated`;
         case 13: return `Segment removed`;
 
-        case 11: return `Import created`;
-        case 12: return `Import updated`;
-        case 13: return `Import removed`;
-        case 14: return `Changed import status`;
+        case 14: return `Import created`;
+        case 15: return `Import updated`;
+        case 16: return `Import removed`;
+        case 17: return `Changed import status`;
 
-        default: '(unrecognized event)';
+        case 18: return `Campaign sent to subscribers`;
+
+        case 19: return `List data synchronized`;
+
+        default: return `(unrecognized event: ${evt.data.activityType.value})`;
     }
 };
 

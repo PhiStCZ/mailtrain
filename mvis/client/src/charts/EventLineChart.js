@@ -323,6 +323,7 @@ export class EventLineChart extends Component {
                 getGraphContent={this.boundGetGraphContent}
                 onSelect={this.boundOnSelect}
                 onDeselect={this.boundOnDeselect}
+                lineWidth={3}
             />
         );
     }
