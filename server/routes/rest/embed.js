@@ -26,10 +26,16 @@ router.getAsync('/embed/list-subscriptions/:listId', passport.loggedIn, async (r
     return await redirectDataFromMvis(res, `list-subscriptions/${listId}`);
 });
 
-router.getAsync('/embed/channel-campaigns/:channelId', passport.loggedIn, async (req, res) => {
+router.getAsync('/embed/channel-recent-campaigns/:channelId', passport.loggedIn, async (req, res) => {
     const channelId = castToInteger(req.params.channelId);
     await shares.enforceEntityPermission(req.context, 'channel', channelId, 'view');
-    return await redirectDataFromMvis(res, `channel-campaigns/${channelId}`);
+    return await redirectDataFromMvis(res, `channel-recent-campaigns/${channelId}`);
+});
+
+router.getAsync('/embed/channel-campaign-contributions/:channelId', passport.loggedIn, async (req, res) => {
+    const channelId = castToInteger(req.params.channelId);
+    await shares.enforceEntityPermission(req.context, 'channel', channelId, 'view');
+    return await redirectDataFromMvis(res, `channel-campaign-contributions/${channelId}`);
 });
 
 router.getAsync('/embed/campaign-overview/:campaignId', passport.loggedIn, async (req, res) => {

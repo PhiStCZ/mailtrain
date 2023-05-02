@@ -7,6 +7,7 @@ import './styles.scss';
 import { EventLineChartTemplate, campaignEventToString, listEventToString } from './templates/EventLineChart';
 import NPieCharts from './templates/NPieCharts';
 import GroupedSegmentedBarChartTemplate from './templates/GroupedSegmentedBarChart';
+import RangeValuePieChart from './templates/RangeValuePieChart';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
@@ -36,7 +37,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
             />
         },
 
-        'mt-channel-campaigns': {
+        'mt-channel-recent-campaigns': {
             render: props => <GroupedSegmentedBarChartTemplate
                 docToLabel={doc => `campaign ${doc.campaignId}`}
                 customProcessData={(docs, barGroups) => {
@@ -49,6 +50,13 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     }
                     return barGroups;
                 }}
+                {...props}
+            />
+        },
+
+        'mt-channel-campaign-contributions': {
+            render: props => <RangeValuePieChart
+                docToLabel={doc => `campaign ${doc.campaignId}`}
                 {...props}
             />
         },

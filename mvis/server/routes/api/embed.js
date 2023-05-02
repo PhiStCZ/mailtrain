@@ -59,7 +59,7 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
     );
 });
 
-router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, async (req, res) => {
+router.getAsync('/mt-embed/channel-recent-campaigns/:channelId', passport.loggedIn, async (req, res) => {
     const channelId = castToInteger(req.params.channelId);
     const sigSet = channels.signalSetCid(channelId);
     const params = {
@@ -99,7 +99,32 @@ router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, asy
     };
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-campaigns')
+        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-recent-campaigns')
+    );
+});
+
+router.getAsync('/mt-embed/channel-campaign-contributions/:channelId', passport.loggedIn, async (req, res) => {
+    const channelId = castToInteger(req.params.channelId);
+    const sigSet = channels.signalSetCid(channelId);
+    const params = {
+        sigSet,
+        tsSig: 'creationTimestamp',
+        signals: [
+            { label: 'Opened', sigSet, signal: 'opened' },
+            { label: 'Sent (but unopened)', sigSet, signal: 'sent' },
+            { label: 'Failed', sigSet, signal: 'failed' },
+            { label: 'Clicked any', sigSet, signal: 'clicked_any' },
+            { label: 'Unsubscribed', sigSet, signal: 'unsubscribed' },
+            { label: 'Bounced', sigSet, signal: 'bounced' },
+            { label: 'Complained', sigSet, signal: 'complained' },
+        ],
+        extraSignals: [
+            { sigSet, sig: 'campaignId' }
+        ]
+    };
+
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.RANGE_VALUE_PIECHART, params, 'mt-channel-campaign-contributions')
     );
 });
 

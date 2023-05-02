@@ -261,4 +261,70 @@ em.on('builtinTemplates.add', builtinTemplates => {
             }
         ]
     };
+
+    builtinTemplates[BuiltinTemplateIds.RANGE_VALUE_PIECHART] = {
+        name: 'Pie Chart with time interval and signal selector',
+        params: [
+            {
+                "id": "sigSet",
+                "label": "Signal Set CID",
+                "type": "signalSet"
+            },
+            {
+                "id": "tsSig",
+                "label": "Timestamp signal",
+                "type": "signal",
+                "signalSetRef": "sigSet"
+            },
+            {
+                "id": "signals",
+                "label": "Signals",
+                "type": "fieldset",
+                "cardinality": "1..n",
+                "children": [
+                    {
+                        "id": "label",
+                        "label": "Signal label",
+                        "type": "string"
+                    },
+                    {
+                        // since ivis cannot handle deeper references,
+                        // i have to put this here, and it has to be
+                        // the same as the root sigSet
+                        "id": "sigSet",
+                        "label": "Signal Set CID",
+                        "type": "signalSet"
+                    },
+                    {
+                        "id": "signal",
+                        "label": "Signal",
+                        "type": "signal",
+                        "signalSetRef": "sigSet"
+                    }
+                ]
+            },
+            {
+                "id": "extraSignals",
+                "label": "Extra Signals",
+                "type": "fieldset",
+                "cardinality": "n",
+                "children": [
+                    {
+                        // since ivis cannot handle deeper references,
+                        // i have to put this here, and it has to be
+                        // the same as the root sigSet
+                        "id": "sigSet",
+                        "label": "Signal Set CID",
+                        "type": "signalSet"
+                    },
+                    {
+                        "id": "sig",
+                        "label": "Signal",
+                        "type": "signal",
+                        "signalSetRef": "sigSet"
+                    }
+                ]
+            }
+        ]
+    };
 });

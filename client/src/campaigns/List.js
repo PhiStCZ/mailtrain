@@ -37,6 +37,7 @@ export default class List extends Component {
 
         if (props.channel) {
             this.campaignsEmbedId = _.uniqueId('campaignsEmbed');
+            this.contributionsEmbedId = _.uniqueId('contributionsEmbed');
         }
     }
 
@@ -47,7 +48,8 @@ export default class List extends Component {
 
     componentDidMount() {
         if (this.props.channel) {
-            fetchTokenAndEmbedBuiltinTemplate(this.campaignsEmbedId, 'channel-campaigns/' + this.props.channel.id);
+            fetchTokenAndEmbedBuiltinTemplate(this.campaignsEmbedId, 'channel-recent-campaigns/' + this.props.channel.id);
+            fetchTokenAndEmbedBuiltinTemplate(this.contributionsEmbedId, 'channel-campaign-contributions/' + this.props.channel.id);
         }
     }
 
@@ -203,6 +205,10 @@ export default class List extends Component {
 
                 {channel &&
                     <div id={this.campaignsEmbedId} className={embedStyles.embedWindow}></div>
+                }
+
+                {channel &&
+                    <div id={this.contributionsEmbedId} className={embedStyles.embedWindow}></div>
                 }
 
                 {channel ?
