@@ -59,7 +59,6 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
     );
 });
 
-
 router.getAsync('/mt-embed/channel-campaigns/:channelId', passport.loggedIn, async (req, res) => {
     const channelId = castToInteger(req.params.channelId);
     const sigSet = channels.signalSetCid(channelId);
@@ -137,6 +136,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
         // insert it between the other two pies
         // TODO: later add more link colors and maybe sort by size into
         // a limited amount of links (max 5) and rest is 'other'
+        
         params.pies.push(params.pies[1]);
         params.pies[1] = {
             label: 'Links',
@@ -151,6 +151,43 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
 
     return res.json(
         await getDataForEmbed(req.context, BuiltinTemplateIds.N_PIECHARTS, params, 'mt-campaign-overview')
+    );
+});
+
+router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, async (req, res) => {
+    const campaignId = castToInteger(req.params.campaignId);
+    const sigSet = campaignMessages.signalSetCid(campaignId);
+    const extraLinks = await campaignMessages.getRegisteredLinkIds(req.context, campaignId);
+    const params = {
+        sensors: [
+            { label: 'Failed', signal: 'failed', color: '#114411' },
+            { label: 'Sent', signal: 'sent', color: '#22aa22' },
+            { label: 'Opened', signal: 'opened', color: '#44dd44' },
+
+            { label: 'Unsubscribed', signal: 'unsubscribed', color: '#666666' },
+            { label: 'Bounced', signal: 'bounced', color: '#eebb88' },
+            { label: 'Complained', signal: 'complained', color: '#dd4444' },
+        ],
+        activitySet: campaignActivity.signalSetCid(campaignId),
+        activityTs: 'timestamp',
+        activityType: 'activityType',
+        activityIssuedBy: 'issuedBy',
+    };
+
+    params.sensors.push(...extraLinks.map((linkId, idx) => ({
+        label: `Link ${linkId}`,
+        signal: campaignMessages.linkSigCid(linkId),
+        color: idx % 2 ? '#55bbff' : '#5599ff'
+    })));
+
+    for (const s of params.sensors) {
+        s.sigSet = sigSet;
+        s.tsSigCid = 'timestamp';
+        s.enabled = true;
+    }
+
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-campaign-messages')
     );
 });
 

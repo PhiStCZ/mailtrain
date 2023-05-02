@@ -37,6 +37,7 @@ export default class Statistics extends Component {
         this.refreshTimeoutId = 0;
 
         this.overviewEmbedId = _.uniqueId('overviewEmbed');
+        this.messagesEmbedId = _.uniqueId('messagesEmbed');
     }
 
     static propTypes = {
@@ -68,6 +69,7 @@ export default class Statistics extends Component {
         this.periodicRefreshTask();
 
         fetchTokenAndEmbedBuiltinTemplate(this.overviewEmbedId, 'campaign-overview/' + this.props.entity.id);
+        fetchTokenAndEmbedBuiltinTemplate(this.messagesEmbedId, 'campaign-messages/' + this.props.entity.id);
     }
 
     componentWillUnmount() {
@@ -127,6 +129,8 @@ export default class Statistics extends Component {
                 {!entity.click_tracking_disabled && renderMetricsWithProgress('clicks', t('clicked'), 'success')}
 
                 <div id={this.overviewEmbedId} className={embedStyles.embedWindow}></div>
+
+                <div id={this.messagesEmbedId} className={embedStyles.embedWindow}></div>
 
                 <hr/>
 

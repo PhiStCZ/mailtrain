@@ -50,7 +50,7 @@ export default class NPieCharts extends Component {
                             config={{arcs: this.processDataForPie(pie, doc)}}
                             height={this.props.height}
                             legendPosition={LegendPosition.BOTTOM}
-                            drawPercentageLabels={false}
+                            drawPercentageLabels={true}
                             drawValueLabels={true}
                             centerMessage={'Total: ' + this.getTotalValue(pie, doc)}
                         />
@@ -87,7 +87,7 @@ export default class NPieCharts extends Component {
                     if (this.props.customProcessData) {
                         docs = this.props.customProcessData(docs, pies);
                     }
-                    this.renderPieCharts(pies, docs)
+                    return this.renderPieCharts(pies, docs)
                 }}
                 loadingRenderFun={null}
             />
