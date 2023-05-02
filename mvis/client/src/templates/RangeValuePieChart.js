@@ -2,10 +2,8 @@
 
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { LegendPosition, PredefTimeRangeSelector, StaticPieChart, TimeContext, TimeRangeSelector, TimeSeriesProvider, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
-import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
-import { DocsDataProvider } from "../charts/Providers";
-import { Dropdown } from "../../../ivis-core/client/src/lib/form";
+import moment from "moment";
+import { IntervalSpec, LegendPosition, PredefTimeRangeSelector, StaticPieChart, TimeContext, TimeRangeSelector, TimeSeriesProvider, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
 import { ActionLink } from "../../../ivis-core/client/src/lib/bootstrap-components";
 
 
@@ -31,22 +29,41 @@ export default class RangeValuePieChart extends Component {
         const sigSetCid = config.sigSet;
         const tsSigCid = config.tsSig;
 
-        const signalsByCid = {}
+        const signalsByCid = {};
         const signals = {};
         for (const s of config.signals) {
             signals[s.signal] = ['value'];
             signalsByCid[s.signal] = s;
         }
+        for (const s of config.extraSignals) {
+            signals[s.sig] = ['value'];
+        }
 
-        const selectedSignalCid = this.state.selectedSignalCid || config.signals[0].cid;
+        const selectedSignalCid = this.state.selectedSignalCid || config.signals[0].signal;
+
+        const timeRanges = [
+            { from: 'now-1w', label: 'Last week' },
+            { from: 'now-1M', label: 'Last month' },
+            { from: 'now-1y', label: 'Last year' }
+        ].map(e => ({
+            ...e,
+            to: 'now',
+            aggregationInterval: moment.duration(0, 's'),
+            refreshInterval: moment.duration(1, 'm')
+        }));
 
         return (
-            <TimeContext>
-                <PredefTimeRangeSelector ranges={[
-                    { from: 'now-1w', to: 'now', aggregationInterval: moment.duration(0, 's'), refreshInterval: moment.duration(1, 'm') },
-                    { from: 'now-1M', to: 'now', aggregationInterval: moment.duration(0, 's'), refreshInterval: moment.duration(1, 'm') },
-                    { from: 'now-1y', to: 'now', aggregationInterval: moment.duration(0, 's'), refreshInterval: moment.duration(1, 'm') },
-                ]}/>
+            <TimeContext
+                initialIntervalSpec={new IntervalSpec(
+                    timeRanges[0].from,
+                    timeRanges[0].to,
+                    timeRanges[0].aggregationInterval,
+                    timeRanges[0].refreshInterval
+                )}
+            >
+                <h4>Include campaigns within:</h4>
+                <PredefTimeRangeSelector ranges={timeRanges}/>
+                <h4>Statistic:</h4>
                 <ul className="nav nav-pills">
                     {config.signals.map(s =>
                         <li key={s.signal} className="nav-item">
@@ -66,7 +83,7 @@ export default class RangeValuePieChart extends Component {
 
                         const arcs = data[sigSetCid].main.map(doc => ({
                             label: this.props.docToLabel(doc),
-                            value: doc[selectedSignal.cid]['value']
+                            value: doc.data[selectedSignal.signal].value
                         }));
 
                         return <StaticPieChart
@@ -76,23 +93,6 @@ export default class RangeValuePieChart extends Component {
                             drawValueLabels={true}
                         />;
                     }}
-                />
-                <DocsDataProvider
-                    sigSetCid={sigSetCid}
-                    sigCids={sigCids}
-                    sort={[{
-                        sigCid: tsSigCid,
-                        order: 'desc'
-                    }]}
-                    limit={1}
-
-                    renderFun={docs => {
-                        if (this.props.customProcessData) {
-                            docs = this.props.customProcessData(docs, pies);
-                        }
-                        return this.renderPieCharts(pies, docs)
-                    }}
-                    loadingRenderFun={null}
                 />
             </TimeContext>
         );

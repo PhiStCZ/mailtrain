@@ -460,9 +460,9 @@ async function scheduleCampaigns() {
                     campaignId = scheduledCampaign.id;
 
                     await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.SENDING});
-                    const campaignListIds = await tx('campaign_lists').where('campaign', campaignId).select('id');
-                    for (const list of campaignListIds) {
-                        await activityLog.logEntityActivity(LogTypeId.LIST, ListActivityType.SEND_CAMPAIGN, list.id, { campaignId });
+                    const campaignListIds = await tx('campaign_lists').where('campaign', campaignId).select('list');
+                    for (const entry of campaignListIds) {
+                        await activityLog.logEntityActivity(LogTypeId.LIST, ListActivityType.SEND_CAMPAIGN, entry.list, { campaignId });
                     }
                 }
             });

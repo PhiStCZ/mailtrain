@@ -58,6 +58,31 @@ async function removeJob(context, listId) {
     await removeJobByName(context, jobName(listId));
 }
 
+async function getLastRecord(context, listId) {
+    const listSubsId = await knex('signal_sets').where('cid', signalSetCid(listId)).select('id').first();
+    if (!listSubsId) {
+        return null;
+    }
+
+    const lastListSubsEntries = await signalSets.query(context, [{
+        params: {},
+        sigSetCid: signalSetCid(ListId),
+        docs: {
+            signals: [ 'subscribed' ],
+            limit: 1,
+            sort: [{ sigCid: 'timestamp', order: 'desc' }]
+        }
+    }]);
+
+    const lastEntry = lastListSubsEntries[0].docs;
+
+    if (lastEntry.length == 0) {
+        return null;
+    }
+
+    return lastEntry[0];
+}
+
 async function onCreateList(context, listId, creationTimestamp = null) {
     await listActivity.createSignalSet(context, listId);
     const tracker = await listTracker.createListTracker(context, listId);
@@ -125,6 +150,10 @@ async function synchronize(context, listsData) {
 
 
     for (const list of listsData) {
+        const lastRecord = getLastRecord(context, list.id);
+        const lastSubs = lastRecord && lastRecord.subscribed ? lastRecord.subscribed : 0;
+        if (list.subscribers == lastSubs) continue;
+
         log.verbose('Synchronization', `synchronizing list ${list.id} data`);
         toDelete.delete(list.id);
         await onCreateList(context, list.id);

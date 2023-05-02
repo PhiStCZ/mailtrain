@@ -56,7 +56,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-channel-campaign-contributions': {
             render: props => <RangeValuePieChart
-                docToLabel={doc => `campaign ${doc.campaignId}`}
+                docToLabel={doc => `campaign ${doc.data.campaignId.value}`}
                 {...props}
             />
         },

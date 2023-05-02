@@ -111,7 +111,7 @@ router.getAsync('/mt-embed/channel-campaign-contributions/:channelId', passport.
         tsSig: 'creationTimestamp',
         signals: [
             { label: 'Opened', sigSet, signal: 'opened' },
-            { label: 'Sent (but unopened)', sigSet, signal: 'sent' },
+            { label: 'Sent', sigSet, signal: 'sent' },
             { label: 'Failed', sigSet, signal: 'failed' },
             { label: 'Clicked any', sigSet, signal: 'clicked_any' },
             { label: 'Unsubscribed', sigSet, signal: 'unsubscribed' },
