@@ -48,7 +48,7 @@ class EventTooltipContent extends Component {
         for (const setSpec of this.props.config) {
             const sigSetSel = this.props.selection[setSpec.cid];
 
-            if (!sigSetSel) {
+            if (!sigSetSel || !isVisible(setSpec)) {
                 continue;
             }
 
@@ -59,14 +59,14 @@ class EventTooltipContent extends Component {
             );
 
             const maxItemsPerType = 5;
-            for (let i = 0; i < sigSetSel.data.length; i++) {
-                const evt = sigSetSel.data[i];
+            for (let i = 0; i < sigSetSel.events.length; i++) {
+                const evt = sigSetSel.events[i];
 
                 if (i == maxItemsPerType) {
-                    <div key={`${setSpec.cid}-${i}`}>
+                    rows.push(<div key={`${setSpec.cid}-${i}`}>
                         <span className={tooltipStyles.signalColor} style={{color: setSpec.color}}><Icon icon="minus"/></span>
-                        <span className={tooltipStyles.signalVal}>(...{sigSetSel.data.length - maxItemsPerType} more)</span>
-                    </div>
+                        <span className={tooltipStyles.signalVal}>(...{sigSetSel.events.length - maxItemsPerType} more)</span>
+                    </div>);
                     break;
                 }
 

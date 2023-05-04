@@ -348,6 +348,11 @@ em.on('builtinTemplates.add', builtinTemplates => {
                         "type": "string"
                     },
                     {
+                        "id": "enabled",
+                        "label": "Signal set enabled for view",
+                        "type": "boolean"
+                    },
+                    {
                         "id": "type",
                         "label": "Signal set type (used when picking eventToString)",
                         "type": "string"
