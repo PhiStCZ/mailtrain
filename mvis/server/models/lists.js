@@ -66,7 +66,7 @@ async function getLastRecord(context, listId) {
 
     const lastListSubsEntries = await signalSets.query(context, [{
         params: {},
-        sigSetCid: signalSetCid(ListId),
+        sigSetCid: signalSetCid(listId),
         docs: {
             signals: [ 'subscribed' ],
             limit: 1,

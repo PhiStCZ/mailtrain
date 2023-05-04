@@ -14,6 +14,7 @@ const campaignActivity = require('../../models/campaign-activity');
 const campaignMessages = require('../../models/campaign-messages');
 
 const channels = require('../../models/channels');
+const { LogTypeId } = require('../../../../shared/activity-log');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
@@ -213,6 +214,41 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
 
     return res.json(
         await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-campaign-messages')
+    );
+});
+
+router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
+    const params = {
+        signalSets: [
+            {
+                label: 'Campaign',
+                cid: LogTypeId.CAMPAIGN,
+                color: '#dd4444',
+                type: 'campaign',
+                tsSigCid: 'timestamp',
+                activitySigCid: 'activityType',
+                extraSignals: [
+                    { sigSet: LogTypeId.CAMPAIGN, signal: 'entityId' },
+                    { sigSet: LogTypeId.CAMPAIGN, signal: 'issuedBy' }
+                ]
+            },
+            {
+                label: 'List',
+                cid: LogTypeId.LIST,
+                color: '#44dd44',
+                type: 'list',
+                tsSigCid: 'timestamp',
+                activitySigCid: 'activityType',
+                extraSignals: [
+                    { sigSet: LogTypeId.LIST, signal: 'entityId' },
+                    { sigSet: LogTypeId.LIST, signal: 'issuedBy' }
+                ]
+            },
+        ]
+    };
+
+    return res.json(
+        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_CHART, params, 'mt-audit')
     );
 });
 

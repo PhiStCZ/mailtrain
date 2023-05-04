@@ -327,4 +327,73 @@ em.on('builtinTemplates.add', builtinTemplates => {
             }
         ]
     };
+
+    builtinTemplates[BuiltinTemplateIds.EVENT_CHART] = {
+        name: 'A chart showing events over time',
+        params: [
+            {
+                "id": "signalSets",
+                "label": "Signal Sets",
+                "type": "fieldset",
+                "cardinality": "1..n",
+                "children": [
+                    {
+                        "id": "label",
+                        "label": "Signal set label",
+                        "type": "string"
+                    },
+                    {
+                        "id": "color",
+                        "label": "Signal set color",
+                        "type": "string"
+                    },
+                    {
+                        "id": "type",
+                        "label": "Signal set type (used when picking eventToString)",
+                        "type": "string"
+                    },
+                    {
+                        "id": "cid",
+                        "label": "Signal Set",
+                        "type": "signalSet"
+                    },
+                    {
+                        "id": "tsSigCid",
+                        "label": "Timestamp signal",
+                        "type": "signal",
+                        "signalSetRef": "cid"
+                    },
+                    {
+                        "id": "activitySigCid",
+                        "label": "Activity signal",
+                        "type": "signal",
+                        "signalSetRef": "cid"
+                    },
+
+                    {
+                        "id": "extraSignals",
+                        "label": "Extra Signals",
+                        "type": "fieldset",
+                        "cardinality": "n",
+                        "children": [
+                            {
+                                // since ivis cannot handle deeper references,
+                                // i have to put this here, and it has to be
+                                // the same as the root sigSet
+                                "id": "sigSet",
+                                "label": "Signal Set CID",
+                                "type": "signalSet"
+                            },
+                            {
+                                "id": "signal",
+                                "label": "Signal",
+                                "type": "signal",
+                                "signalSetRef": "sigSet"
+                            }
+                        ]
+                    }
+                ]
+            },
+        ]
+    };
 });

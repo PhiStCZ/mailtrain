@@ -6,7 +6,7 @@ const shares = require('../../models/shares');
 const axios = require('axios').default;
 
 const router = require('../../lib/router-async').create();
-const {castToInteger} = require('../../lib/helpers');
+const {castToInteger, enforce} = require('../../lib/helpers');
 
 const mvisApiUrlBase = config.get('mvis.apiUrlBase');
 const embedUrl = `${mvisApiUrlBase}/api/mt-embed/`;
@@ -48,6 +48,11 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
     const campaignId = castToInteger(req.params.campaignId);
     await shares.enforceEntityPermission(req.context, 'campaign', campaignId, 'view');
     return await redirectDataFromMvis(res, `campaign-messages/${campaignId}`);
+});
+
+router.getAsync('/embed/audit', passport.loggedIn, async (req, res) => {
+    enforce(req.context.user.admin, 'Audit can only be done by admins');
+    return await redirectDataFromMvis(res, `audit`);
 });
 
 

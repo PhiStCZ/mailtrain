@@ -4,6 +4,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { TimeContext, TimeRangeSelector, Legend, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
 import { EventLineChart } from "../charts/EventLineChart";
+import { CampaignActivityType, EntityActivityType, ListActivityType } from "../../../../shared/activity-log";
 
 // for now the template code is identical to linechart template code
 
@@ -73,31 +74,31 @@ export class EventLineChartTemplate extends Component {
 
 export const listEventToString = evt => {
     switch (evt.data.activityType.value) {
-        case 1: return `List created`;
-        case 2: return `List updated`;
-        case 3: return `List removed`;
+        case EntityActivityType.CREATE: return `List created`;
+        case EntityActivityType.UPDATE: return `List updated`;
+        case EntityActivityType.REMOVE: return `List removed`;
 
-        case 4: return `Created subscription`;
-        case 5: return `Updated subscription`;
-        case 6: return `Removed subscription`;
-        case 7: return `Changed subscription status`;
+        case ListActivityType.CREATE_SUBSCRIPTION: return `Created subscription`;
+        case ListActivityType.UPDATE_SUBSCRIPTION: return `Updated subscription`;
+        case ListActivityType.REMOVE_SUBSCRIPTION: return `Removed subscription`;
+        case ListActivityType.SUBSCRIPTION_STATUS_CHANGE: return `Changed subscription status`;
 
-        case 8: return `Field created`;
-        case 9: return `Field updated`;
-        case 10: return `Field removed`;
+        case ListActivityType.CREATE_FIELD: return `Field created`;
+        case ListActivityType.UPDATE_FIELD: return `Field updated`;
+        case ListActivityType.REMOVE_FIELD: return `Field removed`;
 
-        case 11: return `Segment created`;
-        case 12: return `Segment updated`;
-        case 13: return `Segment removed`;
+        case ListActivityType.CREATE_SEGMENT: return `Segment created`;
+        case ListActivityType.UPDATE_SEGMENT: return `Segment updated`;
+        case ListActivityType.REMOVE_SEGMENT: return `Segment removed`;
 
-        case 14: return `Import created`;
-        case 15: return `Import updated`;
-        case 16: return `Import removed`;
-        case 17: return `Changed import status`;
+        case ListActivityType.CREATE_IMPORT: return `Import created`;
+        case ListActivityType.UPDATE_IMPORT: return `Import updated`;
+        case ListActivityType.REMOVE_IMPORT: return `Import removed`;
+        case ListActivityType.IMPORT_STATUS_CHANGE: return `Changed import status`;
 
-        case 18: return `Campaign sent to subscribers`;
+        case ListActivityType.SEND_CAMPAIGN: return `Campaign sent to subscribers`;
 
-        case 19: return `List data synchronized`;
+        case ListActivityType.SYNCHRONIZE: return `List data synchronized`;
 
         default: return `(unrecognized event: ${evt.data.activityType.value})`;
     }
@@ -105,20 +106,21 @@ export const listEventToString = evt => {
 
 export const campaignEventToString = evt => {
     switch (evt.data.activityType.value) {
-        case 1: return `Campaign created`;
-        case 2: return `Campaign updated`;
-        case 3: return `Campaign removed`;
-        case 4: return `Changed campaign status`;
-        case 5: return `Campaign reset`;
+        case EntityActivityType.CREATE: return `Campaign created`;
+        case EntityActivityType.UPDATE: return `Campaign updated`;
+        case EntityActivityType.REMOVE: return `Campaign removed`;
 
-        case 6: return `Test-sent an email`;
+        case CampaignActivityType.STATUS_CHANGE: return `Changed campaign status`;
+        case CampaignActivityType.RESET: return `Campaign reset`;
 
-        case 7: return `Created trigger`;
-        case 8: return `Updated trigger`;
-        case 9: return `Removed trigger`;
+        case CampaignActivityType.TEST_SEND: return `Test-sent an email`;
 
-        case 10: return `Added link`;
+        case CampaignActivityType.CREATE_TRIGGER: return `Created trigger`;
+        case CampaignActivityType.UPDATE_TRIGGER: return `Updated trigger`;
+        case CampaignActivityType.REMOVE_TRIGGER: return `Removed trigger`;
 
-        default: '(unrecognized event)';
+        case CampaignActivityType.ADD_LINK: return `Added link`;
+
+        default: return `(unrecognized event: ${evt.data.activityType.value})`;
     }
 };

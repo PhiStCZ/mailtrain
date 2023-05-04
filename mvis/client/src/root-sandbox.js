@@ -8,6 +8,7 @@ import { EventLineChartTemplate, campaignEventToString, listEventToString } from
 import NPieCharts from './templates/NPieCharts';
 import GroupedSegmentedBarChartTemplate from './templates/GroupedSegmentedBarChart';
 import RangeValuePieChart from './templates/RangeValuePieChart';
+import { EventChartTemplate } from './templates/EventChart';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
@@ -57,6 +58,12 @@ em.on('client.installSandboxRoutes', (structure, t) => {
         'mt-channel-campaign-contributions': {
             render: props => <RangeValuePieChart
                 docToLabel={doc => `campaign ${doc.data.campaignId.value}`}
+                {...props}
+            />
+        },
+
+        'mt-audit': {
+            render: props => <EventChartTemplate
                 {...props}
             />
         },
