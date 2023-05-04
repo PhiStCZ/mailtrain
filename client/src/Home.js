@@ -6,8 +6,8 @@ import {withTranslation} from './lib/i18n';
 import {requiresAuthenticatedUser} from './lib/page';
 import {withComponentMixins} from "./lib/decorator-helpers";
 import mailtrainConfig from 'mailtrainConfig';
-import {fetchTokenAndEmbedBuiltinTemplate} from '../lib/embed';
-import embedStyles from '../lib/embed.scss';
+import {fetchTokenAndEmbedBuiltinTemplate} from './lib/embed';
+import embedStyles from './lib/embed.scss';
 
 @withComponentMixins([
     withTranslation,

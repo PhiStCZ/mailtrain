@@ -3,14 +3,14 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
-import { format as d3Format } from "d3-format";
+import {select} from "d3-selection";
 import * as d3Shape from "d3-shape";
 import * as d3Array from "d3-array";
 import * as d3Selection from "d3-selection";
 import { Icon } from "../../../ivis-core/client/src/lib/bootstrap-components";
 import * as dateMath from "../../../ivis-core/client/src/lib/datemath";
 
-import { IntervalAbsolute, RenderStatus, TimeBasedChartBase, XAxisType, isSignalVisible as isVisible } from "../../../ivis-core/client/src/ivis/ivis";
+import { ConfigDifference, IntervalAbsolute, RenderStatus, TimeBasedChartBase, XAxisType, isSignalVisible as isVisible } from "../../../ivis-core/client/src/ivis/ivis";
 import tooltipStyles from "../../../ivis-core/client/src/ivis/Tooltip.scss";
 
 const ACTIVITY_EVENT_SEL_CID = '_activity_events';
@@ -30,16 +30,11 @@ class EventTooltipContent extends Component {
 
     static propTypes = {
         config: PropTypes.array.isRequired,
-        signalSetsData: PropTypes.object,
+        signalSetsData: PropTypes.object.isRequired,
         selection: PropTypes.object,
     }
 
-    static defaultProps = {
-        getSignalValues: defaultGetSignalValues,
-        eventToString: evt => `activity ${evt.data.activityType.value}`,
-    }
-
-    renderRows() {
+    render() {
         if (!this.props.selection) {
             return null;
         }
@@ -50,30 +45,39 @@ class EventTooltipContent extends Component {
             </div>
         ];
 
-        for (const sigSetConf of this.props.config) {
-            const sigSetSel = this.props.selection[sigSetConf.cid];
+        for (const setSpec of this.props.config) {
+            const sigSetSel = this.props.selection[setSpec.cid];
 
             if (!sigSetSel) {
                 continue;
             }
 
             rows.push(
-                <div key={sigSetConf.cid} className={tooltipStyles.signalLabel}>
-                    Events of {sigSetConf.label}
+                <div key={setSpec.cid} className={tooltipStyles.signalLabel}>
+                    {setSpec.label} events
                 </div>
             );
 
-            rows.push(...sigSetSel.data.map((evt, idx) => (
-                <div key={`${sigSetConf.cid}-${idx}`}>
-                    <span className={tooltipStyles.signalColor} style={{color: sigSetConf.color}}><Icon icon="minus"/></span>
-                    <span className={tooltipStyles.signalVal}>{sigSetConf.eventToString(evt)} ({dateMath.format(evt.ts)})</span>
-                </div>
-            )));
-        }
+            const maxItemsPerType = 5;
+            for (let i = 0; i < sigSetSel.data.length; i++) {
+                const evt = sigSetSel.data[i];
 
-        rows.unshift(
-            <div key='line' className={tooltipStyles.time}>{dateMath.format(ts)}</div>
-        );
+                if (i == maxItemsPerType) {
+                    <div key={`${setSpec.cid}-${i}`}>
+                        <span className={tooltipStyles.signalColor} style={{color: setSpec.color}}><Icon icon="minus"/></span>
+                        <span className={tooltipStyles.signalVal}>(...{sigSetSel.data.length - maxItemsPerType} more)</span>
+                    </div>
+                    break;
+                }
+
+                rows.push(
+                    <div key={`${setSpec.cid}-${i}`}>
+                        <span className={tooltipStyles.signalColor} style={{color: setSpec.color}}><Icon icon="minus"/></span>
+                        <span className={tooltipStyles.signalVal}>{dateMath.format(evt.ts)} - {setSpec.eventToString(evt)}</span>
+                    </div>
+                );
+            }
+        }
 
         return <div>{rows}</div>;
     }
@@ -82,7 +86,7 @@ class EventTooltipContent extends Component {
 
 export class EventChart extends Component {
     constructor(props) {
-        super(props)
+        super(props);
 
         this.boundGetQueries = ::this.getQueries;
         this.boundPrepareData = ::this.prepareData;
@@ -96,6 +100,7 @@ export class EventChart extends Component {
         config: PropTypes.object.isRequired,
         height: PropTypes.number,
         margin: PropTypes.object,
+        tooltipExtraProps: PropTypes.object,
         lineWidth: PropTypes.number,
         horizontalLineColor: PropTypes.string,
     }
@@ -139,7 +144,7 @@ export class EventChart extends Component {
         const signalSetsData = {}; // events by signal set
 
         for (const setSpec of this.props.config.signalSets) {
-            signalSetsData[setSpec.cid] = extraData[0][setSpec.cid].main;
+            signalSetsData[setSpec.cid] = queryResults[setSpec.cid].main;
         }
 
         return { signalSetsData };
@@ -152,7 +157,7 @@ export class EventChart extends Component {
             </g>
         ];
 
-        for (const setSpec of this.props.config) {
+        for (const setSpec of this.props.config.signalSets) {
             if (!isVisible(setSpec)) continue;
 
             paths.push(
@@ -177,7 +182,7 @@ export class EventChart extends Component {
             noData &&= (data.length == 0);
 
             const mergedEvents = [];
-            const mergeDistance = (abs.to - abs.from) * 0.025;
+            const mergeDistance = (abs.to - abs.from) * 0.01;
             for (const event of data) {
                 if (mergedEvents.length != 0 && event.ts - mergedEvents.at(-1).ts <= mergeDistance) {
                     mergedEvents.at(-1).events.push(event);
@@ -188,11 +193,11 @@ export class EventChart extends Component {
 
             mergedEventsBySigSet[setSpec.cid] = mergedEvents;
 
-            eventLinesBySigSet[setSpec] = [];
+            eventLinesBySigSet[setSpec.cid] = [];
             for (const event of mergedEvents) {
-                eventLinesBySigSet[setSpec].push({ ...event, top: true });
-                eventLinesBySigSet[setSpec].push({ ...event, top: false });
-                eventLinesBySigSet[setSpec].push(null); // this separates the lines
+                eventLinesBySigSet[setSpec.cid].push({ ...event, top: true });
+                eventLinesBySigSet[setSpec.cid].push({ ...event, top: false });
+                eventLinesBySigSet[setSpec.cid].push(null); // this separates the lines
             }
         }
 
@@ -201,9 +206,9 @@ export class EventChart extends Component {
         let selection = null;
         let mousePosition = null;
 
-        const selectPoints = () => {
+        const selectEvents = () => {
             const containerPos = d3Selection.mouse(base.containerNode);
-            const x = containerPos[0] - self.props.margin.left;
+            const x = containerPos[0] - this.props.margin.left;
             const ts = moment(xScale.invert(x));
 
             base.cursorSelection
@@ -228,15 +233,10 @@ export class EventChart extends Component {
                 const closestIdx = d3Array.minIndex(events, evt => Math.abs(evt.ts - ts));
                 const closest = events[closestIdx];
                 const maxSelectDistance = (abs.to - abs.from) * 0.025;
-                if (Math.abs(closest.ts - mouseTs) <= maxSelectDistance) {
+                if (Math.abs(closest.ts - ts) <= maxSelectDistance) {
                     selection = selection || {};
                     selection[sigSetCid] = closest;
                 }
-            }
-
-            if (!activityEvents || activityEvents.length == 0) {
-                selection[ACTIVITY_EVENT_SEL_CID] = activitySelection;
-                return;
             }
 
             base.setState({
@@ -245,7 +245,7 @@ export class EventChart extends Component {
             });
         }
 
-        const deselectPoints = () => {
+        const deselectEvents = () => {
             if (base.cursorLineVisible) {
                 base.cursorSelection.attr('visibility', 'hidden');
                 base.cursorLineVisible = false;
@@ -254,8 +254,6 @@ export class EventChart extends Component {
             if (noData) {
                 return;
             }
-
-            // ...
 
             if (selection || mousePosition) {
                 selection = null;
@@ -269,17 +267,17 @@ export class EventChart extends Component {
         }
 
         base.brushSelection
-            .on('mouseenter', selectPoints)
-            .on('mousemove', selectPoints)
-            .on('mouseleave', deselectPoints)
+            .on('mouseenter', selectEvents)
+            .on('mousemove', selectEvents)
+            .on('mouseleave', deselectEvents)
 
         if (noData) {
             return RenderStatus.NO_DATA;
         }
 
         const innerHeight = this.props.height - this.props.margin.top - this.props.margin.bottom;
-        const topY = innerHeight / 4;
-        const bottomY = innerHeight * 3 / 4;
+        const topY = innerHeight / 3;
+        const bottomY = innerHeight * 2 / 3;
         const lineWidth = this.props.lineWidth;
         const line = d3Shape.line()
             .defined(d => d !== null)
@@ -291,7 +289,7 @@ export class EventChart extends Component {
                 continue;
             }
 
-            const lineColor = this.props.getLineColor(rgb(sigConf.color));
+            const lineColor = setSpec.color;
             this.eventLineSelection[setSpec.cid]
                 .datum(eventLinesBySigSet[setSpec.cid])
                 // .attr('visibility', lineVisible ? 'visible' : 'hidden')
@@ -309,10 +307,10 @@ export class EventChart extends Component {
                 .x(d => d)
                 .y(d => (topY + bottomY) / 2)
 
-            const innerWidth = xScale.range()[1], lineSegments = 17;
+            const innerWidth = xScale.range()[1], lineSegments = 25;
             const segmentLength = innerWidth / lineSegments;
             const lineData = [];
-            for (const i = 0; i < lineSegments; i += 2) {
+            for (let i = 0; i < lineSegments; i += 2) {
                 lineData.push(segmentLength * i);
                 lineData.push(segmentLength * (i + 1));
                 lineData.push(null);
@@ -333,10 +331,10 @@ export class EventChart extends Component {
     render() {
         return (
             <TimeBasedChartBase
-                config={props.config}
-                // // data={props.data}
-                height={props.height}
-                margin={props.margin}
+                config={this.props.config}
+                // data={this.props.data}
+                height={this.props.height}
+                margin={this.props.margin}
 
 
                 prepareData={this.boundPrepareData}
@@ -344,20 +342,43 @@ export class EventChart extends Component {
                 createChart={this.boundCreateChart}
                 getGraphContent={this.boundGetGraphContent}
 
-                // // getSvgDefs={props.getSvgDefs}
-                // // compareConfigs={props.compareConfigs}
+                // getSvgDefs={this.props.getSvgDefs}
+                compareConfigs={(cf1, cf2) => {
+                    if (cf1.signalSets.length != cf2.signalSets.length) {
+                        return ConfigDifference.DATA;
+                    }
+                    let cfDiff = ConfigDifference.NONE;
+                    for (let i = 0; i < cf1.signalSets.length; i++) {
+                        const set1 = cf1.signalSets[i], set2 = cf2.signalSets[i];
+                        if (set1.cid !== set2.cid ||
+                            set1.tsSigCid !== set2.tsSigCid ||
+                            set1.activitySigCid !== set2.activitySigCid ||
+                            set1.extraSignals.length !== set2.extraSignals.length) {
+                            return ConfigDifference.DATA;
+                        }
+                        for (let j = 0; j < set1.extraSignals.length; j++) {
+                            if (set1.extraSignals[j].cid !== set2.extraSignals[j].cid) {
+                                return ConfigDifference.DATA;
+                            }
+                        }
+                        if (set1.color != set2.color || set1.label !== set2.label || set1.enabled !== set2.enabled) {
+                            cfDiff = ConfigDifference.RENDER;
+                        }
+                    }
+                    return cfDiff;
+                }}
 
                 withTooltip={true}
                 withBrush={true} // can be true
                 withZoom={true} // probs also true
-                // zoomUpdateReloadInterval={props.zoomUpdateReloadInterval}
-                // contentComponent={props.contentComponent}
-                // contentRender={props.contentRender}
+                // zoomUpdateReloadInterval={this.props.zoomUpdateReloadInterval}
+                // contentComponent={this.props.contentComponent}
+                // contentRender={this.props.contentRender}
                 // tooltipContentComponent={this.props.tooltipContentComponent}
 
                 tooltipContentRender={props => <EventTooltipContent {...props} />}
 
-                // tooltipExtraProps={this.props.tooltipExtraProps}
+                tooltipExtraProps={this.props.tooltipExtraProps}
                 // getTooltipExtraState={this.props.getTooltipExtraState}
                 // getSignalValuesForDefaultTooltip={this.props.getSignalValuesForDefaultTooltip}
                 controlTimeIntervalChartWidth={true} // IDK, but its true in linechart

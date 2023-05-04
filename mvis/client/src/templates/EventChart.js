@@ -16,8 +16,22 @@ const sensorsStructure = [
     }
 ];
 
+export const globalListEventToString = evt => listEventToString(evt) + ` (id ${evt.data.entityId.value})`;
+export const globalCampaignEventToString = evt => campaignEventToString(evt) + ` (id ${evt.data.entityId.value})`;
+
 @withPanelConfig
 export class EventChartTemplate extends Component {
+
+    constructor(props) {
+        for (const setSpec of props.panel.params.signalSets) {
+            setSpec.signals = []; // so that TimeBasedChartBase doesn't panic during compareConfigs
+            if (setSpec.type) {
+                setSpec.eventToString = props.eventToStringByType[setSpec.type];
+            }
+        }
+
+        super(props);
+    }
 
     static propTypes = {
         eventToStringByType: PropTypes.object,
@@ -45,12 +59,6 @@ export class EventChartTemplate extends Component {
         */
         const config = this.getPanelConfig();
 
-        for (const setConf of config.signalSets) {
-            if (setConf.type) {
-                setConf.eventToString = this.props.eventToStringByType[setConf.type];
-            }
-        }
-
         return (
             <TimeContext>
                 <TimeRangeSelector/>
@@ -61,14 +69,9 @@ export class EventChartTemplate extends Component {
                     }}
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
-                    tooltipExtraProps={{
-                        width: 450,
-                    }}
+                    tooltipExtraProps={{ width: 500 }}
                 />
             </TimeContext>
         );
     }
 }
-
-export const globalListEventToString = evt => listEventToString(evt) + `(id ${evt.data.entityId})`;
-export const globalCampaignEventToString = evt => campaignEventToString(evt) + `(id ${evt.data.entityId})`;

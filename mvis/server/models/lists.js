@@ -8,6 +8,7 @@ const knex = require('../../ivis-core/server/lib/knex');
 const moment = require('moment');
 const config = require('../../ivis-core/server/lib/config');
 const jobs = require('../../ivis-core/server/models/jobs');
+const signalSets = require('../../ivis-core/server/models/signal-sets');
 const { removeJobByName, createJobByName } = require('../lib/helpers');
 const { BuiltinTaskNames } = require('../../shared/builtin-tasks');
 const { getBuiltinTask } = require('../../ivis-core/server/models/builtin-tasks');
@@ -59,14 +60,14 @@ async function removeJob(context, listId) {
 }
 
 async function getLastRecord(context, listId) {
-    const listSubsId = await knex('signal_sets').where('cid', signalSetCid(listId)).select('id').first();
+    const listSubsId = await knex('signal_sets').where('cid', listSubscriptions.signalSetCid(listId)).select('id').first();
     if (!listSubsId) {
         return null;
     }
 
     const lastListSubsEntries = await signalSets.query(context, [{
         params: {},
-        sigSetCid: signalSetCid(listId),
+        sigSetCid: listSubscriptions.signalSetCid(listId),
         docs: {
             signals: [ 'subscribed' ],
             limit: 1,
@@ -150,12 +151,14 @@ async function synchronize(context, listsData) {
 
 
     for (const list of listsData) {
-        const lastRecord = getLastRecord(context, list.id);
+        toDelete.delete(list.id);
+
+        const lastRecord = await getLastRecord(context, list.id);
         const lastSubs = lastRecord && lastRecord.subscribed ? lastRecord.subscribed : 0;
         if (list.subscribers == lastSubs) continue;
 
         log.verbose('Synchronization', `synchronizing list ${list.id} data`);
-        toDelete.delete(list.id);
+
         await onCreateList(context, list.id);
         const listEvents = new Map();
         listEvents.set(list.id, [{

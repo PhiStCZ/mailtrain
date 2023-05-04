@@ -7,6 +7,7 @@ const axios = require('axios').default;
 
 const router = require('../../lib/router-async').create();
 const {castToInteger, enforce} = require('../../lib/helpers');
+const { getAdminId } = require('../../../shared/users');
 
 const mvisApiUrlBase = config.get('mvis.apiUrlBase');
 const embedUrl = `${mvisApiUrlBase}/api/mt-embed/`;
@@ -51,7 +52,7 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
 });
 
 router.getAsync('/embed/audit', passport.loggedIn, async (req, res) => {
-    enforce(req.context.user.admin, 'Audit can only be done by admins');
+    enforce(req.context.user.id == getAdminId(), 'Audit can only be done by admin');
     return await redirectDataFromMvis(res, `audit`);
 });
 
