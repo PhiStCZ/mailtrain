@@ -88,6 +88,11 @@ em.on('builtinTemplates.add', builtinTemplates => {
         name: 'Grouped Segmented Bar Chart',
         params: [
             {
+                "id": "mailtrainUrl",
+                "label": "Mailtrain URL",
+                "type": "string"
+            },
+            {
                 "id": "groupsLimit",
                 "label": "Maximum amount of bar groups",
                 "type": "number"

@@ -31,8 +31,6 @@ router.postAsync('/synchronize', async (req, res) => {
     await campaigns.synchronize(req.context, dataByTypeId.campaign);
     await channels.synchronize(req.context, dataByTypeId.channel);
     return res.json();
-
-    
 });
 
 module.exports = router;

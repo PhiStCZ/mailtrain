@@ -28,6 +28,7 @@ export class DocsDataProvider extends Component {
         sort: PropTypes.array,
         limit: PropTypes.number,
 
+        processDataFun: PropTypes.func,
         renderFun: PropTypes.func.isRequired,
         loadingRenderFun: PropTypes.func
     }
@@ -39,7 +40,7 @@ export class DocsDataProvider extends Component {
     @withAsyncErrorHandler
     async fetchData() {
         try {
-            const signalSetsData = await this.dataAccessSession.getLatestDocs(
+            let signalSetsData = await this.dataAccessSession.getLatestDocs(
                 this.props.sigSetCid,
                 this.props.sigCids,
                 this.props.filter,
@@ -47,11 +48,13 @@ export class DocsDataProvider extends Component {
                 this.props.limit
             );
 
-            if (signalSetsData) {
-                this.setState({
-                    signalSetsData
-                });
+            if (this.props.processDataFun) {
+                signalSetsData = await this.props.processDataFun(signalSetsData);
             }
+
+            this.setState({
+                signalSetsData
+            });
         } catch (err) {
             throw err;
         }

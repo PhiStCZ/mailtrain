@@ -15,8 +15,15 @@ const campaignMessages = require('../../models/campaign-messages');
 
 const channels = require('../../models/channels');
 const { LogTypeId } = require('../../../../shared/activity-log');
+const config = require('../../../ivis-core/server/lib/config');
+const mailtrainUrl = config.mailtrain.url;
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
+
+function getLinkColor(idx, count) {
+    let g = Math.floor(0xff * (count - idx) / count);
+    return '#55' + g.toString(16).padStart(2, '0') + 'ff'
+}
 
 async function getDataForEmbed(context, builtinTemplateId, params, path) {
     const userId = await ensureMailtrainUser(context);
@@ -64,6 +71,7 @@ router.getAsync('/mt-embed/channel-recent-campaigns/:channelId', passport.logged
     const channelId = castToInteger(req.params.channelId);
     const sigSet = channels.signalSetCid(channelId);
     const params = {
+        mailtrainUrl,
         groupsLimit: 5,
         sigSet,
         tsSig: 'creationTimestamp',
@@ -114,7 +122,7 @@ router.getAsync('/mt-embed/channel-campaign-contributions/:channelId', passport.
             { label: 'Opened', sigSet, signal: 'opened' },
             { label: 'Sent', sigSet, signal: 'sent' },
             { label: 'Failed', sigSet, signal: 'failed' },
-            { label: 'Clicked any', sigSet, signal: 'clicked_any' },
+            { label: 'Clicked any link', sigSet, signal: 'clicked_any' },
             { label: 'Unsubscribed', sigSet, signal: 'unsubscribed' },
             { label: 'Bounced', sigSet, signal: 'bounced' },
             { label: 'Complained', sigSet, signal: 'complained' },
@@ -160,17 +168,15 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
 
     if (extraLinks.length > 0) {
         // insert it between the other two pies
-        // TODO: later add more link colors and maybe sort by size into
-        // a limited amount of links (max 5) and rest is 'other'
-        
+        // TODO: maybe sort by size into a limited amount of links (max 5) and put rest into 'other'
         params.pies.push(params.pies[1]);
         params.pies[1] = {
             label: 'Links',
             segments: extraLinks.map((linkId, idx) => ({
-                label: `Link ${linkId}`,
+                linkId,
                 sigSet,
                 signal: campaignMessages.linkSigCid(linkId),
-                color: idx % 2 ? '#55bbff' : '#5599ff'
+                color: getLinkColor(idx, extraLinks.length)
             })),
         };
     }
@@ -201,9 +207,9 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
     };
 
     params.sensors.push(...extraLinks.map((linkId, idx) => ({
-        label: `Link ${linkId}`,
+        linkId,
         signal: campaignMessages.linkSigCid(linkId),
-        color: idx % 2 ? '#55bbff' : '#5599ff'
+        color: getLinkColor(idx, extraLinks.count)
     })));
 
     for (const s of params.sensors) {

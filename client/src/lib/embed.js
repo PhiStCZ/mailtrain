@@ -5,14 +5,20 @@ import { embedBuiltinTemplate } from '../../../mvis/ivis-core/embedding/src/pane
 
 const prefix = '/rest/embed/';
 
-export async function fetchTokenAndEmbedBuiltinTemplate(domElementId, tokenPath) {
-    const res = await axios.get(prefix + tokenPath);
-    const {
-        token,
-        ivisSandboxUrlBase,
-        path,
-        params,
-    } = res.data;
+export function fetchTokenAndEmbedBuiltinTemplate(domElementId, tokenPath) {
+    const embedPromise = axios.get(prefix + tokenPath)
+    .then(res => {
+        const {
+            token,
+            ivisSandboxUrlBase,
+            path,
+            params,
+        } = res.data;
+    
+        return embedBuiltinTemplate(domElementId, ivisSandboxUrlBase, token, path, params);
+    });
 
-    embedBuiltinTemplate(domElementId, ivisSandboxUrlBase, token, path, params);
+    return {
+        stop: () => embedPromise.then(ctl => ctl.stop())
+    }
 }

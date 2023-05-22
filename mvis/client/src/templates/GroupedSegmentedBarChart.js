@@ -9,7 +9,7 @@ import { withPanelConfig } from "../../../ivis-core/client/src/ivis/PanelConfig"
 
 @withPanelConfig
 export default class GroupedSegmentedBarChartTemplate extends Component {
-    docToLabel = doc => `doc ${doc.campaignId}`;
+    docToLabel = doc => doc.label;
 
     render() {
         const config = this.getPanelConfig();
@@ -62,6 +62,7 @@ export default class GroupedSegmentedBarChartTemplate extends Component {
                     config={{barGroups: processData(docs)}}
                     height={400}
                 />}
+                processDataFun={this.props.providerProcessData}
                 loadingRenderFun={null}
             />
         );

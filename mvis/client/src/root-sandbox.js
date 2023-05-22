@@ -9,6 +9,7 @@ import NPieCharts from './templates/NPieCharts';
 import GroupedSegmentedBarChartTemplate from './templates/GroupedSegmentedBarChart';
 import RangeValuePieChart from './templates/RangeValuePieChart';
 import { EventChartTemplate } from './templates/EventChart';
+import axios from '../../ivis-core/client/src/lib/axios';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
@@ -41,6 +42,17 @@ em.on('client.installSandboxRoutes', (structure, t) => {
         'mt-channel-recent-campaigns': {
             render: props => <GroupedSegmentedBarChartTemplate
                 docToLabel={doc => `campaign ${doc.campaignId}`}
+                providerProcessData={async docs => {
+                    const reqCampaigns = docs.map(d => ({
+                        id: d.entityId,
+                        keys: ['name']
+                    }));
+                    const targetUrl = props.params.mailtrainUrl + '/rest/entity-info';
+                    const res = await axios.post(targetUrl, { campaign: reqCampaigns });
+                    for (let i = 0; i < docs.length; i++) {
+                        docs[i].label = (res.data[i] && res.data[i].name) || '(unknown/deleted campaign)';
+                    }
+                }}
                 customProcessData={(docs, barGroups) => {
                     for (const group of barGroups) {
                         for (const bar of group.bars) {
@@ -51,6 +63,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     }
                     return barGroups;
                 }}
+
                 {...props}
             />
         },
