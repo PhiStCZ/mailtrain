@@ -43,14 +43,13 @@ em.on('client.installSandboxRoutes', (structure, t) => {
             render: props => <GroupedSegmentedBarChartTemplate
                 docToLabel={doc => `campaign ${doc.campaignId}`}
                 providerProcessData={async docs => {
-                    const reqCampaigns = docs.map(d => ({
-                        id: d.entityId,
-                        keys: ['name']
-                    }));
-                    const targetUrl = props.params.mailtrainUrl + '/rest/entity-info';
+                    const reqCampaigns = {
+                        ids: docs.map(d => d.entityId)
+                    };
+                    const targetUrl = '/api/entity-info';
                     const res = await axios.post(targetUrl, { campaign: reqCampaigns });
                     for (let i = 0; i < docs.length; i++) {
-                        docs[i].label = (res.data[i] && res.data[i].name) || '(unknown/deleted campaign)';
+                        docs[i].label = (res.data[i] && res.data[i].name) || '(unknown campaign)';
                     }
                 }}
                 customProcessData={(docs, barGroups) => {

@@ -16,16 +16,20 @@ const campaignMessages = require('../../models/campaign-messages');
 const channels = require('../../models/channels');
 const { LogTypeId } = require('../../../../shared/activity-log');
 const config = require('../../../ivis-core/server/lib/config');
-const mailtrainUrl = config.mailtrain.url;
+const { sendToMailtrain } = require('../../lib/process-communication');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
 function getLinkColor(idx, count) {
-    let g = Math.floor(0xff * (count - idx) / count);
+    let g = Math.floor(0xff * idx / count);
     return '#55' + g.toString(16).padStart(2, '0') + 'ff'
 }
 
 async function getDataForEmbed(context, builtinTemplateId, params, path) {
+    params = {
+        ...params,
+        mailtrainUserId: req.get('mt-user-id')
+    }
     const userId = await ensureMailtrainUser(context);
     const token = await users.getRestrictedAccessToken(
         context,
@@ -209,7 +213,7 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
     params.sensors.push(...extraLinks.map((linkId, idx) => ({
         linkId,
         signal: campaignMessages.linkSigCid(linkId),
-        color: getLinkColor(idx, extraLinks.count)
+        color: getLinkColor(idx, extraLinks.length)
     })));
 
     for (const s of params.sensors) {
@@ -258,6 +262,16 @@ router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
     return res.json(
         await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_CHART, params, 'mt-audit')
     );
+});
+
+router.postAsync('/mt-entity-info', passport.loggedIn, async (req, res) => {
+    const response = await sendToMailtrain({
+        type: 'entity-info',
+        mailtrainUserId: req.restrictedAccessParams.mailtrainUserId,
+        data: req.body
+    })
+
+    return res.json(response);
 });
 
 
