@@ -10,6 +10,7 @@ import GroupedSegmentedBarChartTemplate from './templates/GroupedSegmentedBarCha
 import RangeValuePieChart from './templates/RangeValuePieChart';
 import { EventChartTemplate } from './templates/EventChart';
 import axios from '../../ivis-core/client/src/lib/axios';
+import { getUrl } from '../../ivis-core/client/src/lib/urls';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
@@ -46,7 +47,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     const reqCampaigns = {
                         ids: docs.map(d => d.entityId)
                     };
-                    const targetUrl = '/api/entity-info';
+                    const targetUrl = getUrl('/rest/mt-entity-info');
                     const res = await axios.post(targetUrl, { campaign: reqCampaigns });
                     for (let i = 0; i < docs.length; i++) {
                         docs[i].label = (res.data[i] && res.data[i].name) || '(unknown campaign)';

@@ -1,22 +1,22 @@
 'use strict';
 
-const log = require('./log');
 const moment = require('moment');
 const config = require('config');
+const crypto = require('crypto');
 const axios = require('axios').default;
-const { LogTypeId, ListActivityType } = require('../../shared/activity-log');
-const knex = require('./knex');
+const { LogTypeId } = require('../../shared/activity-log');
 const { hashEmail } = require('./helpers');
-const { mvisReady } = require('./mvis');
 
 let activityQueue = [];
 let activityQueue2 = [];
 
-const apiToken = require('./mvis').apiToken;
+// This avoids a circular dependency with ./mvis
+const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
+process.env.MVIS_API_TOKEN = apiToken;
+
 const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
 const apiUrlBase = config.get('mvis.apiUrlBase');
 const eventsUrl = `${apiUrlBase}/api/events`;
-const syncUrl = `${apiUrlBase}/api/synchronize`;
 
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
@@ -57,10 +57,10 @@ async function _logActivity(typeId, data) {
     }
 }
 
-function _assignIssuedBy(context, data) {
-    // if the data's issued by is already filled, then that data has more priority and won't be overwritten
-    if (!data.issuedBy && context && context.user && context.user.id) {
-        data.issuedBy = context.user.id;
+function _assignActor(context, data) {
+    // if the data's actor is already filled, then that data has more priority and won't be overwritten
+    if (!data.actor && context && context.user && context.user.id) {
+        data.actor = context.user.id;
     }
 }
 
@@ -83,15 +83,15 @@ async function logEntityActivity(entityTypeId, activityType, entityId, extraData
 }
 
 /**
- * Log a general activity of an entity. The context will include the user who issued the activity.
- * @param context only needed for issued-by assignment; can be null
+ * Log a general activity of an entity. The context will include the user who made the activity (the actor).
+ * @param context only needed for actor assignment; may be null for no actor
  * @param entityTypeId
  * @param activityType defined in ../../shared/activity-log.js
  * @param entityId
  * @param extraData different entity types may accept different extra data
  */
 async function logEntityActivityWithContext(context, entityTypeId, activityType, entityId, extraData = {}) {
-    _assignIssuedBy(context, extraData);
+    _assignActor(context, extraData);
     logEntityActivity(entityTypeId, activityType, entityId, extraData);
 }
 
@@ -101,14 +101,14 @@ async function logBlacklistActivity(context, activityType, email) {
         type: activityType,
         email
     };
-    _assignIssuedBy(context, data);
+    _assignActor(context, data);
 
     await _logActivity(LogTypeId.BLACKLIST, data);
 }
 
 async function logSettingsActivity(context) {
     const data = {};
-    _assignIssuedBy(context, data);
+    _assignActor(context, data);
     await _logActivity(LogTypeId.SETTINGS, data);
 }
 
@@ -119,7 +119,7 @@ async function logShareActivity(context, entityTypeId, entityId, userId, role) {
         entityId,
         role
     };
-    _assignIssuedBy(context, data);
+    _assignActor(context, data);
     await _logActivity(LogTypeId.SHARE, data);
 }
 
@@ -187,48 +187,6 @@ function periodicLog() {
 
 periodicLog();
 
-
-/**
- * Synchronizes mvis' data with current mailtrain data.
- */
-async function synchronize() {
-    const list = await knex('lists').select('id', 'subscribers');
-    const campaign = await knex('campaigns').select('id', 'channel');
-    const channel = await knex('channels').select('id');
-
-    const channelsById = new Map();
-    for (const ch of channel) {
-        channelsById.set(ch.id, ch);
-    }
-
-    for (const c of campaign) {
-        if (!c.channel) {
-            continue;
-        }
-        const campaignChannel = channelsById.get(c.channel);
-        if (!campaignChannel.campaignIds) {
-            campaignChannel.campaignIds = [];
-        }
-        campaignChannel.campaignIds.push(c.id);
-    }
-
-    await mvisReady();
-    log.info('Activity-log', 'Synchronizing data with IVIS');
-    try {
-        await axios.post(syncUrl, {
-            list,
-            campaign,
-            channel,
-        }, {
-            headers: { 'global-access-token': apiToken }
-        });
-    } catch (err) {
-        log.error('Activity-log', 'Could not synchronize data with IVIS');
-        log.verbose(err);
-    }
-}
-
-
 module.exports.logBlacklistActivity = logBlacklistActivity;
 module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
@@ -236,4 +194,3 @@ module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
 module.exports.logListTrackerActivity = logListTrackerActivity;
 module.exports.logShareActivity = logShareActivity;
 module.exports.logSettingsActivity = logSettingsActivity;
-module.exports.synchronize = synchronize;

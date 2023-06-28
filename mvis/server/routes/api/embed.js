@@ -15,24 +15,22 @@ const campaignMessages = require('../../models/campaign-messages');
 
 const channels = require('../../models/channels');
 const { LogTypeId } = require('../../../../shared/activity-log');
-const config = require('../../../ivis-core/server/lib/config');
-const { sendToMailtrain } = require('../../lib/process-communication');
 
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
 function getLinkColor(idx, count) {
     let g = Math.floor(0xff * idx / count);
-    return '#55' + g.toString(16).padStart(2, '0') + 'ff'
+    return '#55' + g.toString(16).padStart(2, '0') + 'ff';
 }
 
-async function getDataForEmbed(context, builtinTemplateId, params, path) {
+async function getDataForEmbed(req, builtinTemplateId, params, path) {
     params = {
         ...params,
         mailtrainUserId: req.get('mt-user-id')
     }
-    const userId = await ensureMailtrainUser(context);
+    const userId = await ensureMailtrainUser(req.context);
     const token = await users.getRestrictedAccessToken(
-        context,
+        req.context,
         'builtin_template',
         { renewableBySandbox: true, builtinTemplateId, params },
         userId
@@ -67,7 +65,7 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
     };
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-list-subscriptions')
+        await getDataForEmbed(req, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-list-subscriptions')
     );
 });
 
@@ -75,7 +73,6 @@ router.getAsync('/mt-embed/channel-recent-campaigns/:channelId', passport.logged
     const channelId = castToInteger(req.params.channelId);
     const sigSet = channels.signalSetCid(channelId);
     const params = {
-        mailtrainUrl,
         groupsLimit: 5,
         sigSet,
         tsSig: 'creationTimestamp',
@@ -112,7 +109,7 @@ router.getAsync('/mt-embed/channel-recent-campaigns/:channelId', passport.logged
     };
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-recent-campaigns')
+        await getDataForEmbed(req, BuiltinTemplateIds.GROUP_SEG_BARCHART, params, 'mt-channel-recent-campaigns')
     );
 });
 
@@ -137,7 +134,7 @@ router.getAsync('/mt-embed/channel-campaign-contributions/:channelId', passport.
     };
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.RANGE_VALUE_PIECHART, params, 'mt-channel-campaign-contributions')
+        await getDataForEmbed(req, BuiltinTemplateIds.RANGE_VALUE_PIECHART, params, 'mt-channel-campaign-contributions')
     );
 });
 
@@ -186,7 +183,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
     }
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.N_PIECHARTS, params, 'mt-campaign-overview')
+        await getDataForEmbed(req, BuiltinTemplateIds.N_PIECHARTS, params, 'mt-campaign-overview')
     );
 });
 
@@ -223,7 +220,7 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
     }
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-campaign-messages')
+        await getDataForEmbed(req, BuiltinTemplateIds.EVENT_LINECHART, params, 'mt-campaign-messages')
     );
 });
 
@@ -260,18 +257,8 @@ router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
     };
 
     return res.json(
-        await getDataForEmbed(req.context, BuiltinTemplateIds.EVENT_CHART, params, 'mt-audit')
+        await getDataForEmbed(req, BuiltinTemplateIds.EVENT_CHART, params, 'mt-audit')
     );
-});
-
-router.postAsync('/mt-entity-info', passport.loggedIn, async (req, res) => {
-    const response = await sendToMailtrain({
-        type: 'entity-info',
-        mailtrainUserId: req.restrictedAccessParams.mailtrainUserId,
-        data: req.body
-    })
-
-    return res.json(response);
 });
 
 

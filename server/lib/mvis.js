@@ -5,10 +5,13 @@ const log = require('./log');
 const path = require('path');
 const bluebird = require('bluebird');
 const crypto = require('crypto');
+const knex = require('./knex');
 const users = require('../models/users');
 const shares = require('../models/shares');
 
+// This avoids a circular dependency with activity log
 const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
+process.env.MVIS_API_TOKEN = apiToken;
 
 let mvisProcess;
 let mvisReadyState = null;
@@ -44,6 +47,7 @@ function spawn(callback) {
             mvisProcess.send({
                 type: 'response',
                 data: response,
+                requestId: msg.requestId,
             });
         }
     });

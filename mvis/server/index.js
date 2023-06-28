@@ -11,7 +11,8 @@ const channels = require('./models/channels');
 const lists = require('./models/lists');
 
 const { addBuiltinTasks } = require('./models/builtin-tasks');
-const { handleMessage } = require('./lib/process-communication');
+const { handleMessage, sendToMailtrain } = require('./lib/process-communication');
+const { getAdminContext } = require('../ivis-core/server/lib/context-helpers');
 
 const apiToken = process.env.API_TOKEN;
 
@@ -23,6 +24,11 @@ async function init() {
     em.on('knex.migrate', async () => {
         const knex = require('../ivis-core/server/lib/knex');
         await knex.migrateExtension('mvis', './knex/migrations').latest();
+    });
+
+    em.on('app.installRoutes', app => {
+        const entityInfo = require('./routes/rest/entity-info');
+        app.use('/rest', entityInfo);
     });
 
     em.on('app.installAPIRoutes', app => {
@@ -50,7 +56,7 @@ async function init() {
         await campaigns.init();
         await channels.init();
 
-        const dataByTypeId = sendToMailtrain({
+        const dataByTypeId = await sendToMailtrain({
             type: 'synchronize'
         });
         const context = getAdminContext();

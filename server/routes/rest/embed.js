@@ -53,7 +53,7 @@ router.getAsync('/embed/campaign-overview/:campaignId', passport.loggedIn, async
             return data;
         }
 
-        for (const linkArc of data.params.pies[1]) {
+        for (const linkArc of data.params.pies[1].segments) {
             const link = await knex('links').where('id', linkArc.linkId).where('campaign', campaignId).first();
             linkArc.label = link ? 'Clicks of ' + link.url : '(unknown link clicks)';
             delete linkArc.linkId;
