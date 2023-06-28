@@ -39,6 +39,12 @@ function spawn(callback) {
                 data: response,
                 requestId: msg.requestId,
             });
+        } else if (msg.type === 'synchronize') {
+            const response = await handleSynchronize();
+            mvisProcess.send({
+                type: 'response',
+                data: response,
+            });
         }
     });
 
@@ -122,6 +128,39 @@ async function handleEntityInfo(msg) {
     }
 
     return res.json(result);
+}
+
+/**
+ * Synchronizes mvis' data with current mailtrain data.
+ */
+async function handleSynchronize() {
+    const list = await knex('lists').select('id', 'subscribers');
+    const campaign = await knex('campaigns').select('id', 'channel');
+    const channel = await knex('channels').select('id');
+
+    const channelsById = new Map();
+    for (const ch of channel) {
+        channelsById.set(ch.id, ch);
+    }
+
+    for (const c of campaign) {
+        if (!c.channel) {
+            continue;
+        }
+        const campaignChannel = channelsById.get(c.channel);
+        if (!campaignChannel.campaignIds) {
+            campaignChannel.campaignIds = [];
+        }
+        campaignChannel.campaignIds.push(c.id);
+    }
+
+    log.info('Activity-log', 'Synchronizing data with IVIS');
+
+    return {
+        list,
+        campaign,
+        channel
+    }
 }
 
 /** Returns from the function when Mvis is ready. */

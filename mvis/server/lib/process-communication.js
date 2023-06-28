@@ -41,17 +41,21 @@ function handleResponse(msg) {
     requestMap.delete(msg.requestId);
 }
 
-process.on('message', msg => {
+async function handleMessage(msg) {
     if (!msg) return;
 
     switch (msg.type) {
         case 'response':
             handleResponse(msg);
             break;
+        case 'synchronize':
+            await handleSynchronize(msg);
+            break;
         default: return;
     }
-});
+}
 
 module.exports = {
-    sendToMailtrain
+    sendToMailtrain,
+    handleMessage,
 };

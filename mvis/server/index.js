@@ -11,10 +11,13 @@ const channels = require('./models/channels');
 const lists = require('./models/lists');
 
 const { addBuiltinTasks } = require('./models/builtin-tasks');
+const { handleMessage } = require('./lib/process-communication');
 
 const apiToken = process.env.API_TOKEN;
 
 async function init() {
+    process.on('message', async msg => await handleMessage(msg));
+
     em.set('app.clientDist', path.join(__dirname, '..', 'client', 'dist'));
 
     em.on('knex.migrate', async () => {
@@ -46,6 +49,14 @@ async function init() {
         await lists.init();
         await campaigns.init();
         await channels.init();
+
+        const dataByTypeId = sendToMailtrain({
+            type: 'synchronize'
+        });
+        const context = getAdminContext();
+        await lists.synchronize(context, dataByTypeId.list);
+        await campaigns.synchronize(context, dataByTypeId.campaign);
+        await channels.synchronize(context, dataByTypeId.channel);
     });
 
     if (process.send) {

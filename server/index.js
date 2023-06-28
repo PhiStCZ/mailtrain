@@ -123,7 +123,8 @@ async function init() {
     await postfixBounceServer.start();
 
     await reportProcessor.init();
-    await activityLog.synchronize();
+
+    await mvis.mvisReady();
 
     log.info('Service', 'All services started');
     appBuilder.setReady();

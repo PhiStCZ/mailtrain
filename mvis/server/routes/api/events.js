@@ -12,25 +12,4 @@ router.postAsync('/events', async (req, res) => {
     return res.json();
 });
 
-router.postAsync('/synchronize', async (req, res) => {
-    /*
-    schema = {
-        list: [...{ id, subscribers }],
-
-        campaign: [...{ id, channel }],
-
-        channel: [...{ id, campaignIds: [...ids] }],
-
-        // campaign may have more data, but even with them many events
-        // will be lost, so campaign synchronization probably won't be very
-        // useful anyway
-    }
-    */
-    const dataByTypeId = req.body;
-    await lists.synchronize(req.context, dataByTypeId.list);
-    await campaigns.synchronize(req.context, dataByTypeId.campaign);
-    await channels.synchronize(req.context, dataByTypeId.channel);
-    return res.json();
-});
-
 module.exports = router;
