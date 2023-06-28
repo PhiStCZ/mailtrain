@@ -49,7 +49,6 @@ router.postAsync('/report-start/:id', passport.loggedIn, passport.csrfProtection
     await shares.enforceEntityPermission(req.context, 'reportTemplate', report.report_template, 'execute');
 
     await reportProcessor.start(id);
-    await activityLog.logEntityActivityWithContext(req.context, LogTypeId.REPORT, ReportActivityType.START, id);
     res.json();
 });
 
@@ -62,7 +61,6 @@ router.postAsync('/report-stop/:id', async (req, res) => {
     await shares.enforceEntityPermission(req.context, 'reportTemplate', report.report_template, 'execute');
 
     await reportProcessor.stop(id);
-    await activityLog.logEntityActivityWithContext(req.context, LogTypeId.REPORT, ReportActivityType.STOP, id);
     res.json();
 });
 

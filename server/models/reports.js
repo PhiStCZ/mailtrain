@@ -158,20 +158,12 @@ async function changeState(id, newState, last_run = undefined) {
     if (last_run !== undefined) {
         fields.last_run = last_run;
     }
-
-    await activityLog.logEntityActivity(LogTypeId.REPORT, ReportActivityType.STATUS_CHANGE, id, {status: newState});
-
     return await updateFields(id, fields);
 }
 
 async function bulkChangeState(oldState, newState) {
     return knex.transaction(async tx => {
         const ids = await knex('reports').where('state', oldState).select('id');
-
-        for (const id of ids) {
-            await activityLog.logEntityActivity(LogTypeId.REPORT, ReportActivityType.STATUS_CHANGE, id, {status: newState});
-        }
-
         return await tx('reports').whereIn('id', ids).update('state', newState);
     });
 }

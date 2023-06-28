@@ -48,11 +48,11 @@ async function init() {
         await channels.init();
     });
 
-    em.on('app.ready', async () => {
-        if (process.send) {
+    if (process.send) {
+        em.on('app.ready', async () => {
             process.send({ type: 'mvis-ready' });
-        }
-    });
+        });
+    }
 
     log.heading = '(mvis)';
 
