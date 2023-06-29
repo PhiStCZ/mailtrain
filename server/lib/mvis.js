@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const knex = require('./knex');
 const users = require('../models/users');
 const shares = require('../models/shares');
+const { getAdminContext } = require('./context-helpers');
+const { filterObject } = require('./helpers');
 
 // This avoids a circular dependency with activity log
 const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
@@ -68,14 +70,15 @@ function spawn(callback) {
     });
 };
 
-const allowedKeysCampaign = new Set('name');
-const allowedKeysList = new Set('name');
-const allowedKeysLink = new Set('url');
+const allowedKeysCampaign = ['name', 'cid'];
+const allowedKeysList = ['name'];
+const allowedKeysLink = ['url'];
 
 // quick bulk info about a batch of entities; used by IVIS embeds to extract data from Mailtrain
 async function handleEntityInfo(msg) {
     async function getData(ids, keys, checkPerms, query) {
-        const entities = await query(ids);
+        query = query.select(keys);
+        const entities = await query;
         const entityMap = new Map();
         for (const e of entities) {
             entityMap.set(e.id, e);
@@ -85,10 +88,10 @@ async function handleEntityInfo(msg) {
         for (const id of ids) {
             const entity = entityMap.get(id);
             const hasPerms = await checkPerms(id);
-            if (!hasPerms) {
+            if (!hasPerms || entity === null) {
                 resp.push(null);
             } else {
-                resp.push(entity == null ? null : filterObject(entity, keys));
+                resp.push(filterObject(entity, keys));
             }
         }
 
@@ -96,24 +99,22 @@ async function handleEntityInfo(msg) {
     }
 
     const context = {
-        user: users.getById(msg.mailtrainUserId)
+        user: await users.getById(getAdminContext(), msg.mailtrainUserId)
     };
-    const entityReqs = req.body || {};
+    const entityReqs = msg.data;
     const result = {};
     if (entityReqs.campaign) {
         result.campaign = await getData(
-            entityReqs.campaign,
-            allowedKeysCampaign,
+            entityReqs.campaign.ids, allowedKeysCampaign,
             async id => await shares.checkEntityPermission(context, 'campaign', id, 'view'),
-            async ids => await knex('campaigns').whereIn('id', ids)
+            ids => knex('campaigns').whereIn('id', ids)
         );
     }
     if (entityReqs.list) {
         result.list = await getData(
-            entityReqs.list,
-            allowedKeysList,
+            entityReqs.list.ids, allowedKeysList,
             async id => await shares.checkEntityPermission(context, 'list', id, 'view'),
-            async ids => await knex('lists').whereIn('id', ids)
+            ids => knex('lists').whereIn('id', ids)
         );
     }
     if (entityReqs.link) {
@@ -123,15 +124,14 @@ async function handleEntityInfo(msg) {
             result.link = [];
         } else {
             result.link = await getData(
-                links,
-                allowedKeysLink,
+                links.ids, allowedKeysLink,
                 () => true,
-                async ids => await knex('links').where('campaign', links.campaignId).whereIn('id', ids)
+                ids => knex('links').where('campaign', links.campaignId).whereIn('id', ids)
             );
         }
     }
 
-    return res.json(result);
+    return result;
 }
 
 /**

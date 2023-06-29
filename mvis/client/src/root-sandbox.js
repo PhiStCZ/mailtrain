@@ -42,16 +42,19 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-channel-recent-campaigns': {
             render: props => <GroupedSegmentedBarChartTemplate
-                docToLabel={doc => `campaign ${doc.campaignId}`}
+                docToLabel={doc => `${doc.label} (ID ${doc.campaignId})`}
                 providerProcessData={async docs => {
                     const reqCampaigns = {
-                        ids: docs.map(d => d.entityId)
+                        ids: docs.map(d => d.campaignId)
                     };
-                    const targetUrl = getUrl('/rest/mt-entity-info');
+                    const targetUrl = getUrl('rest/mt-entity-info');
                     const res = await axios.post(targetUrl, { campaign: reqCampaigns });
+                    const campaignData = res.data.campaign;
                     for (let i = 0; i < docs.length; i++) {
-                        docs[i].label = (res.data[i] && res.data[i].name) || '(unknown campaign)';
+                        docs[i].label = (campaignData[i] && campaignData[i].name) || 'UNKNOWN';
                     }
+
+                    return docs;
                 }}
                 customProcessData={(docs, barGroups) => {
                     for (const group of barGroups) {

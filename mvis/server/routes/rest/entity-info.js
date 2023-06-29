@@ -7,7 +7,7 @@ const router = require('../../../ivis-core/server/lib/router-async').create();
 router.postAsync('/mt-entity-info', passport.loggedIn, async (req, res) => {
     const response = await sendToMailtrain({
         type: 'entity-info',
-        mailtrainUserId: req.restrictedAccessParams.mailtrainUserId,
+        mailtrainUserId: req.user.restrictedAccessParams.params.mailtrainUserId,
         data: req.body
     })
 
