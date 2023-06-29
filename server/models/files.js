@@ -9,6 +9,35 @@ const path = require('path');
 const interoperableErrors = require('../../shared/interoperable-errors');
 const entitySettings = require('../lib/entity-settings');
 const {getPublicUrl} = require('../lib/urls');
+const activityLog = require('../lib/activity-log');
+const { CampaignActivityType, TemplateActivityType, MosaicoTemplateActivityType } = require('../../shared/activity-log');
+
+const addFilesActivityMap = {
+    campaign: {
+        file: CampaignActivityType.UPLOAD_FILES,
+        attachment: CampaignActivityType.UPLOAD_ATTACHMENTS,
+    },
+    template: {
+        file: TemplateActivityType.UPLOAD_FILES,
+    },
+    mosaicoTemplate: {
+        file: MosaicoTemplateActivityType.UPLOAD_FILES,
+        block: MosaicoTemplateActivityType.UPLOAD_BLOCKS,
+    },
+};
+const removeFileActivityMap = {
+    campaign: {
+        file: CampaignActivityType.REMOVE_FILE,
+        attachment: CampaignActivityType.REMOVE_ATTACHMENT,
+    },
+    template: {
+        file: TemplateActivityType.REMOVE_FILE,
+    },
+    mosaicoTemplate: {
+        file: MosaicoTemplateActivityType.REMOVE_FILE,
+        block: MosaicoTemplateActivityType.REMOVE_BLOCK,
+    },
+};
 
 const crypto = require('crypto');
 const bluebird = require('bluebird');
@@ -136,6 +165,7 @@ async function getFileByUrl(context, url) {
 
 // Adds files to an entity. The source data can be either a file (then it's path is contained in file.path) or in-memory data (then it's content is in file.data).
 async function createFiles(context, type, subType, entityId, files, replacementBehavior, transformResponseFn) {
+    // TODO: log activity
     enforceTypePermitted(type, subType);
     if (files.length == 0) {
         // No files uploaded
@@ -268,6 +298,11 @@ async function createFiles(context, type, subType, entityId, files, replacementB
         files: filesRet
     };
 
+    const activityType = addFilesActivityMap[type] && addFilesActivityMap[type][subType];
+    if (activityType) {
+        await activityLog.logEntityActivityWithContext(context, type, activityType, entityId);
+    }
+
     if (transformResponseFn) {
         return transformResponseFn(resp);
     } else {
@@ -316,6 +351,11 @@ async function removeFile(context, type, subType, id) {
             await fs.removeAsync(filePath);
         } else {
             await tx(filesTableName).where('id', file.id).update({delete_pending: true});
+        }
+
+        const activityType = removeFileActivityMap[type] && removeFileActivityMap[type][subType];
+        if (activityType) {
+            await activityLog.logEntityActivityWithContext(context, type, activityType, file.entity);
         }
     });
 }

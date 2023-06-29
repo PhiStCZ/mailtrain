@@ -39,6 +39,10 @@ const CampaignActivityType = {
     UPDATE_TRIGGER: EntityActivityType.MAX + 5,
     REMOVE_TRIGGER: EntityActivityType.MAX + 6,
     ADD_LINK: EntityActivityType.MAX + 7,
+    UPLOAD_ATTACHMENTS: EntityActivityType.MAX + 8,
+    REMOVE_ATTACHMENT: EntityActivityType.MAX + 9,
+    UPLOAD_FILES: EntityActivityType.MAX + 10,
+    REMOVE_FILE: EntityActivityType.MAX + 11,
 };
 
 const CampaignTrackerActivityType = {
@@ -87,11 +91,19 @@ const ReportActivityType = {
 
 const TemplateActivityType = {
     TEST_SEND: EntityActivityType.MAX + 1,
+    UPLOAD_FILES: EntityActivityType.MAX + 2,
+    REMOVE_FILE: EntityActivityType.MAX + 3,
+};
+
+const MosaicoTemplateActivityType = {
+    UPLOAD_FILES: EntityActivityType.MAX + 1,
+    REMOVE_FILE: EntityActivityType.MAX + 2,
+    UPLOAD_BLOCKS: EntityActivityType.MAX + 3,
+    REMOVE_BLOCK: EntityActivityType.MAX + 4,
 };
 
 const UserActivityType = {
-    RESET_ACCESS_TOKEN: EntityActivityType.MAX + 1,
-    RESET_PASSWORD: EntityActivityType.MAX + 2,
+    RESET_PASSWORD: EntityActivityType.MAX + 1,
 };
 
 module.exports.LogTypeId = LogTypeId;
@@ -103,4 +115,5 @@ module.exports.ChannelActivityType = ChannelActivityType;
 module.exports.ListActivityType = ListActivityType;
 module.exports.ReportActivityType = ReportActivityType;
 module.exports.TemplateActivityType = TemplateActivityType;
+module.exports.MosaicoTemplateActivityType = MosaicoTemplateActivityType;
 module.exports.UserActivityType = UserActivityType;

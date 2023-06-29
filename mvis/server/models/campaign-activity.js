@@ -64,7 +64,15 @@ const signalSetSchema = {
         indexed: true,
         weight_list: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 7,
         weight_edit: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 7
-    }
+    },
+    type: {
+        type: SignalType.INTEGER,
+        name: 'Campaign type',
+        settings: {},
+        indexed: true,
+        weight_list: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 8,
+        weight_edit: schemas.ENTITY_ACTIVITY_SCHEMA_MAX + 8
+    },
 };
 
 function signalSetCid(campaignId) {

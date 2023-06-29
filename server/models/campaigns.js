@@ -564,7 +564,8 @@ async function _createTx(tx, context, entity, content) {
 
         await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {
             channelId: filteredEntity.channel,
-            status: filteredEntity.status
+            status: filteredEntity.status,
+            type: filteredEntity.type,
         });
         if (entity.channel) {
             await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: id });

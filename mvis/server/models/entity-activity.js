@@ -116,6 +116,14 @@ const staticSignalSets = {
                 weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 7,
                 weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 7
             },
+            type: {
+                type: SignalType.INTEGER,
+                name: 'Campaign type',
+                settings: {},
+                indexed: true,
+                weight_list: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 8,
+                weight_edit: schemas.STATIC_ENTITY_ACTIVITY_SCHEMA_MAX + 8
+            },
         },
         name: 'Campaign',
     },
