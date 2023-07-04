@@ -40,7 +40,8 @@ async function init() {
     });
 
     em.on('app.validateGlobalAccess', data => {
-        data.accept = apiToken && (data.token === apiToken);
+        const token = data.req.get('global-access-token') || req.query.global_access_token;
+        data.accept = apiToken && (token === apiToken);
     });
 
     em.on('builtinTasks.add', async builtinTasks => {
