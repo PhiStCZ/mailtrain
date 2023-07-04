@@ -9,7 +9,7 @@ const {CampaignStatus, CampaignType, CampaignMessageStatus} = require('../../sha
 const campaigns = require('../models/campaigns');
 const builtinZoneMta = require('../lib/builtin-zone-mta');
 const {CampaignActivityType, LogTypeId, ListActivityType} = require('../../shared/activity-log');
-const mvisApiToken = require('../lib/mvis').apiToken;
+const mvisApiToken = require('../lib/mvis-api').token;
 const activityLog = require('../lib/activity-log');
 const {MessageType} = require('../lib/message-sender');
 require('../lib/fork');

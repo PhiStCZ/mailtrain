@@ -6,7 +6,7 @@ const path = require('path');
 const knex = require('./knex');
 const {CampaignStatus} = require('../../shared/campaigns');
 const builtinZoneMta = require('./builtin-zone-mta');
-const mvisApiToken = require('./mvis').apiToken;
+const mvisApiToken = require('./mvis-api').token;
 const bluebird = require('bluebird');
 
 let messageTid = 0;

@@ -1,25 +1,19 @@
 'use strict';
 
-const config = require('../../lib/config');
 const passport = require('../../lib/passport');
 const shares = require('../../models/shares');
-const axios = require('axios').default;
 const knex = require('../../lib/knex');
 
 const router = require('../../lib/router-async').create();
-const {castToInteger, enforce, filterObject} = require('../../lib/helpers');
+const {castToInteger, enforce} = require('../../lib/helpers');
 const { getAdminId } = require('../../../shared/users');
 
-const mvisApiUrlBase = config.get('mvis.apiUrlBase');
-const embedUrl = `${mvisApiUrlBase}/api/mt-embed/`;
-const apiToken = require('../../lib/mvis').apiToken;
+const embedUrl = '/api/mt-embed/';
+const mvisApi = require('../../lib/mvis-api');
 
 async function redirectDataFromMvis(req, res, embedPath, transformData = null) {
-    const mvisRes = await axios.get(embedUrl + embedPath, {
-        headers: {
-            'global-access-token': apiToken,
-            'mt-user-id': req.user.id
-        }
+    const mvisRes = mvisApi.get(embedUrl + embedPath, {
+        headers: { 'mt-user-id': req.user.id }
     });
     let data = transformData ? await transformData(mvisRes.data) : mvisRes.data;
     return res.json(data);

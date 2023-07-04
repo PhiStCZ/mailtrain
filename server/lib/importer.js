@@ -7,7 +7,7 @@ const path = require('path');
 const {ImportStatus, RunStatus} = require('../../shared/imports');
 const {LogTypeId, ListActivityType} = require('../../shared/activity-log');
 const activityLog = require('./activity-log');
-const mvisApiToken = require('./mvis').apiToken;
+const mvisApiToken = require('./mvis-api').token;
 const bluebird = require('bluebird');
 
 let messageTid = 0;

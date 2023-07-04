@@ -9,11 +9,7 @@ const knex = require('./knex');
 const users = require('../models/users');
 const shares = require('../models/shares');
 const { getAdminContext } = require('./context-helpers');
-const { filterObject } = require('./helpers');
-
-// This avoids a circular dependency with activity log
-const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
-process.env.MVIS_API_TOKEN = apiToken;
+const mvisApiToken = require('./mvis-api').token;
 
 let mvisProcess;
 let mvisReadyState = null;
@@ -27,7 +23,7 @@ function spawn(callback) {
         cwd: wDir,
         env: {
             NODE_ENV: process.env.NODE_ENV,
-            API_TOKEN: apiToken
+            API_TOKEN: mvisApiToken
         }
     });
 
@@ -70,14 +66,14 @@ function spawn(callback) {
     });
 };
 
-const allowedKeysCampaign = ['name', 'cid'];
-const allowedKeysList = ['name'];
-const allowedKeysLink = ['url'];
+const allowedKeysCampaign = ['id', 'name', 'cid'];
+const allowedKeysList = ['id', 'name'];
+const allowedKeysLink = ['id', 'url'];
 
 // quick bulk info about a batch of entities; used by IVIS embeds to extract data from Mailtrain
 async function handleEntityInfo(msg) {
     async function getData(ids, keys, checkPerms, query) {
-        query = query.select(keys);
+        query = query(ids).select(keys);
         const entities = await query;
         const entityMap = new Map();
         for (const e of entities) {
@@ -91,7 +87,7 @@ async function handleEntityInfo(msg) {
             if (!hasPerms || entity === null) {
                 resp.push(null);
             } else {
-                resp.push(filterObject(entity, keys));
+                resp.push(entity);
             }
         }
 
@@ -175,6 +171,5 @@ async function mvisReady() {
     await mvisReadyState;
 }
 
-module.exports.apiToken = apiToken;
 module.exports.spawn = bluebird.promisify(spawn);
 module.exports.mvisReady = mvisReady;

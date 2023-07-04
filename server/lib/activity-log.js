@@ -2,21 +2,15 @@
 
 const moment = require('moment');
 const config = require('config');
-const crypto = require('crypto');
-const axios = require('axios').default;
 const { LogTypeId } = require('../../shared/activity-log');
 const { hashEmail } = require('./helpers');
+const mvisApi = require('./mvis-api');
 
 let activityQueue = [];
 let activityQueue2 = [];
 
-// This avoids a circular dependency with ./mvis
-const apiToken = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
-process.env.MVIS_API_TOKEN = apiToken;
-
 const logSensitiveUserData = config.get('mvis.logSensitiveUserData');
-const apiUrlBase = config.get('mvis.apiUrlBase');
-const eventsUrl = `${apiUrlBase}/api/events`;
+const eventsPath = '/api/events';
 
 const activityQueueLengthThreshold = 100;
 const activityQueueTimeoutMs = 1000;
@@ -36,10 +30,8 @@ async function processQueue() {
     // is written to before returning from the axios.post
     [activityQueue2, activityQueue] = [activityQueue, activityQueue2];
 
-    if (eventsUrl) {
-        await axios.post(eventsUrl, { data: activityQueue2 }, {
-            headers: { 'global-access-token': apiToken }
-        });
+    if (eventsPath) {
+        await mvisApi.post(eventsPath, { data: activityQueue2 });
     }
 
     activityQueue2.splice(0);
