@@ -68,13 +68,16 @@ export default class Statistics extends Component {
         // noinspection JSIgnoredPromiseFromCall
         this.periodicRefreshTask();
 
-        fetchTokenAndEmbedBuiltinTemplate(this.overviewEmbedId, 'campaign-overview/' + this.props.entity.id);
-        fetchTokenAndEmbedBuiltinTemplate(this.messagesEmbedId, 'campaign-messages/' + this.props.entity.id);
+        this.overviewEmbedCtrl = fetchTokenAndEmbedBuiltinTemplate(this.overviewEmbedId, 'campaign-overview/' + this.props.entity.id);
+        this.messagesEmbedCtrl = fetchTokenAndEmbedBuiltinTemplate(this.messagesEmbedId, 'campaign-messages/' + this.props.entity.id);
     }
 
     componentWillUnmount() {
         clearTimeout(this.refreshTimeoutId);
         this.refreshTimeoutHandler = null;
+
+        this.overviewEmbedCtrl.stop();
+        this.messagesEmbedCtrl.stop();
     }
 
 

@@ -48,9 +48,14 @@ export default class List extends Component {
 
     componentDidMount() {
         if (this.props.channel) {
-            fetchTokenAndEmbedBuiltinTemplate(this.campaignsEmbedId, 'channel-recent-campaigns/' + this.props.channel.id);
-            fetchTokenAndEmbedBuiltinTemplate(this.contributionsEmbedId, 'channel-campaign-contributions/' + this.props.channel.id);
+            this.campaignsEmbedCtrl = fetchTokenAndEmbedBuiltinTemplate(this.campaignsEmbedId, 'channel-recent-campaigns/' + this.props.channel.id);
+            this.contributionsEmbedCtrl = fetchTokenAndEmbedBuiltinTemplate(this.contributionsEmbedId, 'channel-campaign-contributions/' + this.props.channel.id);
         }
+    }
+
+    componentWillUnmount() {
+        this.campaignsEmbedCtrl.stop();
+        this.contributionsEmbedCtrl.stop();
     }
 
     render() {

@@ -2,11 +2,12 @@
 
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { TimeContext, TimeRangeSelector, Legend, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
-import { EventLineChart } from "../charts/EventLineChart";
+import { TimeContext, TimeRangeSelector, Legend, withPanelConfig, panelConfigMixin } from "../../../ivis-core/client/src/ivis/ivis";
 import { CampaignActivityType, EntityActivityType, ListActivityType } from "../../../../shared/activity-log";
+import { Dropdown, Form, withForm } from "../../../ivis-core/client/src/lib/form";
 import { EventChart } from "../charts/EventChart";
 import { campaignEventToString, listEventToString } from "./EventLineChart";
+import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 
 const sensorsStructure = [
     {
@@ -19,7 +20,10 @@ const sensorsStructure = [
 export const globalListEventToString = evt => listEventToString(evt) + ` (id ${evt.data.entityId.value})`;
 export const globalCampaignEventToString = evt => campaignEventToString(evt) + ` (id ${evt.data.entityId.value})`;
 
-@withPanelConfig
+@withComponentMixins([
+    panelConfigMixin,
+    withForm,
+])
 export class EventChartTemplate extends Component {
 
     constructor(props) {
@@ -44,6 +48,14 @@ export class EventChartTemplate extends Component {
         }
     }
 
+    componentDidMount() {
+        this.populateFormValues({
+            filterType: null,
+            filterEntity: null,
+            filterUser: null,
+        });
+    }
+
     render() {
         /*
         signalSets: [
@@ -58,15 +70,37 @@ export class EventChartTemplate extends Component {
         ]
         */
         const config = this.getPanelConfig();
+        const types = [{ key: null, label: 'None' }].concat(config.signalSets.map(s => ({ key: s.type, label: s.label })));
+        const entitiesByType = {};
+        for (const s of config.signalSets) {
+            entitiesByType[s.type] = [{ key: null, label: 'None' }].concat(s.entities.map(e => ({key: e.id, label: e.label})));
+        }
+        const filteredType = this.getFormValue('filterType');
+        const filteredEntity = this.getFormValue('filterEntity');
+        const filteredUser = this.getFormValue('filterUser');
+
+        for (const s of config.signalSets) {
+            s.visible = filteredType == null || filteredType == s.type
+        }
 
         return (
             <TimeContext>
+                {/*<Legend label="Events" configPath={['signalSets']} withSelector structure={sensorsStructure} />*/}
                 <TimeRangeSelector/>
-                <Legend label="Events" configPath={['signalSets']} withSelector structure={sensorsStructure} />
+                <Form stateOwner={this} onSubmitAsync={/*:: TODO*/this.submitForm} format="wide">
+                    <Dropdown id="filterType" label="Filter entity type:" format="wide" options={types}/>
+                    <Dropdown id="filterEntity" label="Filter entity:" format="wide" options={entitiesByType[filteredType]} disabled={filteredType == null}/>
+                    <Dropdown id="filterUser" label="Filter user:" format="wide" options={entitiesByType['user']}/>
+                    {/*<Button type="submit" className="btn-primary" label={t('Apply')}/>*/}
+                </Form>
                 <EventChart
                     config={{
                         signalSets: config.signalSets,
                     }}
+                    filterFun={event =>
+                        (filteredEntity == null || filteredEntity == event.entityId) &&
+                        (filteredUser == null || filteredUser == event.actor)
+                    }
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
                     tooltipExtraProps={{ width: 500 }}

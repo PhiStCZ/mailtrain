@@ -17,6 +17,7 @@ import templates from './templates/root';
 import users from './users/root';
 import sendConfigurations from './send-configurations/root';
 import settings from './settings/root';
+import audit from './audit/root';
 
 import {DropdownLink, getLanguageChooser, NavDropdown, NavLink, Section} from "./lib/page";
 
@@ -90,6 +91,7 @@ class Root extends Component {
                                     <DropdownLink to="/send-configurations">{t('sendConfigurations')}</DropdownLink>
                                     {mailtrainConfig.globalPermissions.manageBlacklist && <DropdownLink to="/blacklist">{t('blacklist')}</DropdownLink>}
                                     <DropdownLink to="/account/api">{t('api')}</DropdownLink>
+                                    {mailtrainConfig.user.id == 1 && <DropdownLink to="/audit">{'Entity activity'}</DropdownLink>}
                                 </NavDropdown>
                             </ul>
                             <ul className="navbar-nav mt-navbar-nav-right">
@@ -131,7 +133,8 @@ class Root extends Component {
                 ...settings.getMenus(t),
                 ...sendConfigurations.getMenus(t),
                 ...campaigns.getMenus(t),
-                ...channels.getMenus(t)
+                ...channels.getMenus(t),
+                ...audit.getMenus(t),
             }
         };
 
