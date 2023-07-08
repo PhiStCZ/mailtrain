@@ -43,7 +43,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
         ],
         trigger: null,  // no automatic trigger
         min_gap: 60,    // 1 minute
-        delay: 60,      // 1 minute
+        delay: null,
     };
     const jobId = await createJobByName(context, job, true);
 
@@ -123,9 +123,12 @@ async function init() {
     activityLog.on(LogTypeId.CAMPAIGN_TRACKER, async (context, events) => {
         const eventsByCampaignId = activityLog.groupEventsByField(events, 'campaignId');
         campaignTracker.addCampaignTrackerEvents(context, eventsByCampaignId);
-        for (const campaignId of eventsByCampaignId.keys()) {
-            channels.updateChannelCampaignStats(context, campaignId);
-        }
+
+        setTimeout(() => { // jobs may take some time to update the signal sets
+            for (const campaignId of eventsByCampaignId.keys()) {
+                channels.updateChannelCampaignStats(context, campaignId);
+            }
+        }, 1000 * 120);
     });
 
     activityLog.after(LogTypeId.CAMPAIGN, async(context, events) => {

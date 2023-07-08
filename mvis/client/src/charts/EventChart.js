@@ -103,6 +103,7 @@ export class EventChart extends Component {
         tooltipExtraProps: PropTypes.object,
         lineWidth: PropTypes.number,
         horizontalLineColor: PropTypes.string,
+        filterFun: PropTypes.func
     }
 
     static defaultProps = {
@@ -178,7 +179,12 @@ export class EventChart extends Component {
 
         let noData = true;
         for (const setSpec of config.signalSets) {
-            const data = signalSetsData[setSpec.cid];
+            if (!isVisible(setSpec)) continue;
+
+            let data = signalSetsData[setSpec.cid];
+            if (this.props.filterFun) {
+                data = data.filter(this.props.filterFun);
+            }
             noData &&= (data.length == 0);
 
             const mergedEvents = [];

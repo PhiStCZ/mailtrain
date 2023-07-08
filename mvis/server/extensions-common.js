@@ -76,8 +76,8 @@ em.on('builtinTemplates.add', builtinTemplates => {
                 "signalSetRef": "activitySet"
             },
             {
-                "id": "activityIssuedBy",
-                "label": "Time Issued-by",
+                "id": "activityActor",
+                "label": "Activity Actor",
                 "type": "signal",
                 "signalSetRef": "activitySet"
             }

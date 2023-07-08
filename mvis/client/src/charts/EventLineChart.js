@@ -22,7 +22,7 @@ function defaultGetSignalValues(tooltipContent, sigSetConf, sigConf, sigSetCid, 
     const isMax = signalData.max !== null;
     const unit = sigConf.unit || '';
 
-    const numberFormat = d3Format('.3f');
+    const numberFormat = d3Format('.0f');
     const renderVal = attr => {
         const val = signalData[attr];
         if (val === null) {
@@ -174,25 +174,31 @@ export class EventLineChart extends Component {
         tooltipExtraProps: PropTypes.object,
         tooltipEventToString: PropTypes.func,
         eventColor: PropTypes.string,
+        extraActivitySignals: PropTypes.array
     }
 
     static defaultProps = {
         margin: { left: 60, right: 5, top: 5, bottom: 20 },
         height: 500,
-        eventColor: '#884444'
+        eventColor: '#884444',
+        extraActivitySignals: []
     }
 
     getExtraQueries(base, abs) {
         const config = this.props.config;
+        const signals = {
+            // we are searching docs, so no aggregations are needed
+            [config.activityType]: ['value']
+            // [config.activityActor]: ['value'],
+        };
+        for (const sigCid of this.props.extraActivitySignals) {
+            signals[sigCid] = ['value'];
+        }
 
         const signalSets = {
             [config.activitySet]: {
                 tsSigCid: [config.activityTs],
-                signals: {
-                    // we are searching docs, so no aggregations are needed
-                    [config.activityType]: ['value'],
-                    // [config.activityIssuedBy]: ['value'],
-                },
+                signals
             }
         };
 

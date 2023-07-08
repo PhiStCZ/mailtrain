@@ -12,6 +12,8 @@ import { EventChartTemplate } from './templates/EventChart';
 import axios from '../../ivis-core/client/src/lib/axios';
 import { getUrl } from '../../ivis-core/client/src/lib/urls';
 
+const entityInfoUrl = getUrl('rest/mt-entity-info');
+
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
         'mt-list-subscriptions': {
@@ -36,6 +38,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
         'mt-campaign-messages': {
             render: props => <EventLineChartTemplate
                 eventToString={campaignEventToString}
+                extraActivitySignals={['status']}
                 {...props}
             />
         },
@@ -47,8 +50,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     const reqCampaigns = {
                         ids: docs.map(d => d.campaignId)
                     };
-                    const targetUrl = getUrl('rest/mt-entity-info');
-                    const res = await axios.post(targetUrl, { campaign: reqCampaigns });
+                    const res = await axios.post(entityInfoUrl, { campaign: reqCampaigns });
                     const campaignData = res.data.campaign;
                     for (let i = 0; i < docs.length; i++) {
                         docs[i].label = (campaignData[i] && campaignData[i].name) || 'UNKNOWN';
@@ -73,7 +75,23 @@ em.on('client.installSandboxRoutes', (structure, t) => {
 
         'mt-channel-campaign-contributions': {
             render: props => <RangeValuePieChart
-                docToLabel={doc => `campaign ${doc.data.campaignId.value}`}
+                processDataFun={async signalSetsData => {
+                    const sigSetCid = Object.keys(signalSetsData)[0];
+                    const docs = signalSetsData[sigSetCid].main;
+
+                    const reqCampaigns = {
+                        ids: docs.map(d => d.data.campaignId.value)
+                    };
+                    const res = await axios.post(entityInfoUrl, { campaign: reqCampaigns });
+                    const campaignData = res.data.campaign;
+                    for (let i = 0; i < docs.length; i++) {
+                        docs[i].label = (campaignData[i] && campaignData[i].name) || 'UNKNOWN';
+                    }
+
+                    return signalSetsData;
+                }}
+                docToLabel={doc => `${doc.label} (ID ${doc.data.campaignId.value})`}
+                arcWidth={120}
                 {...props}
             />
         },

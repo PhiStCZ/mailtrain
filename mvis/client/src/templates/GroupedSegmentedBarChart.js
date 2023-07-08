@@ -2,7 +2,7 @@
 
 import React, { Component } from "react";
 import { GroupedSegmentedBarChart } from "../charts/GroupedSegmentedBarChart";
-import { DocsDataProvider } from "../charts/Providers";
+import { DocsDataProvider } from "../providers/Providers";
 import { withTranslation } from "../../../ivis-core/client/src/lib/i18n";
 import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 import { withPanelConfig } from "../../../ivis-core/client/src/ivis/PanelConfig";

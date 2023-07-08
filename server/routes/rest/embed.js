@@ -47,10 +47,13 @@ router.getAsync('/embed/campaign-overview/:campaignId', passport.loggedIn, async
             return data;
         }
 
-        for (const linkArc of data.params.pies[1].segments) {
-            const link = await knex('links').where('id', linkArc.linkId).where('campaign', campaignId).first();
-            linkArc.label = link ? 'Clicks of ' + link.url : '(unknown link clicks)';
-            delete linkArc.linkId;
+        const linksPie = data.params.pies.filter(p => p.label === 'Link Clicks')[0];
+        if (linksPie) {
+            for (const linkArc of linksPie.segments) {
+                const link = await knex('links').where('id', linkArc.linkId).where('campaign', campaignId).first();
+                linkArc.label = (link && link.url) || 'UNKNOWN LINK';
+                delete linkArc.linkId;
+            }
         }
 
         return data;
@@ -64,7 +67,7 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
         for (const signal of data.params.sensors) {
             if (signal.linkId) {
                 const link = await knex('links').where('id', signal.linkId).where('campaign', campaignId).first();
-                signal.label = link ? 'Clicks of ' + link.url : '(unknown link clicks)';
+                signal.label = 'Clicks of ' + ((link && link.url) || 'UNKNOWN LINK');
                 delete signal.linkId;
             }
         }
@@ -74,7 +77,27 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
 
 router.getAsync('/embed/audit', passport.loggedIn, async (req, res) => {
     enforce(req.context.user.id == getAdminId(), 'Audit can only be done by admin');
-    return await redirectDataFromMvis(req, res, `audit`);
+
+    return await redirectDataFromMvis(req, res, `audit`, async data => {
+        for (const set of data.params.signalSets) {
+            let tableName, labelName;
+            switch (set.type) {
+                case 'campaign':
+                    [tableName, labelName] = ['campaigns', 'name'];
+                    break;
+                case 'list':
+                    [tableName, labelName] = ['lists', 'name'];
+                    break;
+                case 'user':
+                    [tableName, labelName] = ['users', 'username'];
+                    break;
+                }
+                // TODO: finish
+
+            let entities = await knex(tableName).select('id', labelName);
+            set.entities = entities.map(e => ({id: e.id, label: e[labelName]}));
+        }
+    });
 });
 
 

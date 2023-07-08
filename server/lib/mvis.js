@@ -4,7 +4,6 @@ const fork = require('./fork').fork;
 const log = require('./log');
 const path = require('path');
 const bluebird = require('bluebird');
-const crypto = require('crypto');
 const knex = require('./knex');
 const users = require('../models/users');
 const shares = require('../models/shares');

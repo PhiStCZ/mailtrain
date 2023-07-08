@@ -21,10 +21,10 @@ async function init() {
 
     em.set('app.clientDist', path.join(__dirname, '..', 'client', 'dist'));
 
-    em.on('knex.migrate', async () => {
-        const knex = require('../ivis-core/server/lib/knex');
-        await knex.migrateExtension('mvis', './knex/migrations').latest();
-    });
+    // em.on('knex.migrate', async () => {
+    //     const knex = require('../ivis-core/server/lib/knex');
+    //     await knex.migrateExtension('mvis', './knex/migrations').latest();
+    // });
 
     em.on('app.installRoutes', app => {
         const entityInfo = require('./routes/rest/entity-info');

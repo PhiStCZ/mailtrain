@@ -29,7 +29,6 @@ class TooltipContent extends Component {
     };
 
     render() {
-        // TODO: possibly limit the max amount of displayed segments
         const segment = this.props.selection;
         if (segment) {
             const content = [

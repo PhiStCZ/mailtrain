@@ -8,10 +8,6 @@ const { LogTypeId } = require('../../../shared/activity-log');
 const schemas = require('./schemas');
 const activityLog = require('../lib/activity-log');
 
-/**
- * All signal sets not bound to any entity instance.
- * At runtime it also contains cached signal sets.
- */
 const staticSignalSets = {
     [LogTypeId.BLACKLIST]: {
         schema: {
@@ -23,9 +19,9 @@ const staticSignalSets = {
                 weight_list: 0,
                 weight_edit: 0
             },
-            issuedBy: {
+            actor: {
                 type: SignalType.INTEGER,
-                name: 'Issued by',
+                name: 'Activity Actor',
                 settings: {},
                 indexed: true,
                 weight_list: 1,
@@ -232,9 +228,9 @@ const staticSignalSets = {
                 weight_list: 0,
                 weight_edit: 0
             },
-            issuedBy: {
+            actor: {
                 type: SignalType.INTEGER,
-                name: 'Issued by',
+                name: 'Activity Actor',
                 settings: {},
                 indexed: true,
                 weight_list: 1,
@@ -257,9 +253,9 @@ const staticSignalSets = {
                 weight_list: 0,
                 weight_edit: 0
             },
-            issuedBy: {
+            actor: {
                 type: SignalType.INTEGER,
-                name: 'Issued by',
+                name: 'Activity Actor',
                 settings: {},
                 indexed: true,
                 weight_list: 1,

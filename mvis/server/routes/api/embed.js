@@ -61,7 +61,7 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
         activitySet: listActivity.signalSetCid(listId),
         activityTs: 'timestamp',
         activityType: 'activityType',
-        activityIssuedBy: 'issuedBy',
+        activityActor: 'actor',
     };
 
     return res.json(
@@ -149,7 +149,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
         extraSignals: [],
         pies: [
             {
-                label: 'Messages',
+                label: 'Sent Messages',
                 segments: [
                     { label: 'Opened', sigSet, signal: 'opened', color: '#44dd44' },
                     { label: 'Sent (but unopened)', sigSet, signal: 'sent', color: '#22aa22' },
@@ -157,7 +157,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
                 ],
             },
             {
-                label: 'Actions',
+                label: 'Subscriber Actions',
                 segments: [
                     { label: 'Unsubscribed', sigSet, signal: 'unsubscribed', color: '#666666' },
                     { label: 'Bounced', sigSet, signal: 'bounced', color: '#eebb88' },
@@ -172,7 +172,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
         // TODO: maybe sort by size into a limited amount of links (max 5) and put rest into 'other'
         params.pies.push(params.pies[1]);
         params.pies[1] = {
-            label: 'Links',
+            label: 'Link Clicks',
             segments: extraLinks.map((linkId, idx) => ({
                 linkId,
                 sigSet,
@@ -204,7 +204,7 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
         activitySet: campaignActivity.signalSetCid(campaignId),
         activityTs: 'timestamp',
         activityType: 'activityType',
-        activityIssuedBy: 'issuedBy',
+        activityActor: 'actor',
     };
 
     params.sensors.push(...extraLinks.map((linkId, idx) => ({
@@ -237,7 +237,7 @@ router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
                 activitySigCid: 'activityType',
                 extraSignals: [
                     { sigSet: LogTypeId.CAMPAIGN, signal: 'entityId' },
-                    { sigSet: LogTypeId.CAMPAIGN, signal: 'issuedBy' }
+                    { sigSet: LogTypeId.CAMPAIGN, signal: 'actor' }
                 ]
             },
             {
@@ -250,7 +250,20 @@ router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
                 activitySigCid: 'activityType',
                 extraSignals: [
                     { sigSet: LogTypeId.LIST, signal: 'entityId' },
-                    { sigSet: LogTypeId.LIST, signal: 'issuedBy' }
+                    { sigSet: LogTypeId.LIST, signal: 'actor' }
+                ]
+            },
+            {
+                label: 'User',
+                cid: LogTypeId.USER,
+                color: '#44dd44',
+                enabled: 'true',
+                type: 'user',
+                tsSigCid: 'timestamp',
+                activitySigCid: 'activityType',
+                extraSignals: [
+                    { sigSet: LogTypeId.USER, signal: 'entityId' },
+                    { sigSet: LogTypeId.USER, signal: 'actor' }
                 ]
             },
         ]

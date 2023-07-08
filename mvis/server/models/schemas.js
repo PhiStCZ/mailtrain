@@ -14,9 +14,9 @@ const timestampSignal = {
 
 const entityActivitySchema = {
     timestamp: timestampSignal,
-    issuedBy: {
+    actor: {
         type: SignalType.INTEGER,
-        name: 'Issued by',
+        name: 'Activity Actor',
         settings: {},
         indexed: true,
         weight_list: 1,

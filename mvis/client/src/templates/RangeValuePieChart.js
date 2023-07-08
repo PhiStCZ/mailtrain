@@ -3,7 +3,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
-import { IntervalSpec, LegendPosition, PredefTimeRangeSelector, StaticPieChart, TimeContext, TimeRangeSelector, TimeSeriesProvider, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
+import { IntervalSpec, PredefTimeRangeSelector, StaticPieChart, TimeContext, TimeSeriesProvider, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
 import { ActionLink } from "../../../ivis-core/client/src/lib/bootstrap-components";
 
 
@@ -16,8 +16,10 @@ export default class RangeValuePieChart extends Component {
     }
 
     static propTypes = {
+        processDataFun: PropTypes.func.isRequired,
         docToLabel: PropTypes.func.isRequired,
         height: PropTypes.number,
+        arcWidth: PropTypes.number,
     }
 
     static defaultProps = {
@@ -61,6 +63,7 @@ export default class RangeValuePieChart extends Component {
                     timeRanges[0].refreshInterval
                 )}
             >
+                {/* TODO: perhaps organize this better */}
                 <h4>Include campaigns within:</h4>
                 <PredefTimeRangeSelector ranges={timeRanges}/>
                 <h4>Statistic:</h4>
@@ -78,7 +81,7 @@ export default class RangeValuePieChart extends Component {
                     signalSets={{
                         [sigSetCid]: { tsSigCid, signals }
                     }}
-                    renderFun={(data) => {
+                    renderFun={data => {
                         const selectedSignal = signalsByCid[selectedSignalCid];
 
                         const arcs = data[sigSetCid].main.map(doc => ({
@@ -89,10 +92,12 @@ export default class RangeValuePieChart extends Component {
                         return <StaticPieChart
                             config={{ arcs }}
                             height={this.props.height}
+                            arcWidth={this.props.arcWidth}
                             drawPercentageLabels={true}
                             drawValueLabels={true}
                         />;
                     }}
+                    processDataFun={this.props.processDataFun}
                 />
             </TimeContext>
         );

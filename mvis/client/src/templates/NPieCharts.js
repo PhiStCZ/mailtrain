@@ -4,7 +4,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { LegendPosition, StaticPieChart, withPanelConfig } from "../../../ivis-core/client/src/ivis/ivis";
 import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
-import { DocsDataProvider } from "../charts/Providers";
+import { DocsDataProvider } from "../providers/Providers";
 
 @withPanelConfig
 export default class NPieCharts extends Component {
@@ -46,6 +46,7 @@ export default class NPieCharts extends Component {
             <div>
                 {piesConfig.map((pie, idx) =>
                     <span key={idx} style={{display: 'inline-block', width: widthPercent}}>
+                        <h4>{pie.label}</h4>
                         <StaticPieChart
                             config={{arcs: this.processDataForPie(pie, doc)}}
                             height={this.props.height}
