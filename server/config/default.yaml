@@ -129,7 +129,7 @@ mvis:
   apiUrlBase: http://localhost:3012
 
   logRepeatedEvents: false
-  logSensitiveUserData: false
+  logSensitiveUserData: true
 
 mysql:
   host: localhost
