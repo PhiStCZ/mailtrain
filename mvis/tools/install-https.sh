@@ -1,25 +1,34 @@
 #!/bin/bash
-
 set -e
 
 hostType="$1"
-
 if [ hostType == "centos7" ]; then
     hostType="centos7-minimal"
 elif [ hostType == "centos8" ]; then
     hostType="centos8-minimal"
 fi
 
+ivisCorePath="$(dirname $(realpath -s $0))/../ivis-core"
+SCRIPT_PATH="$ivisCorePath/setup"
 productId=mvis
 productLabel="Mailtrain IVIS"
-ivisCorePath="$(dirname $(realpath -s $0))/../ivis-core"
+userId=mailtrain
+groupId=mailtrain
 
 git submodule update --init $ivisCorePath
 
-. $ivisCorePath/setup/functions
+. $SCRIPT_PATH/functions
 
-# API port is left local-only
-performInstallHttps "$(($# - 1))" "$2" "$3" "$4" "" false
+# API is left local-only
+local hostTrusted="$2"
+local hostSandbox="$3"
+local email="$4"
+
+installPrerequisities
+installHttpd 443 443 ""
+createCertificates "${hostTrusted}" "${hostSandbox}" "" "${email}"
+installHttpsProxy "${hostTrusted}" 443 "${hostSandbox}" 443 "" "" "/etc/letsencrypt/live/${hostTrusted}/cert.pem" "/etc/letsencrypt/live/${hostTrusted}/privkey.pem" "/etc/letsencrypt/live/${hostTrusted}/chain.pem"
+installIvis "https://${hostTrusted}" "https://${hostSandbox}" true 0.0.0.0 false "${email}"
 
 configPath="$(dirname $(realpath -s $0))/../server/config/production.yaml"
 cat > $configPath <<EOT
@@ -32,4 +41,4 @@ www:
 EOT
 
 
-chown mailtrain:mailtrain -R $ivisCorePath
+echo "MVIS successfully installed."

@@ -208,7 +208,8 @@ EOT
     systemctl enable mongod
 }
 
-function installMariaDBFixKeyLength() {
+function installMariaDBFixKeyLength {
+    mkdir -p /etc/mysql/mariadb.conf.d/
     cat > /etc/mysql/mariadb.conf.d/60-fix-key-length.cnf <<EOT
 [mysqld]
 innodb_file_format = Barracuda
