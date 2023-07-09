@@ -1,8 +1,9 @@
 'use strict';
 
 import React, { Component } from 'react';
-import {fetchTokenAndEmbedBuiltinTemplate} from '../lib/embed';
+import { fetchTokenAndEmbedBuiltinTemplate } from '../lib/embed';
 import embedStyles from '../lib/embed.scss';
+import { Title } from '../lib/page';
 
 class Audit extends Component {
 
@@ -23,7 +24,7 @@ class Audit extends Component {
     render() {
         return (
             <div>
-                <Title>{'Entity Activity'}</Title>
+                <Title>{'Entity Activity Audit'}</Title>
                 <div id={this.auditEmbedId} className={embedStyles.embedWindow}></div>
             </div>
         );

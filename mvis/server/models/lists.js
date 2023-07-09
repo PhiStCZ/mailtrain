@@ -45,7 +45,7 @@ async function createJob(context, listId, listTrackerSigSet, creationTimestamp =
         ],
         min_gap: 60,    // 1 minute
         trigger: null,
-        delay: null,
+        delay: 30,
     };
     const jobId = await createJobByName(context, job, true);
 

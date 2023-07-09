@@ -102,8 +102,7 @@ export class EventChart extends Component {
         margin: PropTypes.object,
         tooltipExtraProps: PropTypes.object,
         lineWidth: PropTypes.number,
-        horizontalLineColor: PropTypes.string,
-        filterFun: PropTypes.func
+        horizontalLineColor: PropTypes.string
     }
 
     static defaultProps = {
@@ -182,8 +181,10 @@ export class EventChart extends Component {
             if (!isVisible(setSpec)) continue;
 
             let data = signalSetsData[setSpec.cid];
-            if (this.props.filterFun) {
-                data = data.filter(this.props.filterFun);
+            if (setSpec.filter) {
+                for (const key of Object.keys(setSpec.filter)) {
+                    data = data.filter(value => value[key] == setSpec.filter[key]);
+                }
             }
             noData &&= (data.length == 0);
 
@@ -239,7 +240,7 @@ export class EventChart extends Component {
                 const closestIdx = d3Array.minIndex(events, evt => Math.abs(evt.ts - ts));
                 const closest = events[closestIdx];
                 const maxSelectDistance = (abs.to - abs.from) * 0.025;
-                if (Math.abs(closest.ts - ts) <= maxSelectDistance) {
+                if (closest && (Math.abs(closest.ts - ts) <= maxSelectDistance)) {
                     selection = selection || {};
                     selection[sigSetCid] = closest;
                 }
@@ -350,6 +351,16 @@ export class EventChart extends Component {
 
                 // getSvgDefs={this.props.getSvgDefs}
                 compareConfigs={(cf1, cf2) => {
+                    function filtersDiffer(set1, set2) {
+                        const f1 = set1.filter || {}, f2 = set2.filter || {};
+                        const f1keys = Object.keys(f1);
+                        if (f1keys.length != Object.keys(f2).length) return true;
+                        for (const key of f1keys) {
+                            if (f1[key] != f2[key]) return true;
+                        }
+                        return false;
+                    }
+
                     if (cf1.signalSets.length != cf2.signalSets.length) {
                         return ConfigDifference.DATA;
                     }
@@ -368,6 +379,9 @@ export class EventChart extends Component {
                             }
                         }
                         if (set1.color != set2.color || set1.label !== set2.label || set1.enabled !== set2.enabled) {
+                            cfDiff = ConfigDifference.RENDER;
+                        }
+                        if (filtersDiffer(set1, set2)) {
                             cfDiff = ConfigDifference.RENDER;
                         }
                     }

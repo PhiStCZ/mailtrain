@@ -43,7 +43,7 @@ async function createJob(context, campaignId, campaignTrackerSigSet, creationTim
         ],
         trigger: null,  // no automatic trigger
         min_gap: 60,    // 1 minute
-        delay: null,
+        delay: 30,
     };
     const jobId = await createJobByName(context, job, true);
 

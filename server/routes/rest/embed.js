@@ -12,7 +12,7 @@ const embedUrl = '/api/mt-embed/';
 const mvisApi = require('../../lib/mvis-api');
 
 async function redirectDataFromMvis(req, res, embedPath, transformData = null) {
-    const mvisRes = mvisApi.get(embedUrl + embedPath, {
+    const mvisRes = await mvisApi.get(embedUrl + embedPath, {
         headers: { 'mt-user-id': req.user.id }
     });
     let data = transformData ? await transformData(mvisRes.data) : mvisRes.data;
@@ -97,6 +97,8 @@ router.getAsync('/embed/audit', passport.loggedIn, async (req, res) => {
             let entities = await knex(tableName).select('id', labelName);
             set.entities = entities.map(e => ({id: e.id, label: e[labelName]}));
         }
+
+        return data;
     });
 });
 

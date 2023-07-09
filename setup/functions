@@ -68,11 +68,12 @@ EOF
       exit 1
     fi
 
+    installPrerequisities
+    installMailtrain http://localhost:3000 http://localhost:3003 http://localhost:3004 http://localhost:3010 http://localhost:3011 0.0.0.0 false
+
     mvisInstallPath="mvis/tools/install-local.sh"
     bash $mvisInstallPath "$hostType"
 
-    installPrerequisities
-    installMailtrain http://localhost:3000 http://localhost:3003 http://localhost:3004 http://localhost:3010 http://localhost:3011 0.0.0.0 false
     installService
 
     echo
@@ -113,14 +114,15 @@ EOF
       exit 1
     fi
 
-    mvisInstallPath="mvis/tools/install-https.sh"
-    bash $mvisInstallPath "$hostType" "$hostIvisTrusted" "$hostIvisSandbox" "$email"
-
     installPrerequisities
     installHttpd 443 443 443
     createCertificates "${hostTrusted}" "${hostSandbox}" "${hostPublic}" "${email}"
     installHttpsProxy "${hostTrusted}" 443 "${hostSandbox}" 443 "${hostPublic}" 443 "/etc/letsencrypt/live/${hostPublic}/cert.pem" "/etc/letsencrypt/live/${hostPublic}/privkey.pem" "/etc/letsencrypt/live/${hostPublic}/chain.pem"
     installMailtrain "https://${hostTrusted}" "https://${hostSandbox}" "https://${hostPublic}" "https://${hostIvisTrusted}" "https://${hostIvisSandbox}" 127.0.0.1 true
+
+    mvisInstallPath="mvis/tools/install-https.sh"
+    bash $mvisInstallPath "$hostType" "$hostIvisTrusted" "$hostIvisSandbox" "$email"
+
     installService
 
     echo

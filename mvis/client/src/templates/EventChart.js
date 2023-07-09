@@ -35,6 +35,8 @@ export class EventChartTemplate extends Component {
         }
 
         super(props);
+
+        this.initForm({});
     }
 
     static propTypes = {
@@ -50,9 +52,9 @@ export class EventChartTemplate extends Component {
 
     componentDidMount() {
         this.populateFormValues({
-            filterType: null,
-            filterEntity: null,
-            filterUser: null,
+            filterType: 'none',
+            filterEntity: 'none',
+            filterUser: 'none',
         });
     }
 
@@ -70,37 +72,42 @@ export class EventChartTemplate extends Component {
         ]
         */
         const config = this.getPanelConfig();
-        const types = [{ key: null, label: 'None' }].concat(config.signalSets.map(s => ({ key: s.type, label: s.label })));
+        const types = [{ key: 'none', label: 'None' }].concat(config.signalSets.map(s => ({ key: s.type, label: s.label })));
         const entitiesByType = {};
         for (const s of config.signalSets) {
-            entitiesByType[s.type] = [{ key: null, label: 'None' }].concat(s.entities.map(e => ({key: e.id, label: e.label})));
+            entitiesByType[s.type] = [{ key: 'none', label: 'None' }].concat(s.entities.map(e => ({key: e.id, label: e.label})));
         }
+
         const filteredType = this.getFormValue('filterType');
         const filteredEntity = this.getFormValue('filterEntity');
         const filteredUser = this.getFormValue('filterUser');
 
         for (const s of config.signalSets) {
-            s.visible = filteredType == null || filteredType == s.type
+            s.enabled = filteredType == 'none' || filteredType == s.type;
+
+            s.filter = {};
+            if (filteredType == s.type && filteredEntity != 'none') {
+                s.filter.entityId = filteredEntity;
+            }
+
+            if (filteredUser != 'none') {
+                s.filter.actor = filteredUser;
+            }
         }
 
         return (
             <TimeContext>
-                {/*<Legend label="Events" configPath={['signalSets']} withSelector structure={sensorsStructure} />*/}
                 <TimeRangeSelector/>
-                <Form stateOwner={this} onSubmitAsync={/*:: TODO*/this.submitForm} format="wide">
+                <Form stateOwner={this} format="wide">
+                    {/* TODO: style the dropdowns into one line */}
                     <Dropdown id="filterType" label="Filter entity type:" format="wide" options={types}/>
-                    <Dropdown id="filterEntity" label="Filter entity:" format="wide" options={entitiesByType[filteredType]} disabled={filteredType == null}/>
+                    <Dropdown id="filterEntity" label="Filter entity:" format="wide" options={entitiesByType[filteredType]} disabled={filteredType == 'none'}/>
                     <Dropdown id="filterUser" label="Filter user:" format="wide" options={entitiesByType['user']}/>
-                    {/*<Button type="submit" className="btn-primary" label={t('Apply')}/>*/}
                 </Form>
                 <EventChart
                     config={{
                         signalSets: config.signalSets,
                     }}
-                    filterFun={event =>
-                        (filteredEntity == null || filteredEntity == event.entityId) &&
-                        (filteredUser == null || filteredUser == event.actor)
-                    }
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
                     tooltipExtraProps={{ width: 500 }}

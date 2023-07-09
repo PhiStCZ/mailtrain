@@ -1,10 +1,8 @@
 const crypto = require('crypto');
-const config = require('./config');
 const axios = require('axios').default;
 
+const apiUrlBase = require('./config').get('mvis.apiUrlBase');
 const token = process.env.MVIS_API_TOKEN || crypto.randomBytes(20).toString('hex').toLowerCase();
-
-const apiUrlBase = config.get('mvis.apiUrlBase');
 
 async function get(path, config = {}) {
     config.headers = config.headers || {};
