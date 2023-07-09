@@ -73,7 +73,7 @@ class EventTooltipContent extends Component {
                 rows.push(
                     <div key={`${setSpec.cid}-${i}`}>
                         <span className={tooltipStyles.signalColor} style={{color: setSpec.color}}><Icon icon="minus"/></span>
-                        <span className={tooltipStyles.signalVal}>{dateMath.format(evt.ts)} - {setSpec.eventToString(evt)}</span>
+                        <span className={tooltipStyles.signalVal}>{dateMath.format(evt.ts)} - {setSpec.eventToString(evt, this.props.config)}</span>
                     </div>
                 );
             }
@@ -178,15 +178,16 @@ export class EventChart extends Component {
 
         let noData = true;
         for (const setSpec of config.signalSets) {
+            let data = signalSetsData[setSpec.cid];
+            noData &&= (data.length == 0);
+
             if (!isVisible(setSpec)) continue;
 
-            let data = signalSetsData[setSpec.cid];
             if (setSpec.filter) {
                 for (const key of Object.keys(setSpec.filter)) {
-                    data = data.filter(value => value[key] == setSpec.filter[key]);
+                    data = data.filter(e => e.data[key].value == setSpec.filter[key]);
                 }
             }
-            noData &&= (data.length == 0);
 
             const mergedEvents = [];
             const mergeDistance = (abs.to - abs.from) * 0.01;
@@ -278,10 +279,6 @@ export class EventChart extends Component {
             .on('mousemove', selectEvents)
             .on('mouseleave', deselectEvents)
 
-        if (noData) {
-            return RenderStatus.NO_DATA;
-        }
-
         const innerHeight = this.props.height - this.props.margin.top - this.props.margin.bottom;
         const topY = innerHeight / 3;
         const bottomY = innerHeight * 2 / 3;
@@ -324,6 +321,7 @@ export class EventChart extends Component {
             }
             this.aestheticHorizontalSelection
                 .datum(lineData)
+                .attr('visibility', noData ? 'hidden' : 'visible')
                 .attr('fill', 'none')
                 .attr('stroke', this.props.horizontalLineColor)
                 .attr('stroke-linejoin', 'round')
@@ -332,7 +330,7 @@ export class EventChart extends Component {
                 .attr('d', line);
         }
 
-        return RenderStatus.SUCCESS;
+        return noData ? RenderStatus.NO_DATA : RenderStatus.SUCCESS;
     }
 
     render() {

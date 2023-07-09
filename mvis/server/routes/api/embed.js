@@ -231,43 +231,81 @@ router.getAsync('/mt-embed/audit', passport.loggedIn, async (req, res) => {
                 label: 'Campaign',
                 cid: LogTypeId.CAMPAIGN,
                 color: '#dd4444',
-                enabled: 'true',
-                type: 'campaign',
-                tsSigCid: 'timestamp',
-                activitySigCid: 'activityType',
                 extraSignals: [
-                    { sigSet: LogTypeId.CAMPAIGN, signal: 'entityId' },
-                    { sigSet: LogTypeId.CAMPAIGN, signal: 'actor' }
-                ]
+                    { sigSet: LogTypeId.CAMPAIGN, signal: 'status' },
+                ],
+            },
+            {
+                label: 'Channel',
+                cid: LogTypeId.CHANNEL,
+                color: '#ddaa44',
+                extraSignals: [
+                    { sigSet: LogTypeId.CHANNEL, signal: 'campaignId' },
+                ],
+            },
+            {
+                label: 'Form',
+                cid: LogTypeId.FORM,
+                color: '#44aadd',
             },
             {
                 label: 'List',
                 cid: LogTypeId.LIST,
                 color: '#44dd44',
-                enabled: 'true',
-                type: 'list',
-                tsSigCid: 'timestamp',
-                activitySigCid: 'activityType',
                 extraSignals: [
-                    { sigSet: LogTypeId.LIST, signal: 'entityId' },
-                    { sigSet: LogTypeId.LIST, signal: 'actor' }
-                ]
+                    { sigSet: LogTypeId.LIST, signal: 'campaignId' },
+                ],
+            },
+            {
+                label: 'Namespace',
+                cid: LogTypeId.NAMESPACE,
+                color: '#4444dd',
+            },
+            {
+                label: 'Report template',
+                cid: LogTypeId.REPORT_TEMPLATE,
+                color: '#444444',
+            },
+            {
+                label: 'Report',
+                cid: LogTypeId.REPORT,
+                color: '#666666',
+            },
+            {
+                label: 'Send configuration',
+                cid: LogTypeId.SEND_CONFIGURATION,
+                color: '#dd44aa',
+            },
+            {
+                label: 'Template',
+                cid: LogTypeId.TEMPLATE,
+                color: '#dddd44',
+            },
+            {
+                label: 'Mosaico template',
+                cid: LogTypeId.MOSAICO_TEMPLATE,
+                color: '#ccdd44',
             },
             {
                 label: 'User',
                 cid: LogTypeId.USER,
-                color: '#44dd44',
-                enabled: 'true',
-                type: 'user',
-                tsSigCid: 'timestamp',
-                activitySigCid: 'activityType',
-                extraSignals: [
-                    { sigSet: LogTypeId.USER, signal: 'entityId' },
-                    { sigSet: LogTypeId.USER, signal: 'actor' }
-                ]
+                color: '#aa44dd',
             },
         ]
     };
+
+    for (const s of params.signalSets) {
+        s.enabled = 'true';
+        s.type = s.cid;
+        s.tsSigCid = 'timestamp';
+        s.activitySigCid = 'activityType';
+
+        s.extraSignals = s.extraSignals || [];
+        s.extraSignals.push(
+            { sigSet: s.cid, signal: 'entityId' },
+            { sigSet: s.cid, signal: 'actor' }
+        );
+    }
 
     return res.json(
         await getDataForEmbed(req, BuiltinTemplateIds.EVENT_CHART, params, 'mt-audit')

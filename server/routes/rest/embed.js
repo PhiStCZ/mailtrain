@@ -75,26 +75,29 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
     });
 });
 
+const TableAndLabelMap = {
+    campaign: ['campaigns', 'name'],
+    channel: ['channels', 'name'],
+    form: ['forms', 'name'],
+    list: ['lists', 'name'],
+    namespace: ['namespaces', 'name'],
+    report_template: ['report_templates', 'name'],
+    report: ['reports', 'name'],
+    send_configuration: ['send_configurations', 'name'],
+    template: ['templates', 'name'],
+    mosaico_template: ['mosaico_templates', 'name'],
+    user: ['users', 'username'],
+}
+
 router.getAsync('/embed/audit', passport.loggedIn, async (req, res) => {
     enforce(req.context.user.id == getAdminId(), 'Audit can only be done by admin');
 
     return await redirectDataFromMvis(req, res, `audit`, async data => {
         for (const set of data.params.signalSets) {
-            let tableName, labelName;
-            switch (set.type) {
-                case 'campaign':
-                    [tableName, labelName] = ['campaigns', 'name'];
-                    break;
-                case 'list':
-                    [tableName, labelName] = ['lists', 'name'];
-                    break;
-                case 'user':
-                    [tableName, labelName] = ['users', 'username'];
-                    break;
-                }
-                // TODO: finish
+            const [tableName, labelName] = TableAndLabelMap[set.type];
 
-            let entities = await knex(tableName).select('id', labelName);
+            const entities = await knex(tableName).select('id', labelName);
+
             set.entities = entities.map(e => ({id: e.id, label: e[labelName]}));
         }
 

@@ -83,12 +83,6 @@ const ListActivityType = {
     SYNCHRONIZE: EntityActivityType.MAX + 16,
 };
 
-const ReportActivityType = {
-    STATUS_CHANGE: EntityActivityType.MAX + 1,
-    START: EntityActivityType.MAX + 2,
-    STOP: EntityActivityType.MAX + 3,
-};
-
 const TemplateActivityType = {
     TEST_SEND: EntityActivityType.MAX + 1,
     UPLOAD_FILES: EntityActivityType.MAX + 2,

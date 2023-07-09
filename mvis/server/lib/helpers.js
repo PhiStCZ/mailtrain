@@ -69,6 +69,13 @@ async function removeSignalSetIfExists(context, cid) {
 //       are identified by their name; this may be changed in the future
 
 async function createJobByName(context, job, isSystemJobAllowed = false) {
+    if (!context.user.id) {
+        context = { ...context };
+        context.user = {
+            ...context.user,
+            id: 1
+        };
+    }
     const res = await knex('jobs').where('name', job.name).select('id').first();
     if (res) {
         return res.id;
