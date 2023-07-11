@@ -107,7 +107,6 @@ module.exports.CampaignActivityType = CampaignActivityType;
 module.exports.CampaignTrackerActivityType = CampaignTrackerActivityType;
 module.exports.ChannelActivityType = ChannelActivityType;
 module.exports.ListActivityType = ListActivityType;
-module.exports.ReportActivityType = ReportActivityType;
 module.exports.TemplateActivityType = TemplateActivityType;
 module.exports.MosaicoTemplateActivityType = MosaicoTemplateActivityType;
 module.exports.UserActivityType = UserActivityType;

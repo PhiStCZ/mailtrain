@@ -15,7 +15,7 @@ const {LinkId} = require('./links');
 const subscriptions = require('./subscriptions');
 const {Readable} = require('stream');
 const activityLog = require('../lib/activity-log');
-const { EntityActivityType, ReportActivityType, LogTypeId } = require('../../shared/activity-log');
+const { EntityActivityType, LogTypeId } = require('../../shared/activity-log');
 
 const ReportState = require('../../shared/reports').ReportState;
 

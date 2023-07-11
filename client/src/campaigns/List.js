@@ -54,8 +54,10 @@ export default class List extends Component {
     }
 
     componentWillUnmount() {
-        this.campaignsEmbedCtrl.stop();
-        this.contributionsEmbedCtrl.stop();
+        if (this.props.channel) {
+            this.campaignsEmbedCtrl.stop();
+            this.contributionsEmbedCtrl.stop();
+        }
     }
 
     render() {

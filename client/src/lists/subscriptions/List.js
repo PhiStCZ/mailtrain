@@ -66,7 +66,7 @@ export default class List extends Component {
             segment: this.props.segmentId || ''
         });
 
-        fetchTokenAndEmbedBuiltinTemplate(this.subsEmbedId, 'list-subscriptions/' + this.props.list.id);
+        this.embedCtrl = fetchTokenAndEmbedBuiltinTemplate(this.subsEmbedId, 'list-subscriptions/' + this.props.list.id);
     }
 
     componentDidUpdate() {
@@ -78,6 +78,10 @@ export default class List extends Component {
                 segment: segmentId
             });
         }
+    }
+
+    componentWillUnmount() {
+        this.embedCtrl.stop();
     }
 
     render() {

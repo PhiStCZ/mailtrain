@@ -6,37 +6,34 @@ import { TimeContext, TimeRangeSelector, Legend, withPanelConfig, panelConfigMix
 import { CampaignActivityType, EntityActivityType, ListActivityType, MosaicoTemplateActivityType, TemplateActivityType, UserActivityType } from "../../../../shared/activity-log";
 import { Dropdown, Form, withForm } from "../../../ivis-core/client/src/lib/form";
 import { EventChart } from "../charts/EventChart";
-import { campaignEventToString, listEventToString } from "./EventLineChart";
 import { withComponentMixins } from "../../../ivis-core/client/src/lib/decorator-helpers";
 import { ChannelActivityType } from "../../../../shared/activity-log";
 import { CampaignStatus } from "../../../../shared/campaigns";
 
 
-function getEntityLabel(config, entityTypeId, entityId) {
-    getSignalSet(config, entityTypeId).entitiesMap[entityId];
+function getEntityLabel(sigSets, entityTypeId, entityId) {
+    const set = sigSets.find(s => s.cid === entityTypeId);
+    return set.entitiesMap[entityId];
 }
 function getEventValue(evt, key) {
     return evt.data[key].value;
 }
-function getSignalSet(config, setCid) {
-    config.signalSets.find(s => s.cid === setCid);
-}
 
-function genericEventToString(evt, config, setCid, eventToString) {
+function genericEventToString(evt, sigSets, setCid, eventToString) {
     const actorId = getEventValue(evt, 'actor');
     let userName;
     if (!actorId) {
         userName = 'Mailtrain system'
     } else {
-        userName = getEntityLabel(config, 'user', actorId);
+        userName = getEntityLabel(sigSets, 'user', actorId);
         userName = userName ? `"${userName}"` : 'Unknown user';
     }
 
     const entityId = getEventValue(evt, 'entityId');
-    let entityName = getEntityLabel(config, setCid, entityId);
+    let entityName = getEntityLabel(sigSets, setCid, entityId);
     entityName = entityName ? `"${entityName}"` : `unknown ${setCid}`;
 
-    return `${userName} ${eventToString(evt)} ${entityName} (ID ${entityId})`;
+    return `${userName} ${eventToString(evt, sigSets)} ${entityName} (ID ${entityId})`;
 }
 
 function entityEventToString(evt) {
@@ -48,9 +45,9 @@ function entityEventToString(evt) {
         default: return `did something (id ${activityTypeId}) in`;
     }
 }
-function listEventToString(evt, config) {
-    function getCampaignLabel(evt, config) {
-        let label = getEntityLabel(config, 'campaign', evt);
+function listEventToString(evt, sigSets) {
+    function getCampaignLabel(evt, sigSets) {
+        let label = getEntityLabel(sigSets, 'campaign', evt);
         return label ? `"${label}"` : 'unknown campaign';
     }
 
@@ -73,7 +70,7 @@ function listEventToString(evt, config) {
         case ListActivityType.REMOVE_IMPORT: return `removed an import in`;
         case ListActivityType.IMPORT_STATUS_CHANGE: return `changed import status in`;
 
-        case ListActivityType.SEND_CAMPAIGN: return `sent ${getCampaignLabel(evt, config)} to subscribers of`;
+        case ListActivityType.SEND_CAMPAIGN: return `sent ${getCampaignLabel(evt, sigSets)} to subscribers of`;
         case ListActivityType.SYNCHRONIZE: return `synchronized data of`;
         default: return entityEventToString(evt);
     }
@@ -109,15 +106,15 @@ function campaignEventToString(evt) {
         default: return entityEventToString(evt);
     }
 }
-function channelEventToString(evt) {
-    function getCampaignLabel(evt, config) {
-        let label = getEntityLabel(config, 'campaign', evt);
+function channelEventToString(evt, sigSets) {
+    function getCampaignLabel(evt, sigSets) {
+        let label = getEntityLabel(sigSets, 'campaign', evt);
         return label ? `"${label}"` : 'unknown campaign';
     }
 
     switch (getEventValue(evt, 'activityType')) {
-        case ChannelActivityType.ADD_CAMPAIGN: return `added ${getCampaignLabel(evt, config)} to`;
-        case ChannelActivityType.REMOVE_CAMPAIGN: return `removed ${getCampaignLabel(evt, config)} from`;
+        case ChannelActivityType.ADD_CAMPAIGN: return `added ${getCampaignLabel(evt, sigSets)} to`;
+        case ChannelActivityType.REMOVE_CAMPAIGN: return `removed ${getCampaignLabel(evt, sigSets)} from`;
         default: return entityEventToString(evt);
     }
 }
@@ -275,7 +272,7 @@ export class EventChartTemplate extends Component {
                     }}
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
-                    tooltipExtraProps={{ width: 500 }}
+                    tooltipExtraProps={{ width: 600 }}
                 />
             </TimeContext>
         );

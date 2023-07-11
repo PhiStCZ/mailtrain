@@ -6,12 +6,10 @@ const reportProcessor = require('../../lib/report-processor');
 const reportHelpers = require('../../lib/report-helpers');
 const shares = require('../../models/shares');
 const contextHelpers = require('../../lib/context-helpers');
-const activityLog = require('../../lib/activity-log');
 
 const router = require('../../lib/router-async').create();
 const {castToInteger} = require('../../lib/helpers');
 const fs = require('fs-extra');
-const { ReportActivityType, LogTypeId } = require('../../../shared/activity-log');
 
 router.getAsync('/reports/:reportId', passport.loggedIn, async (req, res) => {
     const report = await reports.getByIdWithTemplate(req.context, castToInteger(req.params.reportId));

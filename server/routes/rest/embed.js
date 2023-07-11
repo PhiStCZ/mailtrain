@@ -78,7 +78,7 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
 const TableAndLabelMap = {
     campaign: ['campaigns', 'name'],
     channel: ['channels', 'name'],
-    form: ['forms', 'name'],
+    form: ['custom_forms', 'name'],
     list: ['lists', 'name'],
     namespace: ['namespaces', 'name'],
     report_template: ['report_templates', 'name'],

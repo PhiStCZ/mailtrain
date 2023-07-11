@@ -12,7 +12,7 @@ import { EventChartTemplate } from './templates/EventChart';
 import axios from '../../ivis-core/client/src/lib/axios';
 import { getUrl } from '../../ivis-core/client/src/lib/urls';
 
-const entityInfoUrl = getUrl('rest/mt-entity-info');
+const entityInfoUrl = 'rest/mt-entity-info';
 
 em.on('client.installSandboxRoutes', (structure, t) => {
     const panelRoutes = {
@@ -50,7 +50,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     const reqCampaigns = {
                         ids: docs.map(d => d.campaignId)
                     };
-                    const res = await axios.post(entityInfoUrl, { campaign: reqCampaigns });
+                    const res = await axios.post(getUrl(entityInfoUrl), { campaign: reqCampaigns });
                     const campaignData = res.data.campaign;
                     for (let i = 0; i < docs.length; i++) {
                         docs[i].label = (campaignData[i] && campaignData[i].name) || 'UNKNOWN';
@@ -82,7 +82,7 @@ em.on('client.installSandboxRoutes', (structure, t) => {
                     const reqCampaigns = {
                         ids: docs.map(d => d.data.campaignId.value)
                     };
-                    const res = await axios.post(entityInfoUrl, { campaign: reqCampaigns });
+                    const res = await axios.post(getUrl(entityInfoUrl), { campaign: reqCampaigns });
                     const campaignData = res.data.campaign;
                     for (let i = 0; i < docs.length; i++) {
                         docs[i].label = (campaignData[i] && campaignData[i].name) || 'UNKNOWN';
