@@ -42,18 +42,13 @@ router.getAsync('/embed/campaign-overview/:campaignId', passport.loggedIn, async
     const campaignId = castToInteger(req.params.campaignId);
     await shares.enforceEntityPermission(req.context, 'campaign', campaignId, 'view');
     return await redirectDataFromMvis(req, res, `campaign-overview/${campaignId}`, async data => {
-        let linkPie = data.params.pies.find(p => p.label == 'Links');
-        if (!linkPie) {
-            return data;
-        }
+        const linksPie = data.params.pies.find(p => p.label === 'Link Clicks');
+        if (!linksPie) return data;
 
-        const linksPie = data.params.pies.filter(p => p.label === 'Link Clicks')[0];
-        if (linksPie) {
-            for (const linkArc of linksPie.segments) {
-                const link = await knex('links').where('id', linkArc.linkId).where('campaign', campaignId).first();
-                linkArc.label = (link && link.url) || 'UNKNOWN LINK';
-                delete linkArc.linkId;
-            }
+        for (const linkArc of linksPie.segments) {
+            const link = await knex('links').where('id', linkArc.linkId).where('campaign', campaignId).first();
+            linkArc.label = (link && link.url) || 'UNKNOWN LINK';
+            delete linkArc.linkId;
         }
 
         return data;
@@ -65,11 +60,11 @@ router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async
     await shares.enforceEntityPermission(req.context, 'campaign', campaignId, 'view');
     return await redirectDataFromMvis(req, res, `campaign-messages/${campaignId}`, async data => {
         for (const signal of data.params.sensors) {
-            if (signal.linkId) {
-                const link = await knex('links').where('id', signal.linkId).where('campaign', campaignId).first();
-                signal.label = 'Clicks of ' + ((link && link.url) || 'UNKNOWN LINK');
-                delete signal.linkId;
-            }
+            if (!signal.linkId) continue;
+
+            const link = await knex('links').where('id', signal.linkId).where('campaign', campaignId).first();
+            signal.label = 'Clicks of ' + ((link && link.url) || 'UNKNOWN LINK');
+            delete signal.linkId;
         }
         return data;
     });

@@ -60,10 +60,12 @@ async function init() {
         const dataByTypeId = await sendToMailtrain({
             type: 'synchronize'
         });
-        const context = getAdminContext();
-        await lists.synchronize(context, dataByTypeId.list);
-        await campaigns.synchronize(context, dataByTypeId.campaign);
-        await channels.synchronize(context, dataByTypeId.channel);
+        if (dataByTypeId) {
+            const context = getAdminContext();
+            await lists.synchronize(context, dataByTypeId.list);
+            await campaigns.synchronize(context, dataByTypeId.campaign);
+            await channels.synchronize(context, dataByTypeId.channel);
+        }
     });
 
     if (process.send) {
