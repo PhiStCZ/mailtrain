@@ -63,7 +63,7 @@ function setUpMvis() {
     return new Promise(resolve => {
         const wDir = path.join(__dirname, '..', 'server');
 
-        mvisProcess = fork(path.join(wDir, 'index.js'), [], {
+        let mvisProcess = fork(path.join(wDir, 'index.js'), [], {
             cwd: wDir,
             env: {
                 NODE_ENV: process.env.NODE_ENV,
@@ -103,10 +103,20 @@ function setUpTestEmbedServer() {
         const mvisRes = await mvisApi.get(embedUrl + embedPath, {
             headers: { 'mt-user-id': 1 }
         });
-        let data = transformData ? await transformData(mvisRes.data) : mvisRes.data;
+        let {
+            token,
+            ivisSandboxUrlBase,
+            path,
+            params
+        } = transformData ? await transformData(mvisRes.data) : mvisRes.data;
 
+        data.params = JSON.stringify(data.params);
         res.render('panel', {
-            ...data, // = token, ivisSandboxUrlBase, path, params
+            token,
+            ivisSandboxUrlBase,
+            path,
+            params,
+            jsonParams: JSON.stringify(params),
         });
     }
 
@@ -149,19 +159,19 @@ function setUpTestEmbedServer() {
     });
     */
 
-    router.getAsync('/list-subscriptions/:listId', passport.loggedIn, async (req, res) => {
+    router.getAsync('/list-subscriptions/:listId', async (req, res) => {
         return await renderEmbedData(req, res, `list-subscriptions/${req.params.listId}`);
     });
     
-    router.getAsync('/channel-recent-campaigns/:channelId', passport.loggedIn, async (req, res) => {
+    router.getAsync('/channel-recent-campaigns/:channelId', async (req, res) => {
         return await renderEmbedData(req, res, `channel-recent-campaigns/${req.params.channelId}`);
     });
     
-    router.getAsync('/channel-campaign-contributions/:channelId', passport.loggedIn, async (req, res) => {
+    router.getAsync('/channel-campaign-contributions/:channelId', async (req, res) => {
         return await renderEmbedData(req, res, `channel-campaign-contributions/${req.params.channelId}`);
     });
     
-    router.getAsync('/campaign-overview/:campaignId', passport.loggedIn, async (req, res) => {
+    router.getAsync('/campaign-overview/:campaignId', async (req, res) => {
         const campaignId = req.params.campaignId;
         return await renderEmbedData(req, res, `campaign-overview/${campaignId}`, async data => {
             const linksPie = data.params.pies.find(p => p.label === 'Link Clicks');
@@ -176,7 +186,7 @@ function setUpTestEmbedServer() {
         });
     });
     
-    router.getAsync('/embed/campaign-messages/:campaignId', passport.loggedIn, async (req, res) => {
+    router.getAsync('/embed/campaign-messages/:campaignId', async (req, res) => {
         const campaignId = castToInteger(req.params.campaignId);
         await shares.enforceEntityPermission(req.context, 'campaign', campaignId, 'view');
         return await renderEmbedData(req, res, `campaign-messages/${campaignId}`, async data => {
@@ -195,12 +205,12 @@ function setUpTestEmbedServer() {
             for (const set of data.params.signalSets) {
                 const type = set.type;
                 const entities = [];
-                for (const i = 1; i <= amountOfEachEntity; i++) {
+                for (let i = 1; i <= amountOfEachEntity; i++) {
                     entities.push({id: i, label: getEntityName(type, i)});
                 }
-        
-                set.entities = entities.map(e => ({id: e.id, label: e[labelName]}));
+                set.entities = entities;
             }
+            return data;
         });
     });
 

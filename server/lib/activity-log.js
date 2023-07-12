@@ -1,7 +1,7 @@
 'use strict';
 
 const moment = require('moment');
-const config = require('config');
+const config = require('./config');
 const { LogTypeId } = require('../../shared/activity-log');
 const { hashEmail } = require('./helpers');
 const mvisApi = require('./mvis-api');
