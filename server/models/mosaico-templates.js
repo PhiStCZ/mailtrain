@@ -70,7 +70,7 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -100,7 +100,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'mosaicoTemplate', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivity(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -135,7 +135,7 @@ async function remove(context, id) {
 
         await tx('mosaico_templates').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.MOSAICO_TEMPLATE, EntityActivityType.REMOVE, id);
     });
 }
 

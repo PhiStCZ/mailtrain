@@ -20,7 +20,7 @@ function spawn(callback) {
         const updateStatus = async (fromStatus, toStatus) => {
             for (const impt of await tx('imports').where('status', fromStatus).select(['id', 'list'])) {
                 await tx('imports').where('id', impt.id).update({status: toStatus});
-                await activityLog.logEntityActivity(LogTypeId.LIST, ListActivityType.IMPORT_STATUS_CHANGE, impt.list, {importId: impt.id, importStatus: toStatus});
+                await activityLog.logEntityActivity(null, LogTypeId.LIST, ListActivityType.IMPORT_STATUS_CHANGE, impt.list, {importId: impt.id, importStatus: toStatus});
             }
         }
 

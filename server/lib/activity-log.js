@@ -56,24 +56,6 @@ function _assignActor(context, data) {
     }
 }
 
-
-/**
- * Log a general activity of an entity.
- * @param entityTypeId
- * @param activityType defined in ../../shared/activity-log.js
- * @param entityId
- * @param extraData different entity types may accept different extra data
- */
-async function logEntityActivity(entityTypeId, activityType, entityId, extraData = {}) {
-    const data = {
-        ...extraData,
-        activityType,
-        entityId
-    };
-
-    await _logActivity(entityTypeId, data);
-}
-
 /**
  * Log a general activity of an entity. The context will include the user who made the activity (the actor).
  * @param context only needed for actor assignment; may be null for no actor
@@ -82,9 +64,15 @@ async function logEntityActivity(entityTypeId, activityType, entityId, extraData
  * @param entityId
  * @param extraData different entity types may accept different extra data
  */
-async function logEntityActivityWithContext(context, entityTypeId, activityType, entityId, extraData = {}) {
+async function logEntityActivity(context, entityTypeId, activityType, entityId, extraData = {}) {
     _assignActor(context, extraData);
-    logEntityActivity(entityTypeId, activityType, entityId, extraData);
+    const data = {
+        ...extraData,
+        activityType,
+        entityId
+    };
+
+    await _logActivity(entityTypeId, data);
 }
 
 
@@ -182,7 +170,6 @@ periodicLog();
 module.exports.logBlacklistActivity = logBlacklistActivity;
 module.exports.logCampaignTrackerActivity = logCampaignTrackerActivity;
 module.exports.logEntityActivity = logEntityActivity;
-module.exports.logEntityActivityWithContext = logEntityActivityWithContext;
 module.exports.logListTrackerActivity = logListTrackerActivity;
 module.exports.logShareActivity = logShareActivity;
 module.exports.logSettingsActivity = logSettingsActivity;

@@ -85,7 +85,7 @@ async function create(context, campaignId, entity) {
         const ids = await tx('triggers').insert(filteredEntity);
         const id = ids[0];
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.CREATE_TRIGGER, campaignId, {triggerId: id});
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.CREATE_TRIGGER, campaignId, {triggerId: id});
 
         return id;
     });
@@ -110,7 +110,7 @@ async function updateWithConsistencyCheck(context, campaignId, entity) {
 
         await tx('triggers').where({campaign: campaignId, id: entity.id}).update(filterObject(entity, allowedKeys));
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.UPDATE_TRIGGER, campaignId, {triggerId: entity.id});
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.UPDATE_TRIGGER, campaignId, {triggerId: entity.id});
     });
 }
 
@@ -125,7 +125,7 @@ async function removeTx(tx, context, campaignId, id) {
     await tx('trigger_messages').where({trigger: id}).del();
     await tx('triggers').where('id', id).del();
 
-    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.REMOVE_TRIGGER, campaignId, {triggerId: id});
+    await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.REMOVE_TRIGGER, campaignId, {triggerId: id});
 }
 
 async function remove(context, campaignId, id) {

@@ -157,7 +157,7 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'customForm', entityId: id });
         
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.FORM, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.FORM, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -193,7 +193,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'customForm', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.FORM, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivity(context, LogTypeId.FORM, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -208,7 +208,7 @@ async function remove(context, id) {
         await tx('custom_forms_data').where('form', id).del();
         await tx('custom_forms').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.FORM, EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.FORM, EntityActivityType.REMOVE, id);
     });
 }
 

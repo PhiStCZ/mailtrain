@@ -148,7 +148,7 @@ async function addOrGet(campaignId, url) {
             });
             const linkId = ids[0];
 
-            await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.ADD_LINK, campaignId, { linkId, url });
+            await activityLog.logEntityActivity(null, LogTypeId.CAMPAIGN, CampaignActivityType.ADD_LINK, campaignId, { linkId, url });
             await activityLog.logCampaignTrackerActivity(CampaignTrackerActivityType.ADD_LINK, campaignId, null, null, { linkId });
 
             return {

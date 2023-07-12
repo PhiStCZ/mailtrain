@@ -562,13 +562,13 @@ async function _createTx(tx, context, entity, content) {
                 }).where('id', id);
         }
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, EntityActivityType.CREATE, id, {
             channelId: filteredEntity.channel,
             status: filteredEntity.status,
             type: filteredEntity.type,
         });
         if (entity.channel) {
-            await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: id });
+            await activityLog.logEntityActivity(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: id });
         }
 
         return id;
@@ -639,16 +639,16 @@ async function updateWithConsistencyCheck(context, entity, content) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'campaign', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, entity.id, {
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, EntityActivityType.UPDATE, entity.id, {
             channelId: filteredEntity.channel,
             status: filteredEntity.status
         });
         if ('channel' in filteredEntity && filteredEntity.channel != existing.channel) {
             if (existing.channel) {
-                await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: entity.id });
+                await activityLog.logEntityActivity(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: entity.id });
             }
             if (filteredEntity.channel) {
-                await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: entity.id });
+                await activityLog.logEntityActivity(context, LogTypeId.CHANNEL, ChannelActivityType.ADD_CAMPAIGN, entity.channel, { campaignId: entity.id });
             }
         }
     });
@@ -692,9 +692,9 @@ async function _removeTx(tx, context, id, existing = null, overrideTypeCheck = f
     await tx('campaigns').where('id', id).del();
 
     if (existing.channel) {
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: id });
+        await activityLog.logEntityActivity(context, LogTypeId.CHANNEL, ChannelActivityType.REMOVE_CAMPAIGN, existing.channel, { campaignId: id });
     }
-    await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, EntityActivityType.REMOVE, id);
+    await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, EntityActivityType.REMOVE, id);
 }
 
 
@@ -945,7 +945,7 @@ async function _changeStatus(context, campaignId, permittedCurrentStates, newSta
 
         await tx('campaigns').where('id', campaignId).update(updateData);
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newState});
     });
 
     senders.scheduleCheck();
@@ -989,7 +989,7 @@ async function reset(context, campaignId) {
         await tx('campaign_links').where('campaign', campaignId).del();
         await tx('links').where('campaign', campaignId).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.RESET, campaignId, {status: CampaignStatus.IDLE});
+        await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.RESET, campaignId, {status: CampaignStatus.IDLE});
     });
 }
 
@@ -1112,7 +1112,7 @@ async function testSend(context, data) {
                 }
             }
 
-            await activityLog.logEntityActivityWithContext(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, campaignId, logData);
+            await activityLog.logEntityActivity(context, LogTypeId.CAMPAIGN, CampaignActivityType.TEST_SEND, campaignId, logData);
 
         } else { // This means we are sending a template
             /*
@@ -1137,7 +1137,7 @@ async function testSend(context, data) {
 
             await processSubscriber(data.sendConfigurationId, list.id, subscriber.id, messageData);
 
-            await activityLog.logEntityActivityWithContext(context, LogTypeId.TEMPLATE, TemplateActivityType.TEST_SEND, data.templateId, {
+            await activityLog.logEntityActivity(context, LogTypeId.TEMPLATE, TemplateActivityType.TEST_SEND, data.templateId, {
                 listId: list.id,
                 subscriptionId: subscriber.id
             });

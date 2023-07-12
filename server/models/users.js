@@ -189,7 +189,7 @@ async function create(context, user) {
 
         await shares.rebuildPermissionsTx(tx, { userId: id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.USER, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.USER, EntityActivityType.CREATE, id);
     });
 
     return id;
@@ -239,7 +239,7 @@ async function updateWithConsistencyCheck(context, user, isOwnAccount) {
 
         await shares.rebuildPermissionsTx(tx, { userId: user.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.USER, EntityActivityType.UPDATE, user.id);
+        await activityLog.logEntityActivity(context, LogTypeId.USER, EntityActivityType.UPDATE, user.id);
     });
 }
 
@@ -257,7 +257,7 @@ async function remove(context, userId) {
 
         await tx('users').where('id', userId).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.USER, EntityActivityType.REMOVE, userId);
+        await activityLog.logEntityActivity(context, LogTypeId.USER, EntityActivityType.REMOVE, userId);
     });
 }
 
@@ -377,7 +377,7 @@ async function resetPassword(username, resetToken, password) {
                 reset_token: null,
                 reset_expire: null
             });
-            await activityLog.logEntityActivity(LogTypeId.USER, UserActivityType.RESET_PASSWORD, user.id);
+            await activityLog.logEntityActivity(null, LogTypeId.USER, UserActivityType.RESET_PASSWORD, user.id);
         } else {
             throw new interoperableErrors.InvalidTokenError();
         }

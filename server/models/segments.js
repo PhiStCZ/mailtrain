@@ -338,7 +338,7 @@ async function create(context, listId, entity) {
         const ids = await tx('segments').insert(filteredEntity);
         const id = ids[0];
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.CREATE_SEGMENT, listId, {segmentId: id});
+        await activityLog.logEntityActivity(context, LogTypeId.LIST, ListActivityType.CREATE_SEGMENT, listId, {segmentId: id});
 
         return id;
     });
@@ -364,7 +364,7 @@ async function updateWithConsistencyCheck(context, listId, entity) {
 
         await tx('segments').where({list: listId, id: entity.id}).update(filterObject(entity, allowedKeys));
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
+        await activityLog.logEntityActivity(context, LogTypeId.LIST, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
     });
 }
 
@@ -385,7 +385,7 @@ async function removeTx(tx, context, listId, id) {
     // The listId "where" is here to prevent deleting segment of a list for which a user does not have permission
     await tx('segments').where({list: listId, id}).del();
 
-    await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.REMOVE_SEGMENT, listId, {segmentId: id});
+    await activityLog.logEntityActivity(context, LogTypeId.LIST, ListActivityType.REMOVE_SEGMENT, listId, {segmentId: id});
 }
 
 async function remove(context, listId, id) {
@@ -429,7 +429,7 @@ async function removeRulesByColumnTx(tx, context, listId, column) {
         await tx('segments').where({list: listId, id: entity.id}).update('settings', JSON.stringify(settings));
 
         // this is worthy of logging just for consistency with other cascade deletes (e.g. lists->fields)
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.LIST, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
+        await activityLog.logEntityActivity(context, LogTypeId.LIST, ListActivityType.UPDATE_SEGMENT, listId, {segmentId: entity.id});
     }
 }
 

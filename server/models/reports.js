@@ -84,7 +84,7 @@ async function create(context, entity) {
     const reportProcessor = require('../lib/report-processor');
     await reportProcessor.start(id);
 
-    await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.CREATE, id);
+    await activityLog.logEntityActivity(context, LogTypeId.REPORT, EntityActivityType.CREATE, id);
 
     return id;
 }
@@ -118,7 +118,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'report', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivity(context, LogTypeId.REPORT, EntityActivityType.UPDATE, entity.id);
     });
 
     // This require is here to avoid cyclic dependency
@@ -136,7 +136,7 @@ async function removeTx(tx, context, id) {
 
     await tx('reports').where('id', id).del();
 
-    await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT, EntityActivityType.REMOVE, id);
+    await activityLog.logEntityActivity(context, LogTypeId.REPORT, EntityActivityType.REMOVE, id);
 }
 
 async function remove(context, id) {

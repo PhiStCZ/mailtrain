@@ -135,7 +135,7 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'sendConfiguration', entityId: id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -165,7 +165,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'sendConfiguration', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivity(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.UPDATE, entity.id);
     });
 
     mailers.invalidateMailer(entity.id);
@@ -187,7 +187,7 @@ async function remove(context, id) {
 
         await tx('send_configurations').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.SEND_CONFIGURATION, EntityActivityType.REMOVE, id);
     });
 }
 

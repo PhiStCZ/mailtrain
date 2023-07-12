@@ -300,7 +300,7 @@ async function createFiles(context, type, subType, entityId, files, replacementB
 
     const activityType = addFilesActivityMap[type] && addFilesActivityMap[type][subType];
     if (activityType) {
-        await activityLog.logEntityActivityWithContext(context, type, activityType, entityId);
+        await activityLog.logEntityActivity(context, type, activityType, entityId);
     }
 
     if (transformResponseFn) {
@@ -355,7 +355,7 @@ async function removeFile(context, type, subType, id) {
 
         const activityType = removeFileActivityMap[type] && removeFileActivityMap[type][subType];
         if (activityType) {
-            await activityLog.logEntityActivityWithContext(context, type, activityType, file.entity);
+            await activityLog.logEntityActivity(context, type, activityType, file.entity);
         }
     });
 }

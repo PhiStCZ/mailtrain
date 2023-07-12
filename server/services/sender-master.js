@@ -327,7 +327,7 @@ async function processCampaign(campaignId) {
             campaignMessageQueue.delete(campaignId);
 
             await knex('campaigns').where('id', campaignId).update({status: newStatus});
-            await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
+            await activityLog.logEntityActivity(null, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: newStatus});
         }
     }
 
@@ -417,7 +417,7 @@ async function scheduleCampaigns() {
                 .select('id');
 
             for (const id of ids) {
-                await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, id, {status: CampaignStatus.FINISHED});
+                await activityLog.logEntityActivity(null, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, id, {status: CampaignStatus.FINISHED});
             }
 
             return await tx('campaigns')
@@ -459,10 +459,10 @@ async function scheduleCampaigns() {
                     await tx('campaigns').where('id', scheduledCampaign.id).update({status: CampaignStatus.SENDING});
                     campaignId = scheduledCampaign.id;
 
-                    await activityLog.logEntityActivity(LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.SENDING});
+                    await activityLog.logEntityActivity(null, LogTypeId.CAMPAIGN, CampaignActivityType.STATUS_CHANGE, campaignId, {status: CampaignStatus.SENDING});
                     const campaignListIds = await tx('campaign_lists').where('campaign', campaignId).select('list');
                     for (const entry of campaignListIds) {
-                        await activityLog.logEntityActivity(LogTypeId.LIST, ListActivityType.SEND_CAMPAIGN, entry.list, { campaignId });
+                        await activityLog.logEntityActivity(null, LogTypeId.LIST, ListActivityType.SEND_CAMPAIGN, entry.list, { campaignId });
                     }
                 }
             });

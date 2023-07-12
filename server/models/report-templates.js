@@ -48,7 +48,7 @@ async function create(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'reportTemplate', entityId: id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.CREATE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.CREATE, id);
 
         return id;
     });
@@ -76,7 +76,7 @@ async function updateWithConsistencyCheck(context, entity) {
 
         await shares.rebuildPermissionsTx(tx, { entityTypeId: 'reportTemplate', entityId: entity.id });
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.UPDATE, entity.id);
+        await activityLog.logEntityActivity(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.UPDATE, entity.id);
     });
 }
 
@@ -90,7 +90,7 @@ async function remove(context, id) {
 
         await tx('report_templates').where('id', id).del();
 
-        await activityLog.logEntityActivityWithContext(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.REMOVE, id);
+        await activityLog.logEntityActivity(context, LogTypeId.REPORT_TEMPLATE, EntityActivityType.REMOVE, id);
     });
 }
 
