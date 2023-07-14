@@ -47,7 +47,7 @@ function entityEventToString(evt) {
 }
 function listEventToString(evt, sigSets) {
     function getCampaignLabel(evt, sigSets) {
-        let label = getEntityLabel(sigSets, 'campaign', evt);
+        let label = getEntityLabel(sigSets, 'campaign', getEventValue(evt, 'campaignId'));
         return label ? `"${label}"` : 'unknown campaign';
     }
 
@@ -108,7 +108,7 @@ function campaignEventToString(evt) {
 }
 function channelEventToString(evt, sigSets) {
     function getCampaignLabel(evt, sigSets) {
-        let label = getEntityLabel(sigSets, 'campaign', evt);
+        let label = getEntityLabel(sigSets, 'campaign', getEventValue(evt, 'campaignId'));
         return label ? `"${label}"` : 'unknown campaign';
     }
 

@@ -374,14 +374,14 @@ async function logTestData() {
             {
                 logType: LogTypeId.CAMPAIGN,
                 args: [ EntityActivityType.UPDATE, campaign1Info.id, {
-                    timestamp: day2ts + 5 * hour,
+                    timestamp: day2ts + 5 * hour + 5 * minute,
                     channelId: 1
                 }]
             },
             {
                 logType: LogTypeId.CHANNEL,
                 args: [ ChannelActivityType.ADD_CAMPAIGN, 1, {
-                    timestamp: day2ts + 5 * hour,
+                    timestamp: day2ts + 5 * hour + 5 * minute,
                     campaignId: campaign1Info.id
                 }]
             },

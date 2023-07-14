@@ -121,7 +121,7 @@ async function getLastRecord(context, campaignId) {
         params: {},
         sigSetCid: signalSetCid(campaignId),
         docs: {
-            signals: [ 'sent', 'opened', 'clicked_any' ],
+            signals: [ 'failed', 'sent', 'opened', 'clicked_any', 'bounced', 'unsubscribed', 'complained' ],
             limit: 1,
             sort: [{ sigCid: 'timestamp', order: 'desc' }]
         }
