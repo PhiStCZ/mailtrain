@@ -379,6 +379,13 @@ async function logTestData() {
                 }]
             },
             {
+                logType: LogTypeId.CHANNEL,
+                args: [ EntityActivityType.ADD_CAMPAIGN, 1, {
+                    timestamp: day2ts + 5 * hour,
+                    campaignId: campaign1Info.id
+                }]
+            },
+            {
                 logType: LogTypeId.FORM,
                 args: [ EntityActivityType.CREATE, 1, {
                     timestamp: day2ts + 7 * hour,
@@ -529,20 +536,20 @@ function setUpTestEmbedServer() {
     */
 
     router.getAsync('/list-subscriptions/:listId', async (req, res) => {
-        return await renderEmbedData(req, res, `list-subscriptions/${req.params.listId}`);
+        await renderEmbedData(req, res, `list-subscriptions/${req.params.listId}`);
     });
-    
+
     router.getAsync('/channel-recent-campaigns/:channelId', async (req, res) => {
-        return await renderEmbedData(req, res, `channel-recent-campaigns/${req.params.channelId}`);
+        await renderEmbedData(req, res, `channel-recent-campaigns/${req.params.channelId}`);
     });
-    
+
     router.getAsync('/channel-campaign-contributions/:channelId', async (req, res) => {
-        return await renderEmbedData(req, res, `channel-campaign-contributions/${req.params.channelId}`);
+        await renderEmbedData(req, res, `channel-campaign-contributions/${req.params.channelId}`);
     });
-    
+
     router.getAsync('/campaign-overview/:campaignId', async (req, res) => {
         const campaignId = req.params.campaignId;
-        return await renderEmbedData(req, res, `campaign-overview/${campaignId}`, async data => {
+        await renderEmbedData(req, res, `campaign-overview/${campaignId}`, async data => {
             const linksPie = data.params.pies.find(p => p.label === 'Link Clicks');
             if (!linksPie) return data;
 
@@ -554,11 +561,10 @@ function setUpTestEmbedServer() {
             return data;
         });
     });
-    
-    router.getAsync('/embed/campaign-messages/:campaignId', async (req, res) => {
-        const campaignId = castToInteger(req.params.campaignId);
-        await shares.enforceEntityPermission(req.context, 'campaign', campaignId, 'view');
-        return await renderEmbedData(req, res, `campaign-messages/${campaignId}`, async data => {
+
+    router.getAsync('/campaign-messages/:campaignId', async (req, res) => {
+        const campaignId = req.params.campaignId;
+        await renderEmbedData(req, res, `campaign-messages/${campaignId}`, async data => {
             for (const signal of data.params.sensors) {
                 if (signal.linkId) {
                     signal.label = `Clicks of ${getLinkUrl(signal.linkId)}`;

@@ -139,7 +139,6 @@ def create_list_subs_with_first_entry():
 if owned['signalSets'].get(list_subs_cid) is None:
   create_list_subs_with_first_entry()
   log('Signal set initialisation complete.')
-  exit(0)
 
 
 list_subs = get_signal_set(list_subs_cid)
