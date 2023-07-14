@@ -205,7 +205,7 @@ async function logTestData() {
         for (const linkId of campaignInfo.linkIds) {
             events.push({
                 logType: LogTypeId.CAMPAIGN_TRACKER,
-                args: [ eventType, campaignId, null, null, {
+                args: [ CampaignTrackerActivityType.ADD_LINK, campaignId, null, null, {
                     timestamp: sendingTs,
                     linkId,
                 }]
@@ -322,7 +322,9 @@ async function logTestData() {
             }]
         });
 
-        randomListSubs(list1Info, generateTimestamps(150, startTs + 3 * hour, startTs + day + 3 * hour));
+        allEvents = allEvents.concat(
+            randomListSubs(list1Info, generateTimestamps(150, startTs + 3 * hour, startTs + day + 3 * hour))
+        );
     }
 
     // day 2
@@ -392,13 +394,15 @@ async function logTestData() {
             },
         );
 
-        allEvents.push(launchCampaign(campaign1Info, day2ts + 3 * hour, day2ts + 17 * hour))
+        allEvents = allEvents.concat(
+            launchCampaign(campaign1Info, day2ts + 3 * hour, day2ts + 17 * hour)
+        );
         randomListSubs(list1Info, generateTimestamps(40, day2ts + 3 * hour, day2ts + day + 3 * hour));
     }
 
     // day 3
     {
-        const day2ts = startTs + 2 * day;
+        const day3ts = startTs + 2 * day;
         const campaign2Info = { // 160 subs at the time of launch
             id: 2,
             listInfo: list1Info,
@@ -412,14 +416,15 @@ async function logTestData() {
             channelId: 1
         }
 
-        // TODO: rewrite timestamps
-        allEvents.push(launchCampaign(campaign2Info, day2ts + 3 * hour, day2ts + 17 * hour))
-        randomListSubs(list1Info, generateTimestamps(75, startTs + 3 * hour, startTs + day + 3 * hour));
+        allEvents = allEvents.concat(
+            launchCampaign(campaign2Info, day3ts + 3 * hour, day3ts + 17 * hour)
+        );
+        randomListSubs(list1Info, generateTimestamps(75, day3ts + 3 * hour, day3ts + day + 3 * hour));
     }
 
     // day 4
     {
-        const day3ts = startTs + 2 * day;
+        const day4ts = startTs + 3 * day;
         const campaign3Info = {
             id: 3,
             listInfo: list1Info,
@@ -433,11 +438,13 @@ async function logTestData() {
             channelId: 1
         }
 
-        allEvents.push(launchCampaign(campaign3Info, day3ts + 3 * hour, day3ts + 17 * hour))
-        randomListSubs(list1Info, generateTimestamps(100, startTs + 3 * hour, startTs + day + 3 * hour));
+        allEvents = allEvents.concat(
+            launchCampaign(campaign3Info, day4ts + 3 * hour, day4ts + 17 * hour)
+        );
+        randomListSubs(list1Info, generateTimestamps(100, day4ts + 3 * hour, day4ts + day + 3 * hour));
     }
 
-    allEvents.push(listInfoToEvents(list1Info));
+    allEvents = allEvents.concat(listInfoToEvents(list1Info));
 
     allEvents.sort((e1, e2) => e1.ts - e2.ts);
 
@@ -447,11 +454,11 @@ async function logTestData() {
         event.args[event.args.length - 1].timestamp = ts;
 
         if (event.logType === LogTypeId.LIST_TRACKER) {
-            activityLog.logListTrackerActivity(...event.args);
+            await activityLog.logListTrackerActivity(...event.args);
         } else if (event.logType === LogTypeId.CAMPAIGN_TRACKER) {
-            activityLog.logCampaignTrackerActivity(...event.args);
+            await activityLog.logCampaignTrackerActivity(...event.args);
         } else {
-            activityLog.logEntityActivity(null, event.logType, ...event.args);
+            await activityLog.logEntityActivity(null, event.logType, ...event.args);
         }
     }
 
@@ -475,7 +482,6 @@ function setUpTestEmbedServer() {
             params
         } = transformData ? await transformData(mvisRes.data) : mvisRes.data;
 
-        data.params = JSON.stringify(data.params);
         res.render('panel', {
             token,
             ivisSandboxUrlBase,
@@ -605,6 +611,9 @@ if (process.argv.length === 2) {
     .then(setUpTestEmbedServer);
 } else {
     console.log('Unknown arguments.');
-    console.log('Launch with 0 args for a read-only test-embed,');
-    console.log('or launch with a \'log\' argument for a test-embed with test-data logging (will modify database).');
+    console.log(
+        'Launch with 0 args for a read-only test-embed, ' + 
+        'or launch with a \'log\' argument for a test-embed ' +
+        'with test-data logging (will modify database).'
+    );
 }
