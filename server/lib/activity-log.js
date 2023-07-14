@@ -40,7 +40,7 @@ async function processQueue() {
 
 async function _logActivity(typeId, data) {
     data.typeId = typeId;
-    data.timestamp = moment.utc().toISOString();
+    data.timestamp = data.timestamp || moment.utc().toISOString();
     activityQueue.push(data);
 
     if (activityQueue.length >= activityQueueLengthThreshold) {

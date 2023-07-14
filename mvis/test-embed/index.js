@@ -10,18 +10,10 @@ const fs = require('fs');
 const path = require('path');
 const fork = require('../../server/lib/fork').fork;
 const mvisApi = require('../../server/lib/mvis-api');
-
-// FUNCTIONS:
-
-// spawn mvis
-// > setup mvis listeners - entity info
-
-// log test data (TODO)
-// > generate the data
-// > use activityLog to send them to MVIS
-
-// start own server
-// > set up test embeds
+const { LogTypeId, ListActivityType, CampaignActivityType, EntityActivityType, CampaignTrackerActivityType, ChannelActivityType } = require('../../shared/activity-log');
+const { SubscriptionStatus } = require('../../shared/lists');
+const { CampaignStatus } = require('../../shared/campaigns');
+const activityLog = require('../../server/lib/activity-log');
 
 // mockup
 const amountOfEachEntity = 10;
@@ -91,6 +83,379 @@ function setUpMvis() {
             }
         });
     });
+}
+
+/**
+ * Logs some data into MVIS to test the logging and visualizations
+ */
+async function logTestData() {
+    const second = 1000,
+        minute = 60 * second,
+        hour = 60 * minute,
+        day = 24 * hour;
+
+
+    function generateTimestamps(amount, startTs, endTs) {
+        // generate <amount> of timestamps within given interval
+        // return them in a random order
+
+        if (amount < 0) throw new Error();
+        const diffTs = startTs - endTs;
+        const timestamps = [];
+        for (let i = 0; i < amount; i++) {
+            timestamps.push(startTs + Math.floor(Math.random() * diffTs));
+        }
+
+        return timestamps;
+    }
+
+
+    function randomListSubs(listInfo, timestamps) {
+        const maxIdx = listInfo.subs.length;
+        listInfo.subs = listInfo.subs.concat(timestamps.map((ts, idx) => ({ id: maxIdx + idx, subTime: ts })));
+    }
+    function randomListUnsubs(listInfo, timestamps) {
+        let timestampI = 0;
+        for (const sub of listInfo.subs.filter(s => !s.unsubTime)) {
+            if (timestampI == timestamps.length) return;
+            sub.unsubTime = timestamps[timestampI];
+        }
+    }
+    function listInfoToEvents(listInfo) {
+        const subs = listInfo.subs.map(sub => ({
+            logType: LogTypeId.LIST_TRACKER,
+            args: [ ListActivityType.CREATE_SUBSCRIPTION, listInfo.id, sub.id, sub.subTime, {
+                subscriptionStatus: SubscriptionStatus.SUBSCRIBED,
+                timestamp: sub.subTime,
+            }]
+        }));
+        const unsubs = listInfo.subs.filter(sub => sub.unsubTime).map(sub => ({
+            logType: LogTypeId.LIST_TRACKER,
+            args: [ ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listInfo.id, sub.id, sub.subTime, {
+                previousSubscriptionStatus: SubscriptionStatus.SUBSCRIBED,
+                timestamp: sub.subTime,
+            }]
+        }));
+
+        return subs.concat(unsubs);
+    }
+
+
+    function launchCampaign(campaignInfo, startTs, endTs) {
+        const sendingTs = startTs + minute;
+        const sentTs = startTs + 3 * minute;
+
+        const sentSubs = campaignInfo.listInfo.subs.filter(s => (s.subTime < startTs) && !s.unsubTime);
+
+        const campaignId = campaignInfo.id;
+        const listId = campaignInfo.listInfo.id;
+
+        const {
+            failedAmount, bouncedAmount,
+            openedAmount, clickedAmount, unsubbedAmount, complainedAmount
+        } = campaignInfo
+
+        const events = [
+            {
+                logType: LogTypeId.CAMPAIGN,
+                args: [ EntityActivityType.CREATE, campaignId, {
+                    timestamp: startTs,
+                    status: CampaignStatus.IDLE,
+                    channelId: campaignInfo.channelId
+                }]
+            },
+            {
+                logType: LogTypeId.CAMPAIGN,
+                args: [ CampaignActivityType.STATUS_CHANGE, campaignId, {
+                    timestamp: startTs + 55 * second,
+                    status: CampaignStatus.SCHEDULED
+                }]
+            },
+            {
+                logType: LogTypeId.LIST,
+                args: [ ListActivityType.SEND_CAMPAIGN, listId, {
+                    timestamp: startTs + 55 * second,
+                    campaignId: campaignId
+                }]
+            },
+            {
+                logType: LogTypeId.CAMPAIGN,
+                args: [ CampaignActivityType.STATUS_CHANGE, campaignId, {
+                    timestamp: sendingTs,
+                    status: CampaignStatus.SENDING
+                }]
+            },
+            {
+                logType: LogTypeId.CAMPAIGN,
+                args: [ CampaignActivityType.STATUS_CHANGE, campaignId, {
+                    timestamp: sentTs,
+                    status: CampaignStatus.FINISHED
+                }]
+            },
+        ];
+        if (campaignInfo.channelId) {
+            events.push({
+                logType: LogTypeId.CHANNEL,
+                args: [ ChannelActivityType.ADD_CAMPAIGN, campaignInfo.channelId, {
+                    timestamp: startTs,
+                    campaignId: campaignId
+                }]
+            });
+        }
+        for (const linkId of campaignInfo.linkIds) {
+            events.push({
+                logType: LogTypeId.CAMPAIGN_TRACKER,
+                args: [ eventType, campaignId, null, null, {
+                    timestamp: sendingTs,
+                    linkId,
+                }]
+            });
+        }
+
+        const sentTimestamps = generateTimestamps(sentSubs.length, sendingTs, sentTs);
+        const notOpenedAmount = failedAmount + bouncedAmount;
+        for (let i = 0; i < sentSubs.length; i++) {
+            const eventType = i < failedAmount
+                ? CampaignTrackerActivityType.FAILED
+                : CampaignTrackerActivityType.SENT;
+            const timestamp = sentTimestamps[i];
+            const subId = sentSubs[i].id;
+
+            events.push({
+                logType: LogTypeId.CAMPAIGN_TRACKER,
+                args: [ eventType, campaignId, listId, subId, {
+                    timestamp: timestamp
+                }]
+            });
+
+            if (i >= failedAmount && i < notOpenedAmount) {
+                events.push({
+                    logType: LogTypeId.CAMPAIGN_TRACKER,
+                    args: [ CampaignTrackerActivityType.BOUNCED, campaignId, listId, subId, {
+                        timestamp: timestamp
+                    }]
+                });
+                sentSubs[i].unsubTime = timestamp;
+            }
+        }
+
+        const openedTimestamps = generateTimestamps(openedAmount, sentTs, endTs);
+        const actedAmount = unsubbedAmount + complainedAmount + clickedAmount;
+        for (let i = notOpenedAmount; i < openedAmount + notOpenedAmount; i++) {
+            const timestamp = openedTimestamps[i];
+            const subId = sentSubs[i].id;
+
+            events.push({
+                logType: LogTypeId.CAMPAIGN_TRACKER,
+                args: [ CampaignTrackerActivityType.OPENED, campaignId, listId, subId, {
+                    timestamp: timestamp
+                }]
+            });
+
+            if (i < notOpenedAmount + actedAmount) {
+                let type;
+                if (i < notOpenedAmount + unsubbedAmount) {
+                    type = CampaignTrackerActivityType.UNSUBSCRIBED;
+                    sentSubs[i].unsubTime = timestamp;
+                } else if (i < notOpenedAmount + unsubbedAmount + complainedAmount) {
+                    type = CampaignTrackerActivityType.COMPLAINED;
+                    sentSubs[i].unsubTime = timestamp;
+                } else {
+                    type = CampaignTrackerActivityType.CLICKED_ANY;
+                    let linkId = campaignInfo.linkIds[Math.random() * campaignInfo.linkIds.length];
+
+                    events.push({
+                        logType: LogTypeId.CAMPAIGN_TRACKER,
+                        args: [ CampaignTrackerActivityType.CLICKED, campaignId, listId, subId, {
+                            timestamp: timestamp + minute,
+                            linkId
+                        }]
+                    });
+                }
+
+                events.push({
+                    logType: LogTypeId.CAMPAIGN_TRACKER,
+                    args: [ type, campaignId, listId, subId, {
+                        timestamp: timestamp + minute
+                    }]
+                });
+            }
+        }
+
+        return events;
+    }
+
+
+    const startTs = new Date(2023, 6, 1, 6).getTime();
+
+    const allEvents = [];
+
+    const list1Info = {
+        id: 1,
+        subs: [],
+    }
+
+    // day 1
+    {
+        allEvents.push({
+            logType: LogTypeId.LIST,
+            args: [ EntityActivityType.CREATE, list1Info.id, {
+                timestamp: startTs,
+            }]
+        },
+        {
+            logType: LogTypeId.USER,
+            args: [ EntityActivityType.UPDATE, 1, {
+                timestamp: startTs + hour,
+            }]
+        },
+        {
+            logType: LogTypeId.SEND_CONFIGURATION,
+            args: [ EntityActivityType.CREATE, 1, {
+                timestamp: startTs + 2 * hour,
+            }]
+        },
+        {
+            logType: LogTypeId.USER,
+            args: [ EntityActivityType.UPDATE, 1, {
+                timestamp: startTs + 8 * hour,
+            }]
+        });
+
+        randomListSubs(list1Info, generateTimestamps(150, startTs + 3 * hour, startTs + day + 3 * hour));
+    }
+
+    // day 2
+    {
+        const day2ts = startTs + day;
+        const campaign1Info = { // total -30 subs
+            id: 1,
+            listInfo: list1Info,
+            linkIds: [1, 2, 3],
+            failedAmount: 6,
+            bouncedAmount: 10,
+            openedAmount: 105,
+            clickedAmount: 75,
+            unsubbedAmount: 17,
+            complainedAmount: 3,
+            // channelId: 1
+        }
+
+        allEvents.push({
+                logType: LogTypeId.USER,
+                args: [ EntityActivityType.CREATE, 2, {
+                    timestamp: day2ts,
+                }]
+            },
+            {
+                logType: LogTypeId.USER,
+                args: [ EntityActivityType.UPDATE, 2, {
+                    timestamp: day2ts + hour,
+                }]
+            },
+            {
+                logType: LogTypeId.LIST,
+                args: [ EntityActivityType.UPDATE, list1Info.id, {
+                    timestamp: day2ts + 2 * hour,
+                }]
+            },
+            {
+                logType: LogTypeId.SEND_CONFIGURATION,
+                args: [ EntityActivityType.UPDATE, 1, {
+                    timestamp: day2ts + 4 * hour,
+                }]
+            },
+            {
+                logType: LogTypeId.CHANNEL,
+                args: [ EntityActivityType.CREATE, 1, {
+                    timestamp: day2ts + 5 * hour,
+                }]
+            },
+            {
+                logType: LogTypeId.CAMPAIGN,
+                args: [ EntityActivityType.UPDATE, campaign1Info.id, {
+                    timestamp: day2ts + 5 * hour,
+                    channelId: 1
+                }]
+            },
+            {
+                logType: LogTypeId.FORM,
+                args: [ EntityActivityType.CREATE, 1, {
+                    timestamp: day2ts + 7 * hour,
+                }]
+            },
+            {
+                logType: LogTypeId.LIST,
+                args: [ EntityActivityType.UPDATE, list1Info.id, {
+                    timestamp: day2ts + 8 * hour,
+                }]
+            },
+        );
+
+        allEvents.push(launchCampaign(campaign1Info, day2ts + 3 * hour, day2ts + 17 * hour))
+        randomListSubs(list1Info, generateTimestamps(40, day2ts + 3 * hour, day2ts + day + 3 * hour));
+    }
+
+    // day 3
+    {
+        const day2ts = startTs + 2 * day;
+        const campaign2Info = { // 160 subs at the time of launch
+            id: 2,
+            listInfo: list1Info,
+            linkIds: [4],
+            failedAmount: 0,
+            bouncedAmount: 4,
+            openedAmount: 95,
+            clickedAmount: 46,
+            unsubbedAmount: 16,
+            complainedAmount: 5, // -15 subs -> 145 subs
+            channelId: 1
+        }
+
+        // TODO: rewrite timestamps
+        allEvents.push(launchCampaign(campaign2Info, day2ts + 3 * hour, day2ts + 17 * hour))
+        randomListSubs(list1Info, generateTimestamps(75, startTs + 3 * hour, startTs + day + 3 * hour));
+    }
+
+    // day 4
+    {
+        const day3ts = startTs + 2 * day;
+        const campaign3Info = {
+            id: 3,
+            listInfo: list1Info,
+            linkIds: [6, 7, 8, 9],
+            failedAmount: 0,
+            bouncedAmount: 4,
+            openedAmount: 60,
+            clickedAmount: 30,
+            unsubbedAmount: 8,
+            complainedAmount: 2,
+            channelId: 1
+        }
+
+        allEvents.push(launchCampaign(campaign3Info, day3ts + 3 * hour, day3ts + 17 * hour))
+        randomListSubs(list1Info, generateTimestamps(100, startTs + 3 * hour, startTs + day + 3 * hour));
+    }
+
+    allEvents.push(listInfoToEvents(list1Info));
+
+    allEvents.sort((e1, e2) => e1.ts - e2.ts);
+
+    for (const event of allEvents) {
+        let ts = event.args[event.args.length - 1].timestamp;
+        ts = new Date(ts).toISOString();
+        event.args[event.args.length - 1].timestamp = ts;
+
+        if (event.logType === LogTypeId.LIST_TRACKER) {
+            activityLog.logListTrackerActivity(...event.args);
+        } else if (event.logType === LogTypeId.CAMPAIGN_TRACKER) {
+            activityLog.logCampaignTrackerActivity(...event.args);
+        } else {
+            activityLog.logEntityActivity(null, event.logType, ...event.args);
+        }
+    }
+
+    console.log('Test data logged.');
 }
 
 /**
@@ -227,5 +592,19 @@ function setUpTestEmbedServer() {
     server.listen(port, '0.0.0.0');
 }
 
-setUpMvis()
-.then(setUpTestEmbedServer);
+if (process.argv.length === 2) {
+    // launch with no arguments
+    console.log('Setting up read-only test-embed server');
+    setUpMvis()
+    .then(setUpTestEmbedServer);
+} else if (process.argv.length === 3 && process.argv[2] === 'log') {
+    // launch with no arguments
+    console.log('Setting up test-embed server with test data logging');
+    setUpMvis()
+    .then(logTestData)
+    .then(setUpTestEmbedServer);
+} else {
+    console.log('Unknown arguments.');
+    console.log('Launch with 0 args for a read-only test-embed,');
+    console.log('or launch with a \'log\' argument for a test-embed with test-data logging (will modify database).');
+}
