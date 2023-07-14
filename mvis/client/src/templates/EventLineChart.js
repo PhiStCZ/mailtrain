@@ -22,7 +22,6 @@ export class EventLineChartTemplate extends Component {
 
     static propTypes = {
         eventToString: PropTypes.func,
-        extraActivitySignals: PropTypes.array
     }
 
     render() {
@@ -63,7 +62,7 @@ export class EventLineChartTemplate extends Component {
                         activityActor: config.activityActor,
                     }}
                     tooltipEventToString={this.props.eventToString}
-                    extraActivitySignals={this.props.extraActivitySignals}
+                    extraActivitySignals={config.activityExtraSignals.map(s => s.signal)}
                     height={500}
                     margin={{ left: 40, right: 5, top: 5, bottom: 20 }}
                     tooltipExtraProps={{

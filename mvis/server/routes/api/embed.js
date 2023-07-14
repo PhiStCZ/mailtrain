@@ -62,6 +62,7 @@ router.getAsync('/mt-embed/list-subscriptions/:listId', passport.loggedIn, async
         activityTs: 'timestamp',
         activityType: 'activityType',
         activityActor: 'actor',
+        activityExtraSignals: [],
     };
 
     return res.json(
@@ -205,6 +206,7 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
         activityTs: 'timestamp',
         activityType: 'activityType',
         activityActor: 'actor',
+        activityExtraSignals: [ { sigSet: sigSet, signal: 'status' }, ],
     };
 
     params.sensors.push(...extraLinks.map((linkId, idx) => ({

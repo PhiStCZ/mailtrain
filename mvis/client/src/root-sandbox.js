@@ -38,7 +38,6 @@ em.on('client.installSandboxRoutes', (structure, t) => {
         'mt-campaign-messages': {
             render: props => <EventLineChartTemplate
                 eventToString={campaignEventToString}
-                extraActivitySignals={['status']}
                 {...props}
             />
         },

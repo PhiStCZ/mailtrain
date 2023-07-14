@@ -380,7 +380,7 @@ async function logTestData() {
             },
             {
                 logType: LogTypeId.CHANNEL,
-                args: [ EntityActivityType.ADD_CAMPAIGN, 1, {
+                args: [ ChannelActivityType.ADD_CAMPAIGN, 1, {
                     timestamp: day2ts + 5 * hour,
                     campaignId: campaign1Info.id
                 }]
@@ -602,7 +602,10 @@ function setUpTestEmbedServer() {
     server.listen(port, '0.0.0.0');
 }
 
-if (process.argv.length === 2) {
+if (process.env.NODE_ENV !== 'production') {
+    console.log('This test only functions with NODE_ENV set to \'production\'.');
+    process.exit(1);
+} else if (process.argv.length === 2) {
     // launch with no arguments
     console.log('Setting up read-only test-embed server');
     setUpMvis()
@@ -620,4 +623,5 @@ if (process.argv.length === 2) {
         'or launch with a \'log\' argument for a test-embed ' +
         'with test-data logging (will modify database).'
     );
+    process.exit(1);
 }
