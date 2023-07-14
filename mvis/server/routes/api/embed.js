@@ -191,6 +191,7 @@ router.getAsync('/mt-embed/campaign-overview/:campaignId', passport.loggedIn, as
 router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, async (req, res) => {
     const campaignId = castToInteger(req.params.campaignId);
     const sigSet = campaignMessages.signalSetCid(campaignId);
+    const activitySigSet = campaignActivity.signalSetCid(campaignId);
     const extraLinks = await campaignMessages.getRegisteredLinkIds(req.context, campaignId);
     const params = {
         sensors: [
@@ -202,11 +203,11 @@ router.getAsync('/mt-embed/campaign-messages/:campaignId', passport.loggedIn, as
             { label: 'Bounced', signal: 'bounced', color: '#eebb88' },
             { label: 'Complained', signal: 'complained', color: '#dd4444' },
         ],
-        activitySet: campaignActivity.signalSetCid(campaignId),
+        activitySet: activitySigSet,
         activityTs: 'timestamp',
         activityType: 'activityType',
         activityActor: 'actor',
-        activityExtraSignals: [ { sigSet: sigSet, signal: 'status' }, ],
+        activityExtraSignals: [ { sigSet: activitySigSet, signal: 'status' }, ],
     };
 
     params.sensors.push(...extraLinks.map((linkId, idx) => ({

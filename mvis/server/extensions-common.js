@@ -56,28 +56,6 @@ em.on('builtinTemplates.add', builtinTemplates => {
                         "type": "boolean",
                         "default": true
                     },
-                    {
-                        "id": "activityExtraSignals",
-                        "label": "Extra Activity Signals",
-                        "type": "fieldset",
-                        "cardinality": "n",
-                        "children": [
-                            {
-                                // since ivis cannot handle deeper references,
-                                // i have to put this here, and it has to be
-                                // the same as the root sigSet
-                                "id": "sigSet",
-                                "label": "Signal Set CID",
-                                "type": "signalSet"
-                            },
-                            {
-                                "id": "signal",
-                                "label": "Signal",
-                                "type": "signal",
-                                "signalSetRef": "sigSet"
-                            }
-                        ]
-                    },
                 ]
             },
             {
@@ -102,7 +80,29 @@ em.on('builtinTemplates.add', builtinTemplates => {
                 "label": "Activity Actor",
                 "type": "signal",
                 "signalSetRef": "activitySet"
-            }
+            },
+            {
+                "id": "activityExtraSignals",
+                "label": "Extra Activity Signals",
+                "type": "fieldset",
+                "cardinality": "n",
+                "children": [
+                    {
+                        // since ivis cannot handle deeper references,
+                        // i have to put this here, and it has to be
+                        // the same as the root sigSet
+                        "id": "sigSet",
+                        "label": "Signal Set CID",
+                        "type": "signalSet"
+                    },
+                    {
+                        "id": "signal",
+                        "label": "Signal",
+                        "type": "signal",
+                        "signalSetRef": "sigSet"
+                    }
+                ]
+            },
         ]
     };
 
