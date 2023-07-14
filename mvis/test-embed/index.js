@@ -100,7 +100,7 @@ async function logTestData() {
         // return them in a random order
 
         if (amount < 0) throw new Error();
-        const diffTs = startTs - endTs;
+        const diffTs = endTs - startTs;
         const timestamps = [];
         for (let i = 0; i < amount; i++) {
             timestamps.push(startTs + Math.floor(Math.random() * diffTs));
@@ -124,16 +124,16 @@ async function logTestData() {
     function listInfoToEvents(listInfo) {
         const subs = listInfo.subs.map(sub => ({
             logType: LogTypeId.LIST_TRACKER,
-            args: [ ListActivityType.CREATE_SUBSCRIPTION, listInfo.id, sub.id, sub.subTime, {
+            args: [ ListActivityType.CREATE_SUBSCRIPTION, listInfo.id, sub.id, {
                 subscriptionStatus: SubscriptionStatus.SUBSCRIBED,
                 timestamp: sub.subTime,
             }]
         }));
         const unsubs = listInfo.subs.filter(sub => sub.unsubTime).map(sub => ({
             logType: LogTypeId.LIST_TRACKER,
-            args: [ ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listInfo.id, sub.id, sub.subTime, {
+            args: [ ListActivityType.SUBSCRIPTION_STATUS_CHANGE, listInfo.id, sub.id, {
                 previousSubscriptionStatus: SubscriptionStatus.SUBSCRIBED,
-                timestamp: sub.subTime,
+                timestamp: sub.unsubTime,
             }]
         }));
 
@@ -242,7 +242,7 @@ async function logTestData() {
         const openedTimestamps = generateTimestamps(openedAmount, sentTs, endTs);
         const actedAmount = unsubbedAmount + complainedAmount + clickedAmount;
         for (let i = notOpenedAmount; i < openedAmount + notOpenedAmount; i++) {
-            const timestamp = openedTimestamps[i];
+            const timestamp = openedTimestamps[i - notOpenedAmount];
             const subId = sentSubs[i].id;
 
             events.push({
@@ -262,7 +262,7 @@ async function logTestData() {
                     sentSubs[i].unsubTime = timestamp;
                 } else {
                     type = CampaignTrackerActivityType.CLICKED_ANY;
-                    let linkId = campaignInfo.linkIds[Math.random() * campaignInfo.linkIds.length];
+                    let linkId = campaignInfo.linkIds[Math.floor(Math.random() * campaignInfo.linkIds.length)];
 
                     events.push({
                         logType: LogTypeId.CAMPAIGN_TRACKER,
@@ -288,7 +288,7 @@ async function logTestData() {
 
     const startTs = new Date(2023, 6, 1, 6).getTime();
 
-    const allEvents = [];
+    let allEvents = [];
 
     const list1Info = {
         id: 1,
@@ -322,9 +322,7 @@ async function logTestData() {
             }]
         });
 
-        allEvents = allEvents.concat(
-            randomListSubs(list1Info, generateTimestamps(150, startTs + 3 * hour, startTs + day + 3 * hour))
-        );
+        randomListSubs(list1Info, generateTimestamps(150, startTs + 3 * hour, startTs + day + 3 * hour))
     }
 
     // day 2
@@ -446,7 +444,7 @@ async function logTestData() {
 
     allEvents = allEvents.concat(listInfoToEvents(list1Info));
 
-    allEvents.sort((e1, e2) => e1.ts - e2.ts);
+    allEvents.sort((e1, e2) => e1.args[e1.args.length - 1].timestamp - e2.args[e2.args.length - 1].timestamp);
 
     for (const event of allEvents) {
         let ts = event.args[event.args.length - 1].timestamp;
