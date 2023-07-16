@@ -108,7 +108,7 @@ These endpoints have to differ in hostname. It's fine to host them all from one 
 Note, that this will automatically accept the Let's Encrypt's Terms of Service.
 Thus, by running this script below, you agree with the Let's Encrypt's Terms of Service (https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf).
 
-Example: install-${hostType}-https.sh mailtrain.example.com sbox.mailtrain.example.com lists.example.com trusted.ivis.example.com sandbox.ivis.example.com api.ivis.example.com admin@example.com
+Example: install-${hostType}-https.sh mailtrain.example.com sbox.mailtrain.example.com lists.example.com ivis.example.com sbox-ivis.example.com admin@example.com
 EOF
 
       exit 1

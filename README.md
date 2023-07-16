@@ -34,10 +34,16 @@ to guarantee security and avoid XSS attacks in the multi-user settings. The func
 - *sandbox* - This is an endpoint not directly visible to a user. It is used to host WYSIWYG template editors.
 - *public* - This is an endpoint for subscribers. It is used to host subscription management forms, files and archive.
 
-The recommended deployment of Mailtrain would use 3 DNS entries that all points to the **same** IP address. For example as follows:
+Mailtrain also uses the IVIS framework, which creates its own two public URL endpoints, with their function as follows:
+- *trusted* - This is the main endpoint for IVIS' UI where logged-in users manage IVIS entities. It does not need to be used for Mailtrain to function properly.
+- *sandbox* - This is an endpoint not directly visible to a user. It is used to host visualizations which are then displayed from Mailtrain's trusted web pages.
+
+The recommended deployment of Mailtrain would use 5 DNS entries that all point to the **same** IP address. For example as follows:
 - *lists.example.com* - public endpoint (A record `lists` under `example.com` domain)
 - *mailtrain.example.com* - trusted endpoint (CNAME record `mailtrain` under `example.com` domain that points to `lists`)
 - *sbox-mailtrain.example.com* - sandbox endpoint (CNAME record `sbox-mailtrain` under `example.com` domain that points to `lists`)
+- *ivis.example.com* - trusted endpoint (CNAME record `ivis` under `example.com` domain that points to `lists`)
+- *sbox-ivis.example.com* - sandbox endpoint (CNAME record `sbox-ivis` under `example.com` domain that points to `lists`)
 
 
 ### Installation on fresh CentOS 7 or Ubuntu 18.04 LTS (public website secured by SSL)
@@ -84,12 +90,12 @@ Thus, by running this script below, you agree with the Let's Encrypt's Terms of 
 
    For Centos 7 type:
     ```
-    bash setup/install-centos7-https.sh mailtrain.example.com sbox-mailtrain.example.com lists.example.com admin@example.com
+    bash setup/install-centos7-https.sh mailtrain.example.com sbox-mailtrain.example.com lists.example.com ivis.example.com sbox-ivis.example.com admin@example.com
     ```
 
    For Ubuntu 18.04 LTS type:
     ```
-    bash setup/install-ubuntu1804-https.sh mailtrain.example.com sbox-mailtrain.example.com lists.example.com admin@example.com
+    bash setup/install-ubuntu1804-https.sh mailtrain.example.com sbox-mailtrain.example.com lists.example.com ivis.example.com sbox-ivis.example.com admin@example.com
     ```
 
 5. Start Mailtrain and enable to be started by default when your server starts.
@@ -168,6 +174,8 @@ All endpoints (trusted, sandbox, public) will provide only HTTP as follows:
 
 
 ### Deployment with Docker and Docker compose
+
+(warning: Docker deployment does not work yet for Mailtrain with IVIS)
 
 This setup starts a stack composed of Mailtrain, MongoDB, Redis, and MariaDB. It will setup a locally accessible Mailtrain instance with HTTP endpoints as follows.
 - http://localhost:3000 - trusted endpoint
